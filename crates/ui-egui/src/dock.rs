@@ -403,6 +403,19 @@ pub fn restore(app: &mut PhotocraftApp) {
     }
 }
 
+/// A fresh install opens painting-first ([`crate::pira::first_launch`]): the Painting
+/// workspace with Color, Brushes and Layers docked and Properties put away.
+pub(crate) fn first_launch_layout(app: &mut PhotocraftApp) {
+    app.ui.workspace = "Painting".into();
+    let p = &mut app.ui.panels;
+    p.properties = false;
+    p.history = false;
+    p.navigator = false;
+    p.color = true;
+    p.brushes = true;
+    p.layers = true;
+}
+
 /// Apply the `panels`, `dockTabs`, `dock` and `timelineOpen` parts of a saved layout
 /// (a workspace or `panelLayout`). Missing or invalid dock parts are left alone; old
 /// layouts without Timeline visibility restore it closed.

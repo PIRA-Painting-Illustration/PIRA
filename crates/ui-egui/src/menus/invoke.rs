@@ -292,7 +292,9 @@ pub(crate) fn invoke_unguarded(app: &mut PhotocraftApp, ctx: &egui::Context, id:
             crate::prefs_ui::sync_appearance(app, ctx);
             Ok(Value::Null)
         }
-        "window.theme.pro"
+        "window.theme.pira"
+        | "window.theme.piraLight"
+        | "window.theme.pro"
         | "window.theme.proMedium"
         | "window.theme.proLightGray"
         | "window.theme.proLight"

@@ -19,3 +19,15 @@ pub fn persist(app: &mut PhotocraftApp, ctx: &egui::Context) {
 pub fn restore(app: &mut PhotocraftApp) {
     photocraft_engine::brush_cmds::restore_brush(&mut app.session);
 }
+
+/// A fresh install ([`crate::pira::first_launch`]) starts on PIRA's first brush, a pressure-
+/// and tilt-ready pencil ([`photocraft_paint::presets::FIRST_BRUSH`]).
+pub(crate) fn first_launch_brush(app: &mut PhotocraftApp) {
+    let name = photocraft_paint::presets::FIRST_BRUSH;
+    let tools = &mut app.session.tools;
+    let Some(p) = photocraft_paint::presets::find(&tools.presets, name) else { return };
+    let brush = photocraft_paint::BrushSettings { color: tools.brush.color, ..p.brush.clone() };
+    tools.brush = brush;
+    tools.current_preset = Some(name.to_string());
+    tools.brush_changed();
+}

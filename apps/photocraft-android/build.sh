@@ -7,7 +7,7 @@
 #   PROFILE=dev apps/photocraft-android/build.sh  # unoptimised library, faster to build
 #   RELEASE_BUILD=3 apps/photocraft-android/build.sh  # the 3rd Android release of this version
 #
-# The APK lands in target/android/photocraft-<version>[-<build>]-arm64-v8a.apk. A release of it
+# The APK lands in target/android/pira-<version>[-<build>]-arm64-v8a.apk. A release of it
 # is tagged android-v<version>[-<build>] with the APK attached: installed copies offer to update
 # to it (android/app/src/main/java/.../Updater.java).
 set -euo pipefail
@@ -45,5 +45,5 @@ VERSION="${APP_VERSION:-$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/Cargo.toml"
 if [[ "${RELEASE_BUILD:-0}" != 0 ]]; then VERSION="$VERSION-$RELEASE_BUILD"; fi
 OUT="${CARGO_TARGET_DIR:-$ROOT/target}/android"
 mkdir -p "$OUT"
-cp app/build/outputs/apk/release/app-release.apk "$OUT/photocraft-$VERSION-arm64-v8a.apk"
-echo "APK: $OUT/photocraft-$VERSION-arm64-v8a.apk"
+cp app/build/outputs/apk/release/app-release.apk "$OUT/pira-$VERSION-arm64-v8a.apk"
+echo "APK: $OUT/pira-$VERSION-arm64-v8a.apk"

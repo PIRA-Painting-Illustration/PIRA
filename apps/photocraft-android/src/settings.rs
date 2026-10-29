@@ -40,7 +40,7 @@ const MAX_TOTAL: usize = 1 << 30;
 const MAX_DEPTH: usize = 8;
 
 /// The suggested name of an export.
-pub const FILE_NAME: &str = "PhotoCraft Settings.zip";
+pub const FILE_NAME: &str = "PIRA Settings.zip";
 
 /// Every file under `dir`, as paths relative to `base` with `/` separators (sorted).
 fn files_under(base: &Path, dir: &Path, depth: usize, out: &mut Vec<String>) {
@@ -71,7 +71,7 @@ fn settings_files(files_dir: &Path) -> Vec<String> {
 /// The export: a zip of every settings file, and a marker naming it.
 pub fn export(files_dir: &Path) -> Result<Vec<u8>, String> {
     let mut zip = ZipWriter::new();
-    let marker = serde_json::json!({ "format": 1, "app": "PhotoCraft for Android", "version": photocraft_engine::build_info::long_version() });
+    let marker = serde_json::json!({ "format": 1, "app": "PIRA for Android", "version": photocraft_engine::build_info::long_version() });
     zip.add(MARKER, marker.to_string().as_bytes()).map_err(|e| e.to_string())?;
     for rel in settings_files(files_dir) {
         let bytes = std::fs::read(files_dir.join(&rel)).map_err(|e| format!("{rel}: {e}"))?;
@@ -94,11 +94,11 @@ fn allowed(name: &str) -> bool {
 /// Check a settings file and stage its contents for the next start. Returns how many files it
 /// holds.
 pub fn stage(files_dir: &Path, bytes: &[u8]) -> Result<usize, String> {
-    let zip = ZipReader::new(bytes).map_err(|_| "this isn't a PhotoCraft settings file".to_string())?;
-    let marker = zip.read_by_name(MARKER, 64 << 10).map_err(|_| "this isn't a PhotoCraft settings file".to_string())?;
+    let zip = ZipReader::new(bytes).map_err(|_| "this isn't a PIRA settings file".to_string())?;
+    let marker = zip.read_by_name(MARKER, 64 << 10).map_err(|_| "this isn't a PIRA settings file".to_string())?;
     let marker: Value = serde_json::from_slice(&marker).map_err(|_| "this settings file is damaged".to_string())?;
     if marker.get("format").and_then(Value::as_u64) != Some(1) {
-        return Err("this settings file comes from a newer version of PhotoCraft".into());
+        return Err("this settings file comes from a newer version of PIRA".into());
     }
     let staging = files_dir.join(STAGING);
     let _ = std::fs::remove_dir_all(&staging);
@@ -217,7 +217,7 @@ pub fn menu(files_dir: &Path, bridge: Arc<Bridge>, outcome: Outcome, wake: impl 
                         };
                         let result = std::fs::read(&path).map_err(|e| e.to_string()).and_then(|bytes| stage(&dir, &bytes));
                         match result {
-                            Ok(_) => tell(&outcome, "Settings imported. Close PhotoCraft (File › Exit) and open it again to use them.".into(), false),
+                            Ok(_) => tell(&outcome, "Settings imported. Close PIRA (File › Exit) and open it again to use them.".into(), false),
                             Err(e) => tell(&outcome, format!("Couldn't import the settings: {e}"), true),
                         }
                         wake();
@@ -281,7 +281,7 @@ mod tests {
         assert!(stage(&d, b"not a zip").is_err());
         let mut z = ZipWriter::new();
         z.add("hello.txt", b"hi").unwrap();
-        assert!(stage(&d, &z.finish().unwrap()).unwrap_err().contains("isn't a PhotoCraft settings file"));
+        assert!(stage(&d, &z.finish().unwrap()).unwrap_err().contains("isn't a PIRA settings file"));
         // A settings file whose entries try to leave the settings folders.
         let mut z = ZipWriter::new();
         z.add(MARKER, br#"{"format":1}"#).unwrap();

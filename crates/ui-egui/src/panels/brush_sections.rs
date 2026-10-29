@@ -597,6 +597,27 @@ fn pose(ui: &mut egui::Ui, b: &mut BrushSettings) {
     widgets::checkbox(ui, &mut p.override_pressure, tl!("Override Pressure"));
 }
 
+/// PIRA's Pen Tilt Shading (under Brush Tip Shape: it works with every other section, on or
+/// off): leaning the pen lengthens, flattens and lightens the tip along the lean.
+fn tilt_shading(ui: &mut egui::Ui, b: &mut BrushSettings) {
+    let t = Tokens::get(ui.ctx());
+    ui.add_space(6.0);
+    widgets::hairline(ui);
+    ui.add_space(4.0);
+    let ts = &mut b.tilt_shading;
+    widgets::checkbox(ui, &mut ts.enabled, tl!("Pen Tilt Shading")).on_hover_text(tl!("Lean the pen to shade with the side of the tip, as with a pencil"));
+    ui.add_enabled_ui(ts.enabled, |ui| {
+        num(ui, tl!("Starts at"), &mut ts.start, 0.0..=85.0, "°");
+        num(ui, tl!("Strongest at"), &mut ts.full, 5.0..=90.0, "°");
+        pct(ui, tl!("Lengthen"), &mut ts.size, 4.0);
+        pct(ui, tl!("Flatten"), &mut ts.flatten, 0.95);
+        pct(ui, tl!("Lighten"), &mut ts.opacity, 1.0);
+    });
+    if !ts.enabled {
+        ui.label(RichText::new(tl!("Off: the tip ignores how far the pen leans.")).color(t.text_faint).font(theme::medium(11.5)));
+    }
+}
+
 fn smoothing(ui: &mut egui::Ui, b: &mut BrushSettings) {
     let s = &mut b.smoothing;
     pct(ui, tl!("Smoothing"), &mut s.amount, 1.0);
@@ -616,7 +637,9 @@ pub fn section_body(ui: &mut egui::Ui, b: &mut BrushSettings, i: usize, presets:
         ui.label(RichText::new(s).color(t.text_faint).font(theme::medium(11.5)));
     };
     if i == 0 {
-        return tip_shape(ui, b, presets, current);
+        let picked = tip_shape(ui, b, presets, current);
+        tilt_shading(ui, b);
+        return picked;
     }
     match i {
         1 => shape_dynamics(ui, b),

@@ -47,8 +47,8 @@ pub fn title_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
             let title = app
                 .session
                 .active()
-                .map(|d| format!("{}{}", if show_name { d.doc.name.as_str() } else { "PhotoCraft" }, if d.is_dirty() { "  •" } else { "" }))
-                .unwrap_or_else(|| "PhotoCraft".into());
+                .map(|d| format!("{}{}", if show_name { d.doc.name.as_str() } else { "PIRA" }, if d.is_dirty() { "  •" } else { "" }))
+                .unwrap_or_else(|| "PIRA".into());
             // The menus and the far-end controls are laid out first; the title is centred in
             // whatever room is left between them (`free`, left to right: menus then controls, or
             // controls then menus in a right-to-left UI), shortened or dropped rather than drawn
@@ -133,7 +133,7 @@ pub fn title_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 return;
             }
             // A right-to-left document name in display order (the OS title keeps the logical text),
-            // in a left-to-right line: "— PhotoCraft" stays after the name, at the right.
+            // in a left-to-right line: "— PIRA" stays after the name, at the right.
             let title = crate::bidi_text::visual_ltr(&title).into_owned();
             let font = theme::medium(13.0);
             let galley = ui.painter().layout_no_wrap(title.clone(), font.clone(), t.text_dim);
@@ -170,9 +170,9 @@ pub fn system_title_bar(app: &PhotocraftApp) -> bool {
 /// drops out and only the app name (and the `*`) remains (#5037).
 pub fn window_title(app: &PhotocraftApp) -> String {
     if !app.session.prefs().interface.show_file_name_in_title {
-        return format!("{}PhotoCraft", if app.session.active().is_some_and(|d| d.is_dirty()) { "*" } else { "" });
+        return format!("{}PIRA", if app.session.active().is_some_and(|d| d.is_dirty()) { "*" } else { "" });
     }
-    app.session.active().map(|d| format!("{}{} \u{2014} PhotoCraft", if d.is_dirty() { "*" } else { "" }, d.doc.name)).unwrap_or_else(|| "PhotoCraft".into())
+    app.session.active().map(|d| format!("{}{} \u{2014} PIRA", if d.is_dirty() { "*" } else { "" }, d.doc.name)).unwrap_or_else(|| "PIRA".into())
 }
 
 /// Keep the OS window title (and the taskbar / Alt-Tab entry) on the active file. Sends

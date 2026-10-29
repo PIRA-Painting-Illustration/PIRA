@@ -518,7 +518,9 @@ pub fn base_diameter(b: &BrushSettings, s: &StepInput) -> f32 {
     } else if b.pressure_size {
         f = s.point.pressure.clamp(0.0, 1.0);
     }
-    b.size * f
+    // Pen-tilt shading lengthens the tip on top of pressure (so spacing follows the longer tip).
+    let ts = &b.tilt_shading;
+    b.size * f * ts.size_factor(ts.amount(&s.point))
 }
 
 /// Builds the primary dabs of a step (Shape Dynamics, Scattering, Transfer, Color, Texture depth).
@@ -596,6 +598,15 @@ impl DabBuilder {
                     }
                 }
             }
+            // Pen-tilt shading: flatten the (already lengthened) tip along the lean. The tip turns
+            // to the lean only when no other angle control steers it (Direction on Charcoal…).
+            let shade = b.tilt_shading.amount(&s.point);
+            if shade > 0.0 {
+                roundness = (roundness * b.tilt_shading.roundness_factor(shade)).clamp(0.01, 1.0);
+                if !(sd.enabled && sd.angle.control != Control::Off) && !sd.brush_projection {
+                    angle += crate::brush::TiltShading::azimuth(&s.point);
+                }
+            }
             let radius = (diameter / 2.0).max(0.5);
             // Scatter.
             let mut c = Point::new(s.point.x, s.point.y);
@@ -624,6 +635,7 @@ impl DabBuilder {
             if b.pressure_opacity && !(tr.enabled && tr.opacity.control != Control::Off) {
                 opacity *= s.point.pressure.clamp(0.0, 1.0);
             }
+            opacity *= b.tilt_shading.opacity_factor(shade);
             // Colour.
             let color = if b.color_dynamics.enabled {
                 if b.color_dynamics.per_tip { dynamic_color(b, s, seed, i) } else { *self.stroke_color.get_or_insert_with(|| dynamic_color(b, s, seed, 0)) }

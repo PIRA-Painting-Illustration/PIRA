@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
  * </ul>
  */
 public class PhotoCraftActivity extends GameActivity {
-    private static final String TAG = "PhotoCraft";
+    private static final String TAG = "PIRA";
     private static final int REQ_OPEN = 1001;
     private static final int REQ_SAVE = 1002;
     private static final long POLL_MS = 150;
@@ -525,7 +525,7 @@ public class PhotoCraftActivity extends GameActivity {
             String text = readText(set);
             //noinspection ResultOfMethodCallIgnored
             set.delete();
-            cm.setPrimaryClip(ClipData.newPlainText("PhotoCraft", text));
+            cm.setPrimaryClip(ClipData.newPlainText("PIRA", text));
         }
         File get = new File(bridge, "clip-get");
         if (get.exists() && get.delete()) {

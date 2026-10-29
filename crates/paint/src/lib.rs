@@ -35,7 +35,7 @@ pub mod tile;
 
 pub use brush::{
     BrushPreset, BrushSettings, ColorDynamics, Control, DualBrush, Dynamic, MAX_BRUSH_SIZE, MAX_SCATTER, MaskMode, Pattern, PatternStyle, Pose, PresetCaptures,
-    Scattering, SectionLocks, ShapeDynamics, Smoothing, Texture, TipShape, Transfer,
+    Scattering, SectionLocks, ShapeDynamics, Smoothing, Texture, TiltShading, TipShape, Transfer,
 };
 pub use curve::ResponseCurve;
 pub use mixer::MixerSettings;

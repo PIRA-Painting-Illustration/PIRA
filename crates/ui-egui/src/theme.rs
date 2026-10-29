@@ -1,5 +1,8 @@
 //! Design system: themes, colour tokens, radii, typography.
 //!
+//! - **PIRA** (a fresh install's theme) and **PIRA Light**: PIRA's own look. Deep teal-navy surfaces (#0F1E25),
+//!   warm cream text (#EDE7D9), a teal accent (#2A9D8F) and coral primary buttons (#FF6B5A),
+//!   with generous rounded corners. The light variant swaps the surfaces for paper cream.
 //! - **Studio**: near-black surfaces, rounded cards, Inter + JetBrains Mono, soft violet
 //!   accent. Modelled on the look of modern pro editors (such as Photoshop 2025).
 //! - **Studio Light**: the same system on light surfaces.
@@ -25,9 +28,14 @@ use std::sync::Arc;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThemeKind {
+    /// PIRA's own dark look: teal-navy surfaces, cream text, teal accent, coral buttons. A fresh
+    /// install picks it ([`crate::pira::first_launch`]); the type's default stays Photoshop's.
+    Pira,
+    /// PIRA's light look: paper-cream surfaces, teal-navy text, the same teal and coral.
+    PiraLight,
     /// Photoshop-style Spectrum dark: flat charcoal panels, tab strips, blue accents (darkest brightness).
     Pro,
-    /// Photoshop's default (second) interface brightness: #535353 panels, #282828 canvas (default).
+    /// Photoshop's default (second) interface brightness: #535353 panels, #282828 canvas.
     #[default]
     ProMedium,
     /// Photoshop's third interface brightness: #B8B8B8 panels (#2661).
@@ -55,7 +63,9 @@ pub enum ThemeKind {
 }
 
 impl ThemeKind {
-    pub const ALL: [ThemeKind; 14] = [
+    pub const ALL: [ThemeKind; 16] = [
+        ThemeKind::Pira,
+        ThemeKind::PiraLight,
         ThemeKind::Pro,
         ThemeKind::ProMedium,
         ThemeKind::ProLightGray,
@@ -73,6 +83,8 @@ impl ThemeKind {
     ];
     pub fn label(self) -> &'static str {
         match self {
+            ThemeKind::Pira => "PIRA",
+            ThemeKind::PiraLight => "PIRA Light",
             ThemeKind::Pro => "Pro (Dark)",
             ThemeKind::ProMedium => "Pro (Medium Gray)",
             ThemeKind::ProLightGray => "Pro (Light Gray)",
@@ -93,6 +105,8 @@ impl ThemeKind {
     /// `window.theme.<id>`.
     pub fn id(self) -> &'static str {
         match self {
+            ThemeKind::Pira => "pira",
+            ThemeKind::PiraLight => "piraLight",
             ThemeKind::Pro => "pro",
             ThemeKind::ProMedium => "proMedium",
             ThemeKind::ProLightGray => "proLightGray",
@@ -117,7 +131,8 @@ impl ThemeKind {
     pub fn is_dark(self) -> bool {
         matches!(
             self,
-            ThemeKind::Studio
+            ThemeKind::Pira
+                | ThemeKind::Studio
                 | ThemeKind::Pro
                 | ThemeKind::ProMedium
                 | ThemeKind::SolarizedDark
@@ -136,6 +151,8 @@ impl ThemeKind {
     }
     pub fn from_name(s: &str) -> Option<Self> {
         match s.to_ascii_lowercase().replace([' ', '_', '-', '(', ')'], "").as_str() {
+            "pira" | "piradark" => Some(ThemeKind::Pira),
+            "piralight" | "paper" => Some(ThemeKind::PiraLight),
             "pro" | "prodark" | "photoshop" | "dark" => Some(ThemeKind::Pro),
             "promedium" | "promediumgray" | "medium" | "mediumgray" => Some(ThemeKind::ProMedium),
             "prolightgray" | "lightgray" | "mediumlight" => Some(ThemeKind::ProLightGray),
@@ -221,6 +238,89 @@ impl Tokens {
 
     pub fn for_kind(kind: ThemeKind) -> Self {
         match kind {
+            // PIRA: the brand palette (#0F1E25 base, #EDE7D9 cream, #2A9D8F teal, #FF6B5A coral,
+            // #FFD166 yellow) on the rounded card layout.
+            ThemeKind::Pira => Tokens {
+                kind,
+                chrome: Color32::from_rgb(19, 37, 46),
+                canvas: Color32::from_rgb(10, 22, 27),
+                canvas_dot: Color32::from_rgb(28, 50, 60),
+                dock: Color32::from_rgb(13, 27, 33),
+                card: Color32::from_rgb(21, 42, 51),
+                card_border: Color32::from_rgb(34, 63, 74),
+                field: Color32::from_rgb(15, 32, 40),
+                field_border: Color32::from_rgb(44, 76, 88),
+                hover: Color32::from_rgb(29, 55, 66),
+                pressed: Color32::from_rgb(37, 68, 79),
+                text: Color32::from_rgb(237, 231, 217),
+                text_dim: Color32::from_rgb(182, 190, 188),
+                text_faint: Color32::from_rgb(128, 143, 145),
+                icon: Color32::from_rgb(220, 216, 204),
+                accent: Color32::from_rgb(42, 157, 143),
+                accent_soft: Color32::from_rgba_unmultiplied(42, 157, 143, 56),
+                accent_border: Color32::from_rgba_unmultiplied(64, 190, 174, 150),
+                accent_text: Color32::from_rgb(150, 226, 214),
+                separator: Color32::from_rgb(11, 24, 30),
+                shadow: Color32::from_black_alpha(150),
+                primary_bg: Color32::from_rgb(255, 107, 90),
+                primary_text: Color32::from_rgb(15, 30, 37),
+                danger: Color32::from_rgb(255, 107, 90),
+                warning: Color32::from_rgb(255, 209, 102),
+                radius_sm: 7.0,
+                radius: 10.0,
+                radius_lg: 14.0,
+                bevel: false,
+                pro: false,
+                round_chips: true,
+                tab_strip: Color32::TRANSPARENT,
+                row_selected: Color32::TRANSPARENT,
+                histogram_bg: Color32::from_rgb(10, 22, 27),
+                histogram_level: 225,
+                caption_close: Color32::from_rgb(255, 107, 90),
+                caption_close_text: Color32::from_rgb(15, 30, 37),
+                scrim: Color32::from_black_alpha(120),
+            },
+            // PIRA Light: paper-cream surfaces with teal-navy text; teal accent, navy primary.
+            ThemeKind::PiraLight => Tokens {
+                kind,
+                chrome: Color32::from_rgb(237, 231, 217),
+                canvas: Color32::from_rgb(214, 206, 189),
+                canvas_dot: Color32::from_rgb(200, 191, 172),
+                dock: Color32::from_rgb(228, 221, 205),
+                card: Color32::from_rgb(246, 242, 233),
+                card_border: Color32::from_rgb(214, 205, 186),
+                field: Color32::from_rgb(252, 250, 245),
+                field_border: Color32::from_rgb(196, 186, 165),
+                hover: Color32::from_rgb(232, 225, 210),
+                pressed: Color32::from_rgb(218, 209, 191),
+                text: Color32::from_rgb(15, 30, 37),
+                text_dim: Color32::from_rgb(52, 70, 78),
+                text_faint: Color32::from_rgb(98, 112, 116),
+                icon: Color32::from_rgb(30, 48, 56),
+                accent: Color32::from_rgb(31, 128, 117),
+                accent_soft: Color32::from_rgba_unmultiplied(42, 157, 143, 48),
+                accent_border: Color32::from_rgba_unmultiplied(31, 128, 117, 160),
+                accent_text: Color32::from_rgb(18, 96, 88),
+                separator: Color32::from_rgb(214, 205, 186),
+                shadow: Color32::from_black_alpha(45),
+                primary_bg: Color32::from_rgb(15, 30, 37),
+                primary_text: Color32::from_rgb(237, 231, 217),
+                danger: Color32::from_rgb(196, 62, 48),
+                warning: Color32::from_rgb(150, 100, 0),
+                radius_sm: 7.0,
+                radius: 10.0,
+                radius_lg: 14.0,
+                bevel: false,
+                pro: false,
+                round_chips: true,
+                tab_strip: Color32::TRANSPARENT,
+                row_selected: Color32::TRANSPARENT,
+                histogram_bg: Color32::from_rgb(15, 30, 37),
+                histogram_level: 240,
+                caption_close: Color32::from_rgb(255, 107, 90),
+                caption_close_text: Color32::from_rgb(15, 30, 37),
+                scrim: Color32::from_black_alpha(90),
+            },
             // Sampled from Photoshop 2026's default brightness (raw display values).
             ThemeKind::ProMedium => Tokens {
                 kind,

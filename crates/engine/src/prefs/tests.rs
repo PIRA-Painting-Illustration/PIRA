@@ -89,9 +89,12 @@ fn appearance_defaults_and_legacy_theme_migrate() {
     assert_eq!(p.interface.appearance_mode, AppearanceMode::Dark);
     assert_eq!(p.interface.dark_theme, DarkTheme::ProMedium);
     assert_eq!(p.interface.light_theme, LightTheme::ProLight);
-    for (theme, mode, dark, light) in
-        [("pro", AppearanceMode::Dark, DarkTheme::Pro, LightTheme::ProLight), ("classic", AppearanceMode::Light, DarkTheme::ProMedium, LightTheme::Classic)]
-    {
+    for (theme, mode, dark, light) in [
+        ("pro", AppearanceMode::Dark, DarkTheme::Pro, LightTheme::ProLight),
+        ("classic", AppearanceMode::Light, DarkTheme::ProMedium, LightTheme::Classic),
+        ("pira", AppearanceMode::Dark, DarkTheme::Pira, LightTheme::ProLight),
+        ("piraLight", AppearanceMode::Light, DarkTheme::ProMedium, LightTheme::PiraLight),
+    ] {
         let mut s = Session::new();
         s.load_prefs_json(&json!({"interface": {"theme": theme}}).to_string()).unwrap();
         assert_eq!(s.prefs().interface.appearance_mode, mode);

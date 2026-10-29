@@ -32,6 +32,7 @@ pub mod menus;
 pub mod monitor_status;
 pub mod notices;
 pub mod panels;
+pub mod pira;
 pub mod platform_menu;
 pub mod preset_files_ui;
 pub mod proxy;
