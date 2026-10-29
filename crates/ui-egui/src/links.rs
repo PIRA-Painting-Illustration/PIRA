@@ -11,6 +11,8 @@ pub const ARTCRAFT_WEBSITE: &str = "https://getartcraft.com";
 pub const APP_PAGE: &str = "https://getartcraft.com/apps/photocraft";
 pub const GITHUB: &str = "https://github.com/storytold/photocraft";
 pub const ISSUES: &str = "https://github.com/storytold/photocraft/issues";
+/// PIRA's home on GitHub (the start screen's link).
+pub const PIRA_GITHUB: &str = "https://github.com/PIRA-Paint";
 
 /// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`.
 pub const COMMANDS: &[(&str, &str)] =
@@ -41,15 +43,16 @@ pub fn discord_button(app: &mut PhotocraftApp, ui: &mut egui::Ui, min_width: f32
     r
 }
 
-/// "PhotoCraft website · GitHub · ArtCraft" as links, centred. Clicks route through [`open`] (the
+/// "PIRA on GitHub · Built on PhotoCraft" as links, centred (the start screen). The second is
+/// the upstream credit; PIRA has no website or community links of its own yet. Clicks route through [`open`] (the
 /// platform browser service) rather than `ui.hyperlink_to`, which uses the unreliable `ctx.open_url`.
 pub fn link_row(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let t = crate::theme::Tokens::get(ui.ctx());
-    let links = [(tl!("PhotoCraft website"), APP_PAGE), (tl!("GitHub"), GITHUB), (tl!("ArtCraft"), ARTCRAFT_WEBSITE)];
+    let links = [(tl!("PIRA on GitHub"), PIRA_GITHUB), (tl!("Built on PhotoCraft"), GITHUB)];
     let font = egui::FontId::proportional(12.5);
     let sep = "  ·  ";
     let width: f32 = links.iter().map(|(l, _)| ui.painter().layout_no_wrap((*l).into(), font.clone(), t.text).size().x).sum::<f32>()
-        + 2.0 * ui.painter().layout_no_wrap(sep.into(), font.clone(), t.text).size().x;
+        + (links.len().saturating_sub(1)) as f32 * ui.painter().layout_no_wrap(sep.into(), font.clone(), t.text).size().x;
     let mut clicked: Option<&str> = None;
     ui.horizontal(|ui| {
         ui.spacing_mut().item_spacing.x = 0.0;
