@@ -6,8 +6,9 @@ derived from the PhotoCraft Android port. User-facing text says **PIRA**; machin
 `UPSTREAM.md`). The rest of this file is PhotoCraft's contributor guide and still applies to the
 code, except where PIRA's goal differs: PIRA aims at a painting-first app (pen pressure and tilt
 working out of the box, see `docs/pira/`), not Photoshop parity. Take inspiration from other
-painting apps' workflows, never their assets, names or trade dress. Keep this repository local:
-no remote to push to has been set up.
+painting apps' workflows, never their assets, names or trade dress. The repository is
+`PIRA-Paint/PIRA` on GitHub (private, remote `origin`); `photocraft-port` is the local port, push
+disabled.
 
 ---
 

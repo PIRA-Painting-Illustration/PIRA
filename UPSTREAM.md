@@ -8,6 +8,7 @@ PIRA started as a copy of the PhotoCraft Android port.
 | Port it came from | PhotoCraft for Android, branch `android-port` (local remote `photocraft-port`, push disabled) |
 | Fork point | `81c379c49` "README: download 0.16.0-4" (port version 0.16.0-4), 2026-10-29 |
 | History | Kept, so every upstream line keeps its author and licence trail |
+| PIRA repository | [PIRA-Paint/PIRA](https://github.com/PIRA-Paint/PIRA) (private), remote `origin` |
 
 ## Naming policy (for now)
 

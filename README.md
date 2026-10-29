@@ -13,7 +13,7 @@ pen **pressure and tilt from the first stroke**, with nothing to switch on. No a
 subscription, no network needed to draw, save or export.
 
 > [!NOTE]
-> Working name, local repository, early prototype. PIRA is an independent project. It contains
+> Working name, early prototype, [PIRA-Paint/PIRA](https://github.com/PIRA-Paint/PIRA) on GitHub (private). PIRA is an independent project. It contains
 > software derived from [PhotoCraft](https://github.com/storytold/photocraft) by ArtCraft
 > contributors (MIT OR Apache-2.0), through the PhotoCraft Android port. It is not made or
 > supported by the PhotoCraft developers or ArtCraft, and it is not affiliated with Clip Studio
