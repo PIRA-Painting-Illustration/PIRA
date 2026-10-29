@@ -260,8 +260,16 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                                 opt_label(ui, tl!("Smoothing"));
                                 smoothing_field(ui, b, 66.0);
                                 widgets::vline(ui, 22.0);
-                                widgets::toggle(ui, &mut b.pressure_size, tl!("Pressure for Size"));
-                                widgets::toggle(ui, &mut b.pressure_opacity, tl!("Pressure for Opacity"));
+                                // On whenever pressure drives size or opacity, by the shortcut or by
+                                // Shape Dynamics / Transfer (PIRA's presets use the latter).
+                                let mut size = size_follows_pressure(b);
+                                if widgets::toggle(ui, &mut size, tl!("Pressure for Size")).changed() {
+                                    set_size_pressure(b, size);
+                                }
+                                let mut opacity = opacity_follows_pressure(b);
+                                if widgets::toggle(ui, &mut opacity, tl!("Pressure for Opacity")).changed() {
+                                    set_opacity_pressure(b, opacity);
+                                }
                             }
                             Tool::MixerBrush => {
                                 brush_preset_chip(ui, b, &mut app.ui);
@@ -808,4 +816,72 @@ fn percent_field(ui: &mut egui::Ui, label: &str, value: &mut f32, range: std::op
 fn hint(ui: &mut egui::Ui, s: &str) {
     let t = Tokens::get(ui.ctx());
     ui.label(RichText::new(s).color(t.text_faint));
+}
+
+/// Does pen pressure change the brush's size: the options-bar shortcut, or Shape Dynamics' size
+/// control on Pen Pressure?
+pub(crate) fn size_follows_pressure(b: &photocraft_paint::BrushSettings) -> bool {
+    let sd = &b.shape_dynamics;
+    b.pressure_size || (sd.enabled && sd.size.control == photocraft_paint::Control::PenPressure)
+}
+
+/// Turn pressure-driven size on or off. Off clears both the shortcut and a Pen Pressure size
+/// control; on prefers Shape Dynamics (which keeps its Minimum Diameter) when that is in use.
+pub(crate) fn set_size_pressure(b: &mut photocraft_paint::BrushSettings, on: bool) {
+    let sd = &mut b.shape_dynamics;
+    if on {
+        if sd.enabled && sd.size.control == photocraft_paint::Control::Off {
+            sd.size.control = photocraft_paint::Control::PenPressure;
+        } else if !size_follows_pressure(b) {
+            b.pressure_size = true;
+        }
+    } else {
+        b.pressure_size = false;
+        if sd.size.control == photocraft_paint::Control::PenPressure {
+            sd.size.control = photocraft_paint::Control::Off;
+        }
+    }
+}
+
+/// Does pen pressure change the brush's opacity: the shortcut, or Transfer's opacity control?
+pub(crate) fn opacity_follows_pressure(b: &photocraft_paint::BrushSettings) -> bool {
+    let tr = &b.transfer;
+    b.pressure_opacity || (tr.enabled && tr.opacity.control == photocraft_paint::Control::PenPressure)
+}
+
+/// Turn pressure-driven opacity on or off, like [`set_size_pressure`].
+pub(crate) fn set_opacity_pressure(b: &mut photocraft_paint::BrushSettings, on: bool) {
+    let tr = &mut b.transfer;
+    if on {
+        if tr.enabled && tr.opacity.control == photocraft_paint::Control::Off {
+            tr.opacity.control = photocraft_paint::Control::PenPressure;
+        } else if !opacity_follows_pressure(b) {
+            b.pressure_opacity = true;
+        }
+    } else {
+        b.pressure_opacity = false;
+        if tr.opacity.control == photocraft_paint::Control::PenPressure {
+            tr.opacity.control = photocraft_paint::Control::Off;
+        }
+    }
+}
+
+#[cfg(test)]
+mod pressure_toggle_tests {
+    use super::*;
+
+    #[test]
+    fn the_toggles_show_and_switch_pressure_however_the_brush_gets_it() {
+        let presets = photocraft_paint::presets::builtin();
+        let mut b = photocraft_paint::presets::find(&presets, "2B Pencil").unwrap().brush.clone();
+        assert!(!b.pressure_size && size_follows_pressure(&b) && opacity_follows_pressure(&b));
+        set_size_pressure(&mut b, false);
+        set_opacity_pressure(&mut b, false);
+        assert!(!size_follows_pressure(&b) && !opacity_follows_pressure(&b));
+        set_size_pressure(&mut b, true);
+        assert_eq!(b.shape_dynamics.size.control, photocraft_paint::Control::PenPressure, "back on through Shape Dynamics");
+        let mut plain = photocraft_paint::BrushSettings { pressure_size: false, ..Default::default() };
+        set_size_pressure(&mut plain, true);
+        assert!(plain.pressure_size);
+    }
 }
