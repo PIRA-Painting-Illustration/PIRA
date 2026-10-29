@@ -404,16 +404,11 @@ pub fn restore(app: &mut PhotocraftApp) {
 }
 
 /// A fresh install opens painting-first ([`crate::pira::first_launch`]): the Painting
-/// workspace with Color, Brushes and Layers docked and Properties put away.
+/// workspace in PIRA's two-sided layout (brushes and colour at the start edge, properties and
+/// layers at the end edge; [`crate::panel_docking::pira_workspace`]).
 pub(crate) fn first_launch_layout(app: &mut PhotocraftApp) {
     app.ui.workspace = "Painting".into();
-    let p = &mut app.ui.panels;
-    p.properties = false;
-    p.history = false;
-    p.navigator = false;
-    p.color = true;
-    p.brushes = true;
-    p.layers = true;
+    crate::panel_docking::use_pira_workspace(app);
 }
 
 /// Apply the `panels`, `dockTabs`, `dock` and `timelineOpen` parts of a saved layout

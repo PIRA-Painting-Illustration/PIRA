@@ -33,7 +33,18 @@ mod tests {
         assert_eq!(i.dark_theme, DarkTheme::Pira);
         assert_eq!(i.light_theme, LightTheme::PiraLight);
         assert_eq!(app.ui.workspace, "Painting");
-        assert!(app.ui.panels.brushes && app.ui.panels.color && app.ui.panels.layers && !app.ui.panels.properties);
+        assert!(app.ui.panels.brushes && app.ui.panels.color && app.ui.panels.layers && app.ui.panels.properties);
+        assert!(!app.ui.panels.navigator && !app.ui.panels.history);
+        let layout = &app.ui.docking.as_ref().expect("PIRA's docking layout").layout;
+        assert!(crate::panel_docking::valid(layout));
+        // Brushes and colour at the start edge, properties and layers at the end edge.
+        let side = |panel: &str| layout.location(&panel.to_owned()).ok().and_then(|at| at.group).and_then(|g| g.column).map(|c| c.side);
+        for panel in ["brushes", "color", "swatches"] {
+            assert_eq!(side(panel), Some(craft_ui::docking::Side::Start), "{panel}");
+        }
+        for panel in ["properties", "layers", "channels", "paths"] {
+            assert_eq!(side(panel), Some(craft_ui::docking::Side::End), "{panel}");
+        }
         assert_eq!(app.session.tools.current_preset.as_deref(), Some(photocraft_paint::presets::FIRST_BRUSH));
         assert!(app.session.tools.brush.tilt_shading.enabled);
     }
