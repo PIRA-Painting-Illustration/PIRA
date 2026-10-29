@@ -16,11 +16,11 @@ use winit::platform::android::activity::input::{ImeOptions, InputType, TextInput
 #[allow(unsafe_code)]
 #[unsafe(no_mangle)]
 fn android_main(app: AndroidApp) {
-    android_logger::init_once(android_logger::Config::default().with_max_level(log::LevelFilter::Info).with_tag("PhotoCraft"));
+    android_logger::init_once(android_logger::Config::default().with_max_level(log::LevelFilter::Info).with_tag("PIRA"));
     // Panics end up in logcat rather than vanishing with the process.
     std::panic::set_hook(Box::new(|info| log::error!("panic: {info}")));
     if let Err(e) = run(app) {
-        log::error!("PhotoCraft stopped: {e}");
+        log::error!("PIRA stopped: {e}");
     }
 }
 
@@ -29,7 +29,7 @@ fn run(android: AndroidApp) -> Result<(), String> {
     // Settings imported last session (Edit › Preferences › Import Settings…) go into place before
     // anything reads them.
     crate::settings::apply_pending(&files_dir);
-    log::info!("PhotoCraft {} starting; data in {}", photocraft_engine::build_info::long_version(), files_dir.display());
+    log::info!("PIRA {} starting; data in {}", photocraft_engine::build_info::long_version(), files_dir.display());
     let bridge = Arc::new(Bridge::new(&files_dir).map_err(|e| format!("couldn't create the file bridge: {e}"))?);
 
     let mut options = eframe::NativeOptions {
@@ -47,10 +47,10 @@ fn run(android: AndroidApp) -> Result<(), String> {
     let present = present_settings(&mut options, &android);
 
     eframe::run_native(
-        "PhotoCraft",
+        "PIRA",
         options,
         Box::new(move |cc| {
-            PhotocraftApp::setup_context(&cc.egui_ctx, ThemeKind::Pro);
+            PhotocraftApp::setup_context(&cc.egui_ctx, ThemeKind::Pira);
             let inbox: photocraft_ui_egui::Inbox = Arc::default();
             // Fonts imported with Type › Import Font… load with the system's on every start.
             photocraft_text::fonts::add_font_dir(crate::fonts::fonts_dir(&files_dir));
@@ -66,11 +66,26 @@ fn run(android: AndroidApp) -> Result<(), String> {
             let fonts_menu = crate::fonts::menu(&files_dir, bridge.clone(), font_outcome.clone(), move || wake.request_repaint());
             let wake = cc.egui_ctx.clone();
             let settings_menu = crate::settings::menu(&files_dir, bridge.clone(), font_outcome.clone(), move || wake.request_repaint());
-            services.platform_menu =
-                Some(crate::updates::combine(vec![layout.menu(), pad.menu(), touch.menu(), fonts_menu, settings_menu, crate::updates::menu(&files_dir, bridge.clone())]));
+            services.platform_menu = Some(crate::updates::combine(vec![
+                layout.menu(),
+                pad.menu(),
+                touch.menu(),
+                fonts_menu,
+                settings_menu,
+                crate::updates::menu(&files_dir, bridge.clone()),
+            ]));
             crate::services::watch_incoming(bridge.clone(), inbox, cc.egui_ctx.clone());
             let mut app = PhotocraftApp::new(Session::new(), services);
             app.background_jobs = true;
+            // A fresh install opens on PIRA's theme, painting layout and pencil; the marker keeps
+            // later launches on whatever the user chose since.
+            let first_run = files_dir.join("pira-first-run");
+            if !first_run.exists() {
+                photocraft_ui_egui::pira::first_launch(&mut app);
+                if let Err(e) = std::fs::write(&first_run, b"1") {
+                    log::warn!("couldn't record the first run: {e}");
+                }
+            }
             // No theme set here: `set_theme` saves its choice as the preference, and this ran
             // before the saved preferences load, so it replaced the user's theme on every start.
             // The first frame applies the saved one (Preferences › Interface), as on the desktop.
@@ -654,7 +669,10 @@ impl eframe::App for Shell {
         let tokens = photocraft_ui_egui::theme::Tokens::for_kind(self.app.ui.theme);
         // A front camera's cutout (punch hole or notch): the bars split around it (#21).
         let ppp = ui.ctx().pixels_per_point();
-        let holes = photocraft_tablet::android::cutouts_px().into_iter().map(|[l, t, r, b]| egui::Rect::from_min_max(egui::pos2(l, t) / ppp, egui::pos2(r, b) / ppp)).collect();
+        let holes = photocraft_tablet::android::cutouts_px()
+            .into_iter()
+            .map(|[l, t, r, b]| egui::Rect::from_min_max(egui::pos2(l, t) / ppp, egui::pos2(r, b) / ppp))
+            .collect();
         photocraft_ui_egui::cutout::set(ui.ctx(), holes);
         // The pad first, so the app lays out beside it.
         self.pad.show(ui, &tokens, &self.app);
@@ -671,7 +689,13 @@ impl eframe::App for Shell {
         self.pad.settings(ui.ctx(), &tokens);
         self.touch.settings(ui.ctx(), &tokens, photocraft_tablet::android::controls_held(), photocraft_tablet::android::last_buttons(), {
             use photocraft_tablet::android;
-            android::last_contact().map(|k| crate::touch::Contact { pressure: k.pressure, size: k.size, major: k.major, contact: android::contact_size(&k), mapped: k.mapped })
+            android::last_contact().map(|k| crate::touch::Contact {
+                pressure: k.pressure,
+                size: k.size,
+                major: k.major,
+                contact: android::contact_size(&k),
+                mapped: k.mapped,
+            })
         });
         // Copy and Cut in a text field go to the system clipboard.
         for command in ui.ctx().output(|o| o.commands.clone()) {

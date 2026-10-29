@@ -50,13 +50,16 @@ import java.util.regex.Pattern;
  * install apps). Updates only install when they are signed with the same key as this build.
  */
 final class Updater {
-    private static final String TAG = "PhotoCraft";
-    /** The repository whose releases are the updates. */
-    static final String REPO = "morte2437/photocraft-android";
+    private static final String TAG = "PIRA";
+    /**
+     * The repository whose releases are the updates. Empty: PIRA has no release channel yet, so
+     * no check is made (never point this at PhotoCraft's releases: they are a different app).
+     */
+    static final String REPO = "";
     private static final String API = "https://api.github.com/repos/" + REPO + "/releases?per_page=20";
     private static final Pattern TAG_VERSION = Pattern.compile("^android-v(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?$");
     private static final Pattern NAME_VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?");
-    private static final String INSTALL_ACTION = "ai.storyteller.photocraft.UPDATE_INSTALLED";
+    private static final String INSTALL_ACTION = "art.pira.UPDATE_INSTALLED";
 
     private final Activity activity;
     private final File filesDir;
@@ -90,6 +93,12 @@ final class Updater {
      * say so when there is none or the check fails, and offer a skipped version again.
      */
     void check(boolean manual) {
+        if (REPO.isEmpty()) {
+            if (manual) {
+                toast("PIRA has no update channel yet.");
+            }
+            return;
+        }
         if (busy) {
             return;
         }

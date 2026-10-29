@@ -542,6 +542,86 @@ impl Default for Smoothing {
     }
 }
 
+/// Pen-tilt shading (PIRA): lean the pen and the tip turns into the longer, flatter, lighter
+/// contact patch of a pencil lead on its side, stretched along the direction the pen leans.
+///
+/// It sits on top of Shape Dynamics and Transfer, so a preset can follow pen pressure (size,
+/// opacity) and tilt at the same time; Photoshop's model gives each dynamic only one control.
+/// A pen held near upright (under [`Self::start`]), a mouse or a finger (no tilt reported) paint
+/// exactly as without it.
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct TiltShading {
+    pub enabled: bool,
+    /// Tilt from upright, in degrees, where shading starts: an ordinary writing grip stays crisp.
+    pub start: f32,
+    /// Tilt, in degrees, where shading is strongest (Wacom and S Pen report up to about 60°).
+    pub full: f32,
+    /// Extra tip length at full tilt, as a fraction of the size (1 = twice as long). 0..4.
+    pub size: f32,
+    /// How much narrower than its length the tip gets at full tilt, 0..1.
+    pub flatten: f32,
+    /// Opacity taken away at full tilt, 0..1: shading with the side of the lead is lighter.
+    pub opacity: f32,
+}
+
+impl Default for TiltShading {
+    fn default() -> Self {
+        Self { enabled: false, start: 25.0, full: 60.0, size: 1.5, flatten: 0.55, opacity: 0.45 }
+    }
+}
+
+impl TiltShading {
+    /// The shading every PIRA pencil and dry-media preset starts with.
+    pub fn pencil() -> Self {
+        Self { enabled: true, ..Self::default() }
+    }
+
+    /// Off (serialisation skips it, so saved brushes without it read back unchanged).
+    pub fn is_off(&self) -> bool {
+        !self.enabled
+    }
+
+    /// How far into the shading range a point's tilt is: 0 at or under [`Self::start`], 1 at or
+    /// beyond [`Self::full`], eased in between. Hostile numbers (NaN, infinity) read 0.
+    pub fn amount(&self, p: &crate::StrokePoint) -> f32 {
+        if !self.enabled {
+            return 0.0;
+        }
+        let tilt = p.tilt_x.hypot(p.tilt_y);
+        if !tilt.is_finite() || !self.start.is_finite() || !self.full.is_finite() {
+            return 0.0;
+        }
+        let start = self.start.clamp(0.0, 89.0);
+        let full = self.full.clamp(start + 1.0, 90.0);
+        let t = ((tilt.clamp(0.0, 90.0) - start) / (full - start)).clamp(0.0, 1.0);
+        t * t * (3.0 - 2.0 * t)
+    }
+
+    /// Tip length multiplier at shading amount `t` (from [`Self::amount`]).
+    pub fn size_factor(&self, t: f32) -> f32 {
+        let gain = if self.size.is_finite() { self.size.clamp(0.0, 4.0) } else { 0.0 };
+        1.0 + gain * t
+    }
+
+    /// Roundness multiplier at shading amount `t`.
+    pub fn roundness_factor(&self, t: f32) -> f32 {
+        let k = if self.flatten.is_finite() { self.flatten.clamp(0.0, 0.95) } else { 0.0 };
+        1.0 - k * t
+    }
+
+    /// Opacity multiplier at shading amount `t`.
+    pub fn opacity_factor(&self, t: f32) -> f32 {
+        let k = if self.opacity.is_finite() { self.opacity.clamp(0.0, 1.0) } else { 0.0 };
+        1.0 - k * t
+    }
+
+    /// The direction the pen leans, in degrees counter-clockwise (as the Pen Tilt angle control).
+    pub fn azimuth(p: &crate::StrokePoint) -> f32 {
+        if p.tilt_x == 0.0 && p.tilt_y == 0.0 { 0.0 } else { (-p.tilt_y).atan2(p.tilt_x).to_degrees() }
+    }
+}
+
 /// A complete brush: tip shape, dynamics, and stroke-level options.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -600,6 +680,9 @@ pub struct BrushSettings {
     pub color_dynamics: ColorDynamics,
     pub transfer: Transfer,
     pub pose: Pose,
+    /// Pen-tilt shading on top of the other dynamics (PIRA).
+    #[serde(skip_serializing_if = "TiltShading::is_off")]
+    pub tilt_shading: TiltShading,
     /// Add grain to the soft parts of the tip.
     pub noise: bool,
     /// Watercolour look: lighter interior, darker rims; overlapping dabs don't build up.
@@ -649,6 +732,7 @@ impl Default for BrushSettings {
             color_dynamics: ColorDynamics::default(),
             transfer: Transfer::default(),
             pose: Pose::default(),
+            tilt_shading: TiltShading::default(),
             noise: false,
             wet_edges: false,
             build_up: false,

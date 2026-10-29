@@ -12,7 +12,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
     <application
-        android:label="PhotoCraft"
+        android:label="PIRA"
         android:icon="@mipmap/ic_launcher"
         android:theme="@style/Theme.PhotoCraft"
         android:largeHeap="true"
@@ -36,7 +36,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- "Open with PhotoCraft" and "Share to PhotoCraft" for images and documents. -->
+            <!-- "Open with PIRA" and "Share to PIRA" for images and documents. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

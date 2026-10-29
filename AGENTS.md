@@ -1,3 +1,16 @@
+# PIRA note (read first)
+
+This repository is **PIRA** (Painting, Illustration & Raster Art), an independent painting app
+derived from the PhotoCraft Android port. User-facing text says **PIRA**; machine names
+(`photocraft-*` crates, `ai.storyteller.photocraft` Java package) stay as they are for now (see
+`UPSTREAM.md`). The rest of this file is PhotoCraft's contributor guide and still applies to the
+code, except where PIRA's goal differs: PIRA aims at a painting-first app (pen pressure and tilt
+working out of the box, see `docs/pira/`), not Photoshop parity. Take inspiration from other
+painting apps' workflows, never their assets, names or trade dress. Keep this repository local:
+no remote to push to has been set up.
+
+---
+
 # AGENTS.md: guide for AI agents and contributors
 
 PhotoCraft is an open-source, native, Photoshop-comparable image editor written in **Rust only** (no JavaScript or TypeScript). **No Tauri, Electron or webview shells:** the desktop app is native egui/eframe on wgpu, and the web build is the same Rust compiled to WebAssembly (trunk + wasm-bindgen). Never add Tauri (or any webview/JS UI framework) as a dependency, build step or packaging target. The product name is always written **PhotoCraft** (`{Function}Craft` in PascalCase, like its siblings ArtCraft, ArtCraftX, DesignCraft, VectorCraft, EffectCraft, FilmCraft, LightCraft, PdfCraft) in user-facing text: UI, window titles, About, installers, release names, docs prose. Machine names stay lowercase: crates (`photocraft-*`), binaries, file names, ids (`ai.storyteller.photocraft`). Standards and learnings shared across the crafting apps live in `../craftrules` (read its `README.md`; the repository is not public — outside contributors should ask a maintainer for the standards relevant to their change). Contribute reusable learnings there; shared Rust components live in [storytold/craft-libs](https://github.com/storytold/craft-libs) and are pinned by immutable git revision. UI libraries stay at L6. The goal is 1:1 Photoshop parity (same menus, shortcuts, behaviour and file fidelity) with better performance, and every feature drivable by agents. Read this file first, then `docs/`.
