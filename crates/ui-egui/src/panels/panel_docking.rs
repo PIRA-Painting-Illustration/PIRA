@@ -201,8 +201,8 @@ fn studio_properties_rect(app: &PhotocraftApp) -> [f32; 4] {
 }
 
 /// Width of PIRA's start-edge column (brushes and colour) and end-edge column (layers).
-const PIRA_START_WIDTH: f32 = 280.0;
-const PIRA_END_WIDTH: f32 = 300.0;
+const PIRA_START_WIDTH: f32 = 220.0;
+const PIRA_END_WIDTH: f32 = 230.0;
 
 /// PIRA's default arrangement, for a fresh install: a painting layout with the tools on both
 /// sides of the canvas. The start edge holds the brush list over the colour picker (with
