@@ -28,8 +28,9 @@ The Android **application id** is `art.pira`, so PIRA and PhotoCraft install sid
   Essentials preset group, and `pen_ready` over Dry and Wet Media (`crates/paint/src/presets.rs`);
   the Pen Tilt Shading controls (`crates/ui-egui/src/panels/brush_sections.rs`).
 - **First launch:** `crates/ui-egui/src/pira.rs`, called by the Android app once (marker file
-  `pira-first-run` in its data folder): PIRA theme, Painting layout (Color, Brushes, Layers) and
-  the 2B Pencil. PhotoCraft's own defaults are untouched, so the upstream tests keep passing.
+  `pira-first-run` in its data folder): PIRA theme, a two-sided docking layout (Brushes over Color and
+  Swatches at the start edge, Properties over Layers at the end; `panel_docking::pira_workspace`)
+  and the 2B Pencil. PhotoCraft's own defaults are untouched, so the upstream tests keep passing.
 - **Branding:** window and title bar, start screen, About (with the upstream credit, no ArtCraft
   Discord button), native menu name, update dialog, GPU status, Android label, log tag and
   settings export name.

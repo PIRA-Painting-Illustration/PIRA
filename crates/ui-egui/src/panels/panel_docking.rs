@@ -200,6 +200,47 @@ fn studio_properties_rect(app: &PhotocraftApp) -> [f32; 4] {
     }
 }
 
+/// Width of PIRA's start-edge column (brushes and colour) and end-edge column (layers).
+const PIRA_START_WIDTH: f32 = 280.0;
+const PIRA_END_WIDTH: f32 = 300.0;
+
+/// PIRA's default arrangement, for a fresh install: a painting layout with the tools on both
+/// sides of the canvas. The start edge holds the brush list over the colour picker (with
+/// Swatches); the end edge holds Properties over Layers, Channels and Paths. Hidden panels go
+/// back where the native dock would put them.
+pub(crate) fn pira_workspace(app: &PhotocraftApp) -> Workspace {
+    let group = |panels: &[&str], height: Option<f32>| craft_ui::docking::Group {
+        height,
+        ..craft_ui::docking::Group::new(panels.iter().map(|p| (*p).to_owned()).collect(), 0)
+    };
+    let start = Node::Dock {
+        side: Side::Start,
+        // The last group of a column takes the height left, so the brush list gets its own.
+        columns: vec![Column::new(vec![group(&["brushes"], Some(460.0)), group(&["color", "swatches"], None)], PIRA_START_WIDTH)],
+    };
+    let end = Node::Dock {
+        side: Side::End,
+        columns: vec![Column::new(vec![group(&["properties"], Some(240.0)), group(&["layers", "channels", "paths"], None)], PIRA_END_WIDTH)],
+    };
+    let root = Node::Split {
+        axis: SplitAxis::Horizontal,
+        size: SplitSize::FixedFirst(PIRA_START_WIDTH),
+        first: Box::new(start),
+        second: Box::new(with_canvas(end, PIRA_END_WIDTH)),
+    };
+    let layout = Layout { root: Some(root), floating: Vec::new() };
+    let hidden = migration_hidden(app, &layout);
+    Workspace { hidden, ..Workspace::new(layout) }
+}
+
+/// Switch to [`pira_workspace`] (a fresh install, `crate::pira::first_launch`).
+pub(crate) fn use_pira_workspace(app: &mut PhotocraftApp) {
+    let workspace = pira_workspace(app);
+    if valid_workspace(&workspace) {
+        commit(app, workspace, Returns::new());
+    }
+}
+
 /// The native dock as a workspace: its shown panels, and where each hidden one goes back.
 fn legacy_workspace(app: &PhotocraftApp) -> Workspace {
     let layout = legacy(app);

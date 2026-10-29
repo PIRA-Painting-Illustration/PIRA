@@ -27,7 +27,7 @@ subscription, no network needed to draw, save or export.
 | ✏️ **Pen-ready brushes** | A new **PIRA Essentials** group: HB, 2B and 6B pencils, mechanical and coloured pencil, fine liner, inking pen, brush pen, marker, airbrush and dry gouache. A fresh install starts on the 2B pencil. |
 | 📐 **Tilt shading** | Lean the pen and the tip turns into the side of a lead: longer, flatter and lighter along the lean, on top of pressure. Upright writing stays crisp. Tune it under Brush Settings › Brush Tip Shape › Pen Tilt Shading. |
 | 🖌️ **Pressure everywhere** | Every Dry and Wet Media preset now follows pressure (several ignored it), and Dry Media shades with tilt. |
-| 🗂️ **Painting layout** | Opens with Color, Brushes and Layers docked. |
+| 🗂️ **Painting layout** | Tools on both sides of the canvas: Brushes over Color and Swatches on the left, Properties over Layers on the right. |
 | 📦 **Own identity** | Android app id `art.pira` (installs beside PhotoCraft), label PIRA, placeholder icon, no auto-update from PhotoCraft's releases. |
 
 Plan and brand material: [docs/pira/](docs/pira/) (master plan, brand palette, concept art).
