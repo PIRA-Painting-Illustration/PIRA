@@ -1,10 +1,15 @@
-use super::*;
+use super::PhotocraftApp;
 
 impl PhotocraftApp {
     /// Zoom of the active document's main view: screen (device) pixels per document pixel, the
     /// user-facing factor (`100%` is `1.0`).
     pub fn current_zoom(&self) -> f32 {
         self.session.active_index().and_then(|i| self.ui.views.get(i)).map_or(1.0, |v| v.zoom)
+    }
+
+    /// Whether a drag on the canvas (a brush stroke, a selection) is in progress.
+    pub fn canvas_dragging(&self) -> bool {
+        self.drag.is_some()
     }
 
     /// Screen (device) pixels per egui point of the canvas (`ctx.pixels_per_point`), as of the
