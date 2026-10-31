@@ -9,6 +9,10 @@ use super::*;
 /// in-app bar shows menus and workspace controls only: no brand mark, no centred title.
 pub fn title_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
+    // The touch themes (PIRA) have their own bar, with the menus behind one button.
+    if t.touch() && app.services.native_menu.is_none() {
+        return super::pira_bar::pira_bar(app, ui);
+    }
     let custom = app.custom_titlebar;
     let system = system_title_bar(app);
     // The caption buttons' room at each end (`titlebar`); a side with buttons has no margin.

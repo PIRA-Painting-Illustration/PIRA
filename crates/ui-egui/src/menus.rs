@@ -6,6 +6,7 @@ use crate::PhotocraftApp;
 use crate::state::DialogKind;
 
 mod bar;
+pub mod pira_menu;
 pub mod enable_rules;
 mod invoke;
 mod items;

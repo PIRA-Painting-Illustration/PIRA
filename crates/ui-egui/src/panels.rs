@@ -58,6 +58,7 @@ mod status_bar;
 pub mod swatches_ui;
 pub(super) mod timeline_ui;
 mod title_bar;
+pub(crate) mod pira_bar;
 pub(super) mod titlebar;
 mod toolbar;
 pub mod type_panels_ui;
@@ -106,6 +107,7 @@ use properties::{adjustments_grid, properties_body};
 pub use status_bar::{status_bar, status_bar_heights};
 #[cfg(test)]
 use title_bar::title_x;
+pub use pira_bar::{pira_bar, pira_strip};
 pub use title_bar::{sync_window_title, system_title_bar, title_bar, window_title};
 #[cfg(test)]
 use toolbar::{STUDIO_CHIP, TOOL_SECTIONS, chips_height, color_chips, tool_flyout_drag_open, tool_flyout_release, toolbar_icon_size, visible_sections};

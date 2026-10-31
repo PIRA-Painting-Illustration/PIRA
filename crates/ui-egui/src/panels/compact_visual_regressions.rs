@@ -464,7 +464,9 @@ fn the_narrow_options_bar_preference_shortens_the_bar() {
 
 #[test]
 fn narrow_tool_options_can_scroll_to_the_last_control() {
-    for kind in crate::theme::ThemeKind::ALL {
+    // The touch themes (PIRA) show no options bar for the Brush and Pencil: the brush pill and
+    // the size and opacity strip take its place.
+    for kind in crate::theme::ThemeKind::ALL.into_iter().filter(|k| !Tokens::for_kind(*k).touch()) {
         for width in [360.0, 800.0, 1280.0] {
             for scale in [1.0, 1.5, 2.0] {
                 let ctx = egui::Context::default();
