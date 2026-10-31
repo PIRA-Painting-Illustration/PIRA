@@ -7,4 +7,6 @@ fonts folder (`montserrat-Montserrat[wght].ttf`).
 
     python chrome_set.py <fonts dir> ../../assets/app-icon/pira-logo-round.png <out dir>
 
+`letters.py` writes the four letters on their own (`assets/brand/letters/`) for the landing page header.
+
 Needs Pillow. The images the app and README use live in `assets/brand/`.
