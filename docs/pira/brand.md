@@ -1,6 +1,6 @@
 # PIRA brand (working)
 
-**PIRA — Painting, Illustration & Raster Art.** Tagline: *Create · Explore · Share · Belong.*
+**PIRA — Painting, Illustration & Raster Art.** Tagline: *Painting, Illustration & Raster Art.*
 Secondary lines: "Art Without Limits", "Create Freely. Share Openly."
 
 The logo is drawn by the project owner: `assets/app-icon/pira-logo-round.png`, a painted feather
