@@ -2,7 +2,7 @@ use super::appearance::{AppearanceRows, appearance_rows, system_theme};
 use super::dialogs::{mismatch_body, presets_body, presets_io_body, settings_height};
 use super::graphics::{gpu_memory_lines, gpu_status_rows, memory_usage_row, read_at_launch, rendering_mode_row};
 use super::shortcuts::shortcuts_body;
-use super::*;
+use super::{Color32, Map, PhotocraftApp, RichText, SECTIONS, Sense, Tokens, Value, json, prefs, vec2};
 
 // ------------------------------------------------------------------ bodies
 
@@ -62,6 +62,10 @@ pub(super) fn humanize(key: &str) -> String {
     // File Handling: Photoshop's wording (#8080).
     if key == "doNotAppendCopy" {
         return "Do not append \"copy\" to filename when saving a copy".into();
+    }
+    // Plug-ins: Photoshop's wording (#9392).
+    if key == "generatorEnabled" {
+        return "Enable Generator".into();
     }
     if key == "lowLatencyDrawing" {
         return "Low-Latency Drawing (vsync off, applies at next launch)".into();
@@ -182,7 +186,7 @@ fn prefs_body(ui: &mut egui::Ui, f: &mut Map<String, Value>, system: Option<egui
     let narrow = ui.available_width() < SECTION_LIST_WIDTH + 12.0 + MIN_SETTINGS_WIDTH;
     if narrow {
         let current = found.iter().find(|(id, _)| *id == section).map_or(String::new(), |(_, title)| tl!(title).to_string());
-        egui::ComboBox::from_id_salt("prefs-section-menu").selected_text(current).width(ui.available_width()).show_ui(ui, |ui| {
+        craft_ui::ComboBox::from_id_salt("prefs-section-menu").selected_text(current).width(ui.available_width()).show_ui(ui, |ui| {
             for &(id, title) in &found {
                 if ui.selectable_label(section == id, tl!(title)).clicked() {
                     section = id.to_string();
@@ -271,8 +275,16 @@ fn prefs_body(ui: &mut egui::Ui, f: &mut Map<String, Value>, system: Option<egui
                 if search.trim().is_empty()
                     && has_visible_fields(&values, &section)
                     && crate::widgets::secondary_button(ui, tl!("Reset Section"), 110.0).clicked()
-                    && let Some(def) = prefs::Preferences::default().get(&section)
+                    && let Some(mut def) = prefs::Preferences::default().get(&section)
                 {
+                    // The favourite fonts are the user's library, not a Type setting: kept, as
+                    // `prefs.reset {"path": "type"}` keeps them.
+                    if section == "type"
+                        && let Some(favorites) = values.get(&section).and_then(|v| v.get("favoriteFonts")).cloned()
+                        && let Some(def) = def.as_object_mut()
+                    {
+                        def.insert("favoriteFonts".into(), favorites);
+                    }
                     values[&section] = def;
                 }
             });
@@ -500,7 +512,11 @@ fn field_rows(ui: &mut egui::Ui, section: &str, obj: &mut Map<String, Value>, ke
                 let (lo, hi) = prefs::range(&path).unwrap_or((-1e9, 1e9));
                 if n.is_u64() || n.is_i64() {
                     let mut x = n.as_i64().unwrap_or(0);
-                    ui.add(egui::DragValue::new(&mut x).range(lo as i64..=hi as i64).custom_parser(crate::widgets::parse_num)).labelled_by(value_label.id);
+                    crate::widgets::number_fields::drag_value(
+                        ui,
+                        egui::DragValue::new(&mut x).range(lo as i64..=hi as i64).custom_parser(crate::widgets::parse_num),
+                    )
+                    .labelled_by(value_label.id);
                     obj.insert(k, json!(x));
                     // A row of its own, so the label stays level with its field.
                     if read_at_launch(&path) {
@@ -510,8 +526,11 @@ fn field_rows(ui: &mut egui::Ui, section: &str, obj: &mut Map<String, Value>, ke
                     }
                 } else {
                     let mut x = n.as_f64().unwrap_or(0.0);
-                    ui.add(egui::DragValue::new(&mut x).range(lo..=hi).speed(0.1).max_decimals(3).custom_parser(crate::widgets::parse_num))
-                        .labelled_by(value_label.id);
+                    crate::widgets::number_fields::drag_value(
+                        ui,
+                        egui::DragValue::new(&mut x).range(lo..=hi).speed(0.1).max_decimals(3).custom_parser(crate::widgets::parse_num),
+                    )
+                    .labelled_by(value_label.id);
                     obj.insert(k, json!(x));
                 }
             }

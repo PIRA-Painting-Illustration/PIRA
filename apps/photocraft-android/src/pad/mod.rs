@@ -223,7 +223,7 @@ impl Pad {
                 Routed::App(e) => out.push(e),
                 Routed::Pad(t) => self.touch(t, &mut out),
                 Routed::View(m) => self.views.push(m),
-                Routed::StripScroll(dx) => photocraft_ui_egui::panels::scroll_options_bar(ctx, dx),
+                Routed::StripScroll(strip, dx) => photocraft_ui_egui::scroll_strip::scroll(ctx, strip, dx),
                 Routed::Tap(fingers) => {
                     let shortcut = match fingers {
                         2 => &env.config.two_finger_tap,
@@ -425,34 +425,35 @@ impl Pad {
         p.text(c + egui::vec2(0.0, 12.0), Align2::CENTER_CENTER, readout, FontId::proportional(18.0), tk.text);
     }
 
-    /// Draw the pad (before the app, which then lays out in the rest of the window).
-    pub fn show(&mut self, ui: &mut egui::Ui, tk: &Tokens, app: &PhotocraftApp) {
-        self.screen = ui.ctx().content_rect();
+    /// Before the app lays out: asks it for the pad's strip along its side edge, below the top
+    /// bars (none while the pad is off).
+    pub fn reserve(&mut self, app: &mut PhotocraftApp) {
+        let config = self.shared.borrow().config.clone();
+        app.edge_strip = config.enabled.then(|| (config.side == Side::Right, if self.compact { router::COMPACT_WIDTH } else { router::WIDTH }));
+    }
+
+    /// Draw the pad in the strip the app kept for it (after the app's layout).
+    pub fn show(&mut self, ctx: &egui::Context, tk: &Tokens, app: &PhotocraftApp) {
+        self.screen = ctx.content_rect();
         self.screen_step = ScreenStep::of(app);
         let config = self.shared.borrow().config.clone();
-        if !config.enabled {
+        let Some(strip) = app.edge_strip_rect.filter(|_| config.enabled) else {
             self.layout = None;
             return;
-        }
-        let panel = match config.side {
-            Side::Left => egui::Panel::left("shortcut_pad"),
-            Side::Right => egui::Panel::right("shortcut_pad"),
         };
-        let frame = egui::Frame::new().fill(tk.chrome).stroke(Stroke::new(1.0, tk.separator));
         let mode = self.mode();
-        let layout = panel
-            .exact_size(if self.compact { router::COMPACT_WIDTH } else { router::WIDTH })
-            .resizable(false)
-            .frame(frame)
-            .show(ui, |ui| {
-                let l = Layout::new(ui.max_rect(), config.keys.len());
-                self.paint(ui.painter(), &l, &config, mode, tk);
-                l
-            })
-            .inner;
+        // On the app's own layer, over its empty strip: windows and menus still open above it.
+        let painter = egui::Painter::new(ctx.clone(), egui::LayerId::background(), strip);
+        painter.rect(strip, 0.0, tk.chrome, Stroke::new(1.0, tk.separator), egui::StrokeKind::Inside);
+        // The screen's rounded corners: the keys at the strip's ends move clear of them.
+        let span = photocraft_ui_egui::cutout::column_span(ctx, strip.x_range());
+        let top = strip.top().max(span.min);
+        let full = egui::Rect::from_x_y_ranges(strip.x_range(), top..=strip.bottom().min(span.max).max(top));
+        let layout = Layout::new(full, config.keys.len());
+        self.paint(&painter, &layout, &config, mode, tk);
         self.layout = Some(layout);
         if let Some(b) = self.big {
-            let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Foreground, egui::Id::unique("shortcut_pad_ring")));
+            let painter = ctx.layer_painter(egui::LayerId::new(egui::Order::Foreground, egui::Id::unique("shortcut_pad_ring")));
             self.paint_big(&painter, b, mode, &Self::readout(app, mode), tk);
         }
     }
@@ -599,7 +600,7 @@ impl Pad {
                             ui.label(format!("Key {}", i + 1)).on_hover_text(if i < above { "Above the wheel" } else { "Below the wheel" });
                             ui.add_sized([84.0, 24.0], egui::TextEdit::singleline(&mut key.label).char_limit(8));
                             color_choice(ui, tk, i, &mut key.color);
-                            egui::ComboBox::from_id_salt(("pad_preset", i)).selected_text("Choose…").width(110.0).show_ui(ui, |ui| {
+                            craft_ui::ComboBox::from_id_salt(("pad_preset", i)).selected_text("Choose…").width(110.0).show_ui(ui, |ui| {
                                 for (name, label, shortcut) in config::PRESETS {
                                     if ui.selectable_label(key.shortcut == *shortcut, format!("{name}  ({shortcut})")).clicked() {
                                         key.label = (*label).into();
@@ -662,11 +663,16 @@ impl Pad {
     pub fn paint_trackpad_cursor(&self, ctx: &egui::Context, on: bool) {
         let Some(c) = self.router.trackpad_cursor().filter(|_| on) else { return };
         let p = ctx.layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::unique("trackpad_cursor")));
-        // The classic arrow, its tip on the point.
-        let arrow = [(0.0, 0.0), (0.0, 17.0), (4.5, 13.0), (7.5, 20.0), (10.5, 18.8), (7.6, 12.2), (13.0, 12.2)];
-        let pts: Vec<egui::Pos2> = arrow.iter().map(|(x, y)| c + egui::vec2(*x, *y)).collect();
-        p.add(egui::Shape::convex_polygon(pts.clone(), egui::Color32::WHITE, Stroke::NONE));
-        p.add(egui::Shape::closed_line(pts, Stroke::new(1.2, egui::Color32::BLACK)));
+        // A rounded arrow, its tip on the point: white with a dark outline and a soft shadow.
+        let outline = arrow_outline();
+        let at = |off: egui::Vec2| outline.iter().map(|q| c + q.to_vec2() + off).collect::<Vec<_>>();
+        let shadow = egui::vec2(1.0, 1.6);
+        for (width, alpha) in [(5.0, 18), (3.0, 30)] {
+            p.add(egui::Shape::closed_line(at(shadow), Stroke::new(width, egui::Color32::from_black_alpha(alpha))));
+        }
+        p.add(arrow_fill(&at(shadow), c + shadow, egui::Color32::from_black_alpha(60)));
+        p.add(arrow_fill(&at(egui::Vec2::ZERO), c, egui::Color32::WHITE));
+        p.add(egui::Shape::closed_line(at(egui::Vec2::ZERO), Stroke::new(2.0, egui::Color32::from_gray(0x38))));
         // Holding the button (a drag): a ring at the tip, so a drag never comes as a surprise.
         if self.router.trackpad_pressed() {
             p.circle_stroke(c, 9.0, Stroke::new(3.0, egui::Color32::BLACK));
@@ -683,6 +689,44 @@ impl Pad {
     pub fn active(&self) -> bool {
         self.router.pad_active()
     }
+}
+
+/// The trackpad cursor's corners (points from its tip) and how round each one is.
+const ARROW: [(f32, f32, f32); 4] = [(0.0, 0.0, 1.6), (0.0, 20.5, 1.6), (7.6, 14.2, 2.4), (16.0, 14.2, 1.4)];
+/// A point every edge of the arrow can be seen from, to fill it as a fan (it isn't convex).
+const ARROW_CENTRE: egui::Pos2 = egui::pos2(3.0, 12.0);
+
+/// The trackpad cursor's outline, its corners rounded, relative to its tip.
+fn arrow_outline() -> Vec<egui::Pos2> {
+    let n = ARROW.len();
+    let corner = |i: usize| egui::pos2(ARROW[i % n].0, ARROW[i % n].1);
+    let mut out = Vec::new();
+    for (i, &(_, _, r)) in ARROW.iter().enumerate() {
+        let (prev, here, next) = (corner(i + n - 1), corner(i), corner(i + 1));
+        let a = here + (prev - here).normalized() * r;
+        let b = here + (next - here).normalized() * r;
+        for s in 0..=5 {
+            let t = s as f32 / 5.0;
+            // A quadratic curve from a to b, bending towards the corner.
+            let q = a.to_vec2() * (1.0 - t) * (1.0 - t) + here.to_vec2() * 2.0 * t * (1.0 - t) + b.to_vec2() * t * t;
+            out.push(q.to_pos2());
+        }
+    }
+    out
+}
+
+/// `outline` (the arrow with its tip at `tip`) filled with `color`.
+fn arrow_fill(outline: &[egui::Pos2], tip: egui::Pos2, color: egui::Color32) -> egui::Shape {
+    let mut mesh = egui::Mesh::default();
+    mesh.colored_vertex(tip + ARROW_CENTRE.to_vec2(), color);
+    for &q in outline {
+        mesh.colored_vertex(q, color);
+    }
+    let n = outline.len() as u32;
+    for i in 0..n {
+        mesh.add_triangle(0, 1 + i, 1 + (i + 1) % n);
+    }
+    egui::Shape::mesh(mesh)
 }
 
 fn key_event(key: Key, pressed: bool) -> Event {
@@ -737,7 +781,7 @@ fn color_choice(ui: &mut egui::Ui, tk: &Tokens, i: usize, color: &mut Option<[u8
             None => "Default",
             Some(c) => config::KEY_COLORS.iter().find(|(_, k)| k == c).map_or("Custom", |(n, _)| *n),
         };
-        egui::ComboBox::from_id_salt(("pad_color", i)).selected_text(name).width(84.0).show_ui(ui, |ui| {
+        craft_ui::ComboBox::from_id_salt(("pad_color", i)).selected_text(name).width(84.0).show_ui(ui, |ui| {
             let mut row = |ui: &mut egui::Ui, label: &str, value: Option<[u8; 3]>| {
                 let r = ui.horizontal(|ui| {
                     swatch(ui, tk, value);
@@ -783,6 +827,19 @@ mod tests {
     use super::*;
     use egui::{Rect, TouchDeviceId, TouchId, TouchPhase, pos2, vec2};
 
+    /// The arrow fills as a fan from its centre: every triangle must turn the same way, or the
+    /// fill would spill outside the notch.
+    #[test]
+    fn the_trackpad_cursor_fills_inside_its_outline() {
+        let outline = arrow_outline();
+        assert!(outline.iter().all(|q| q.x >= 0.0 && q.y >= 0.0 && q.x <= 16.0 && q.y <= 20.5));
+        let o = ARROW_CENTRE;
+        for (a, b) in outline.iter().zip(outline.iter().cycle().skip(1)) {
+            let cross = (*a - o).x * (*b - o).y - (*a - o).y * (*b - o).x;
+            assert!(cross <= 1e-4, "{a:?} → {b:?} turns the wrong way ({cross})");
+        }
+    }
+
     fn pad() -> (Pad, PathBuf) {
         let dir = std::env::temp_dir().join(format!("photocraft-padmod-{}-{}", std::process::id(), rand()));
         std::fs::create_dir_all(&dir).unwrap();
@@ -812,7 +869,7 @@ mod tests {
             list_item: &|_| false,
             draggable: &|_| false,
             secondary: &|_| false,
-            scroll_strip: None,
+            scroll_strips: &[],
             screen: egui::Rect::from_min_size(egui::pos2(0.0, 0.0), egui::vec2(1280.0, 800.0)),
             now: 0.0,
         };

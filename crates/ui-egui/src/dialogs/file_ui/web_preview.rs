@@ -1,5 +1,5 @@
 //! Save for Web navigation and indexed palette UI. Draft state is serialized in dialog fields.
-use super::*;
+use super::{Arc, Map, Optimized, PhotocraftApp, Tokens, Value, WebSettings, json, n, params, s, web_cmds};
 
 /// Export dimensions, using the same percent/width/height precedence as web_document.
 pub fn dimensions(doc: &photocraft_doc::Document, p: &Value) -> Result<(f64, f64), String> {
@@ -219,7 +219,10 @@ pub fn controls(ui: &mut egui::Ui, f: &mut Map<String, Value>) {
             nav.zoom = Some((nav.zoom.unwrap_or(effective) * 1.25).min(32.0));
         }
         let mut percent = nav.zoom.unwrap_or(effective) * 100.0;
-        if ui.add(egui::DragValue::new(&mut percent).range(0.01..=3200.0).suffix("%").speed(10.0)).accessible_name(tl!("Zoom")).changed() {
+        if crate::widgets::number_fields::drag_value(ui, egui::DragValue::new(&mut percent).range(0.01..=3200.0).suffix("%").speed(10.0))
+            .accessible_name(tl!("Zoom"))
+            .changed()
+        {
             nav.zoom = Some(percent / 100.0);
         }
         if ui.small_button(tl!("100%")).clicked() {

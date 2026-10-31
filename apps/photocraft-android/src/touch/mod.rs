@@ -174,6 +174,13 @@ impl TouchInput {
                     ui.checkbox(&mut c.two_finger_scroll, "Two fingers scroll menus, panels and lists");
                     ui.checkbox(&mut c.long_press_right_click, "Hold a finger still to right-click (context menus, closing panels)");
                     ui.separator();
+                    ui.strong("Pen");
+                    ui.checkbox(&mut c.low_latency_ink, "Low latency ink (experimental): the line appears under the pen sooner");
+                    ui.label(
+                        egui::RichText::new("While you draw with the Brush or Pencil, a plain line in the brush's colour is drawn straight to the screen, then the real stroke replaces it.")
+                            .color(tk.text_dim),
+                    );
+                    ui.separator();
                     ui.strong("Pen buttons");
                     ui.label(
                         egui::RichText::new("Button 1 is nearest the tip. Press a button or turn the pen over: its light turns green.").color(tk.text_dim),
@@ -187,7 +194,7 @@ impl TouchInput {
                                 ui.label(config::pen_control_label(control));
                             });
                             let salt = format!("touch_pen_{control:?}");
-                            egui::ComboBox::from_id_salt(&salt).selected_text(setting.action.label()).width(150.0).show_ui(ui, |ui| {
+                            craft_ui::ComboBox::from_id_salt(&salt).selected_text(setting.action.label()).width(150.0).show_ui(ui, |ui| {
                                 for a in PenAction::ALL {
                                     ui.selectable_value(&mut setting.action, a, a.label());
                                 }
@@ -241,8 +248,11 @@ fn finger_pressure(ui: &mut egui::Ui, tk: &Tokens, c: &mut TouchConfig, contact:
     p.rect(rect, 8.0, if pressing { tk.accent.gamma_multiply(0.25) } else { tk.field }, egui::Stroke::new(1.0, tk.separator), egui::StrokeKind::Inside);
     let calibrated = c.finger_firm > c.finger_light;
     let text = if calibrated {
-        format!("Light {:.0} · firm {:.0}
-Touch lightly, then press firmly, to calibrate again", c.finger_light, c.finger_firm)
+        format!(
+            "Light {:.0} · firm {:.0}
+Touch lightly, then press firmly, to calibrate again",
+            c.finger_light, c.finger_firm
+        )
     } else {
         "Calibrate: touch here lightly, then press firmly".to_string()
     };
@@ -282,7 +292,7 @@ fn tap_row(ui: &mut egui::Ui, tk: &Tokens, name: &str, salt: &str, shortcut: &mu
     ui.label(name);
     let current =
         PRESETS.iter().find(|(_, _, s)| s.eq_ignore_ascii_case(shortcut)).map_or(if shortcut.is_empty() { "Nothing" } else { "Custom" }, |(n, _, _)| *n);
-    egui::ComboBox::from_id_salt(salt).selected_text(current).width(150.0).show_ui(ui, |ui| {
+    craft_ui::ComboBox::from_id_salt(salt).selected_text(current).width(150.0).show_ui(ui, |ui| {
         if ui.selectable_label(shortcut.is_empty(), "Nothing").clicked() {
             shortcut.clear();
         }
@@ -378,6 +388,12 @@ impl Snapshot {
 
     /// Whether a window, menu or popup was drawn over `p`: touches there belong to it, not to the
     /// canvas or the Shortcut Pad.
+    /// What's drawn over the app's own layer (menus, windows, popups): touches there aren't on
+    /// the canvas.
+    pub fn covering(&self) -> Vec<egui::Rect> {
+        self.layers.iter().filter(|(order, _)| *order != egui::Order::Background).flat_map(|(_, w)| w.iter().map(|w| w.rect)).collect()
+    }
+
     pub fn covered(&self, p: egui::Pos2) -> bool {
         self.top(p).is_some_and(|(order, _)| *order != egui::Order::Background)
     }
@@ -387,7 +403,11 @@ impl Snapshot {
     /// fingertip is really on, senses drags.
     pub fn draggable(&self, p: egui::Pos2) -> bool {
         let Some((_, widgets)) = self.top(p) else { return false };
-        widgets.iter().filter(|w| w.enabled && w.interact.contains(p) && (w.click || w.drag)).min_by(|a, b| a.interact.area().total_cmp(&b.interact.area())).is_some_and(|w| w.drag)
+        widgets
+            .iter()
+            .filter(|w| w.enabled && w.interact.contains(p) && (w.click || w.drag))
+            .min_by(|a, b| a.interact.area().total_cmp(&b.interact.area()))
+            .is_some_and(|w| w.drag)
     }
 
     /// Whether `p` is on a list row inside a scrolling list: a widget that can be both clicked

@@ -62,6 +62,10 @@ fn run(android: AndroidApp) -> Result<(), String> {
             let touch = crate::touch::TouchInput::new(&files_dir);
             let layout = crate::layout::Layout::new(&files_dir);
             let font_outcome = crate::fonts::Outcome::default();
+            // The keyboard opening or closing (and a cutout or corner change) lays the app out
+            // again right away, not on the next touch.
+            let wake = cc.egui_ctx.clone();
+            photocraft_tablet::android::on_layout_change(move || wake.request_repaint());
             let wake = cc.egui_ctx.clone();
             let fonts_menu = crate::fonts::menu(&files_dir, bridge.clone(), font_outcome.clone(), move || wake.request_repaint());
             let wake = cc.egui_ctx.clone();
@@ -369,11 +373,48 @@ impl Shell {
     }
 }
 
+impl Shell {
+    /// What the Activity draws a stroke with while it's drawn (Touch Input › Low latency ink):
+    /// a plain line in the brush's colour and on-screen width, over the canvas. None while it's
+    /// off or the stroke wouldn't simply paint (another tool, the eraser, a modifier held).
+    fn ink_style(&self, ctx: &egui::Context) -> Option<photocraft_tablet::android::Ink> {
+        use photocraft_engine::paint::Control;
+        use photocraft_ui_egui::Tool;
+        let config = self.touch.config();
+        if !config.low_latency_ink || !matches!(self.app.ui.tool, Tool::Brush | Tool::Pencil) || !ctx.input(|i| i.modifiers.is_none()) {
+            return None;
+        }
+        let tools = &self.app.session.tools;
+        let brush = &tools.brush;
+        if brush.erase {
+            return None;
+        }
+        let xf = photocraft_ui_egui::canvas::ViewXform::active(&self.app)?;
+        let ppp = ctx.pixels_per_point();
+        let px = |r: egui::Rect| [r.min.x * ppp, r.min.y * ppp, r.max.x * ppp, r.max.y * ppp];
+        let byte = |v: f32| (v.clamp(0.0, 1.0) * 255.0).round() as u32;
+        let [r, g, b, _] = tools.foreground;
+        let size_dynamic = brush.shape_dynamics.enabled && brush.shape_dynamics.size.control == Control::PenPressure;
+        let pen_near = photocraft_tablet::android::pen_seen_within(std::time::Duration::from_millis(300));
+        Some(photocraft_tablet::android::Ink {
+            color: (byte(r) << 16) | (byte(g) << 8) | byte(b),
+            width: (brush.size * xf.zoom * ppp).max(1.0),
+            minimum: if size_dynamic { brush.shape_dynamics.size.minimum.clamp(0.0, 1.0) } else { 0.0 },
+            pressure: brush.pressure_size || size_dynamic,
+            fingers: config.finger == crate::touch::config::FingerMode::Draw && !(config.palm_rejection && pen_near),
+            canvas: px(xf.rect),
+            covered: self.drawn.covering().into_iter().map(px).collect(),
+        })
+    }
+}
+
 impl eframe::App for Shell {
     fn logic(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let _section = section("photocraft:logic");
         // Phone or tablet, decided again every frame (rotation, a foldable opening, split screen).
-        let phone = self.layout.is_phone(ctx);
+        // The screen as it is without the keyboard: opening it doesn't turn a tablet into a phone.
+        let keyboard = if self.layout.keyboard_covers() { 0.0 } else { photocraft_tablet::android::ime_height_px() / ctx.pixels_per_point() };
+        let phone = self.layout.is_phone(ctx, keyboard);
         self.app.compact_layout = phone;
         self.pad.compact = phone;
         self.pad.run_pending(&mut self.app, ctx);
@@ -390,6 +431,7 @@ impl eframe::App for Shell {
         // above it (panels, menus and dialogs alike), as apps that resize for the keyboard do.
         let ime = photocraft_tablet::android::ime_height_px() / ctx.pixels_per_point();
         if ime > 1.0
+            && !self.layout.keyboard_covers()
             && let Some(r) = &mut raw_input.screen_rect
         {
             r.max.y = (r.max.y - ime).max(r.min.y + r.height() * 0.3);
@@ -416,7 +458,10 @@ impl eframe::App for Shell {
         // A text field, or the Type tool editing text on the canvas (no egui field has focus
         // then, but its typing comes the same way: text and Backspace/Enter events).
         let canvas_text = self.app.ui.text_edit.is_some();
-        let editing = ctx.egui_wants_keyboard_input() || canvas_text;
+        // A number field isn't typing: it's dragged or scrubbed, so the keyboard stays shut
+        // (and closes when focus moves to one from a text field).
+        let number = photocraft_ui_egui::widgets::number_fields::number_focused(ctx);
+        let editing = (ctx.egui_wants_keyboard_input() && !number) || canvas_text;
         if editing && !self.editing {
             // A field just gained focus. Multi-line, so the keyboard's Enter key types a newline
             // into the text state (an editor action would be dropped by winit), which
@@ -507,6 +552,7 @@ impl eframe::App for Shell {
         };
         // While Liquify is open its preview is the canvas: two fingers pan and zoom it (#20).
         let liquify = photocraft_ui_egui::liquify_ui::preview_rect(&self.app);
+        let strips = photocraft_ui_egui::scroll_strip::strips(ctx);
         let env = crate::pad::router::Env {
             // Gestures move the canvas only while a document is open.
             canvas: liquify.or_else(|| self.app.session.active_index().map(|_| self.app.last_canvas_rect)),
@@ -516,7 +562,7 @@ impl eframe::App for Shell {
             list_item: &|p: egui::Pos2| self.drawn.list_item(p),
             draggable: &|p: egui::Pos2| self.drawn.draggable(p),
             secondary: &secondary,
-            scroll_strip: photocraft_ui_egui::panels::options_bar_overflow(ctx),
+            scroll_strips: &strips,
             screen: ctx.content_rect(),
             now: raw_input.time.unwrap_or_else(|| ctx.input(|i| i.time)),
         };
@@ -559,6 +605,19 @@ impl eframe::App for Shell {
         });
         let drawn = &self.drawn;
         self.pad.input(ctx, raw_input, &env, |p| !liquify.is_some_and(|r| r.contains(p)) && drawn.covered(p));
+        // The pen hovering: the pointer follows it, so the brush cursor shows where it would
+        // paint (winit doesn't pass hover moves on). After the router, which replaces pointer
+        // events with its own.
+        if let Some(hover) = android::take_hover() {
+            let e = match hover {
+                Some((x, y)) => egui::Event::PointerMoved(egui::pos2(x, y) / ctx.pixels_per_point()),
+                None => egui::Event::PointerGone,
+            };
+            // After the router's own "pointer gone" once a touch ends, or the cursor would vanish;
+            // but before a press the same frame, which belongs where the pen came down.
+            let pressing = raw_input.events.iter().any(|e| matches!(e, egui::Event::PointerButton { .. } | egui::Event::Touch { .. }));
+            if pressing { raw_input.events.insert(0, e) } else { raw_input.events.push(e) }
+        }
         // A focused field the keyboard now covers: scroll its list until the field shows again, as
         // a finger would (a wheel over an empty part of the same list, never over a control, which
         // the wheel would change), a step a frame and no further than SCROLL_LIMIT. Its place is
@@ -674,11 +733,20 @@ impl eframe::App for Shell {
             .map(|[l, t, r, b]| egui::Rect::from_min_max(egui::pos2(l, t) / ppp, egui::pos2(r, b) / ppp))
             .collect();
         photocraft_ui_egui::cutout::set(ui.ctx(), holes);
-        // The pad first, so the app lays out beside it.
-        self.pad.show(ui, &tokens, &self.app);
+        // The screen's rounded corners: controls in their curves move clear of them.
+        let corners = photocraft_tablet::android::corners_px()
+            .into_iter()
+            .zip([(true, true), (false, true), (false, false), (true, false)])
+            .filter(|([r, ..], _)| *r > 0.0)
+            .map(|([r, x, y], (left, top))| photocraft_ui_egui::cutout::Corner { centre: egui::pos2(x, y) / ppp, radius: r / ppp, left, top })
+            .collect();
+        photocraft_ui_egui::cutout::set_corners(ui.ctx(), corners);
+        // The app keeps a strip for the pad below its top bars, and the pad draws in it after.
+        self.pad.reserve(&mut self.app);
         let section = section("photocraft:app");
         self.app.ui(ui, frame);
         drop(section);
+        self.pad.show(ui.ctx(), &tokens, &self.app);
         if self.app.stroke_trace.enabled() && self.app.stroke_trace.last != self.trace_logged {
             self.trace_logged = self.app.stroke_trace.last.clone();
             if let Some(summary) = &self.trace_logged {
@@ -727,7 +795,17 @@ impl eframe::App for Shell {
                 self.ime_hidden = false;
             }
         }
+        // A number field asks for no keyboard (unless the Shortcut Pad's keyboard key is on).
+        if !self.soft_keyboard && photocraft_ui_egui::widgets::number_fields::number_focused(ctx) {
+            ctx.output_mut(|o| o.ime = None);
+            self.last_ime = None;
+            self.ime_hidden = false;
+        }
         // What was drawn where, for the next frame's touches (see `touch::Snapshot`).
         self.drawn = crate::touch::Snapshot::take(ui.ctx());
+        // Low-latency ink: what the Activity draws the next stroke with, ahead of this frame.
+        if photocraft_tablet::android::set_ink(self.ink_style(ui.ctx()), self.app.canvas_dragging()) {
+            ui.ctx().request_repaint();
+        }
     }
 }
