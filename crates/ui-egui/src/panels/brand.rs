@@ -9,9 +9,17 @@ use photocraft_codecs::{ChannelLayout, SampleType};
 /// 128 px: sharp at 20 pt on a 3× display, and the mipmaps keep it clean at 1×.
 const ICON_PNG: &[u8] = include_bytes!("../../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.photocraft.png");
 
+/// PIRA's chrome wordmark (assets/brand), shown on the start screen.
+const WORDMARK_PNG: &[u8] = include_bytes!("../../../../assets/brand/pira-wordmark-chrome.png");
+
 /// The icon's pixels (one transparent pixel if it couldn't be decoded, which a test rules out).
 fn decode() -> egui::ColorImage {
-    let rgba = photocraft_codecs::decode(ICON_PNG).ok().map(|img| img.convert(ChannelLayout::Rgba, SampleType::U8));
+    decode_png(ICON_PNG)
+}
+
+/// A PNG's pixels, or one transparent pixel if it couldn't be decoded.
+fn decode_png(png: &[u8]) -> egui::ColorImage {
+    let rgba = photocraft_codecs::decode(png).ok().map(|img| img.convert(ChannelLayout::Rgba, SampleType::U8));
     match rgba {
         Some(img) if img.data().len() == img.width() as usize * img.height() as usize * 4 => {
             egui::ColorImage::from_rgba_unmultiplied([img.width() as usize, img.height() as usize], img.data())
@@ -30,6 +38,30 @@ fn texture(ctx: &Context) -> TextureHandle {
     let tex = ctx.load_texture("photocraft-brand-mark", decode(), options);
     ctx.data_mut(|d| d.insert_temp(id, tex.clone()));
     tex
+}
+
+/// The wordmark texture, uploaded on first use and kept in the context.
+fn wordmark_texture(ctx: &Context) -> TextureHandle {
+    let id = Id::unique("pira-wordmark");
+    if let Some(tex) = ctx.data(|d| d.get_temp::<TextureHandle>(id)) {
+        return tex;
+    }
+    let options = TextureOptions { mipmap_mode: Some(egui::TextureFilter::Linear), ..TextureOptions::LINEAR };
+    let tex = ctx.load_texture("pira-wordmark", decode_png(WORDMARK_PNG), options);
+    ctx.data_mut(|d| d.insert_temp(id, tex.clone()));
+    tex
+}
+
+/// The wordmark's width for a given height (points).
+pub fn wordmark_width(ctx: &Context, height: f32) -> f32 {
+    let [w, h] = wordmark_texture(ctx).size();
+    height * w as f32 / h.max(1) as f32
+}
+
+/// Paint the wordmark into `r` (sized with [`wordmark_width`]).
+pub fn paint_wordmark(ui: &Ui, r: Rect) {
+    let uv = Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0));
+    ui.painter().image(wordmark_texture(ui.ctx()).id(), r, uv, Color32::WHITE);
 }
 
 /// Where the mark was painted this frame (tests and screenshots).
@@ -61,6 +93,12 @@ mod tests {
         // Rounded corners: the corner pixel is transparent, the centre opaque.
         assert_eq!(img.pixels[0].a(), 0);
         assert_eq!(img.pixels[64 * 128 + 64].a(), 255);
+    }
+
+    #[test]
+    fn the_wordmark_decodes() {
+        let img = decode_png(WORDMARK_PNG);
+        assert!(img.size[0] > img.size[1] * 2, "a wide wordmark: {:?}", img.size);
     }
 
     #[test]
