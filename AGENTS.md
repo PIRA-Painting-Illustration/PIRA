@@ -7,7 +7,7 @@ derived from the PhotoCraft Android port. User-facing text says **PIRA**; machin
 code, except where PIRA's goal differs: PIRA aims at a painting-first app (pen pressure and tilt
 working out of the box, see `docs/pira/`), not Photoshop parity. Take inspiration from other
 painting apps' workflows, never their assets, names or trade dress. The repository is
-`PIRA-Paint/PIRA` on GitHub (private, remote `origin`); `photocraft-port` is the local port, push
+`PIRA-Painting-Illustration/PIRA` on GitHub (private, remote `origin`); `photocraft-port` is the local port, push
 disabled.
 
 ---
