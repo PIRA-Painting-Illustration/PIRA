@@ -12,7 +12,7 @@ pub const APP_PAGE: &str = "https://getartcraft.com/apps/photocraft";
 pub const GITHUB: &str = "https://github.com/storytold/photocraft";
 pub const ISSUES: &str = "https://github.com/storytold/photocraft/issues";
 /// PIRA's home on GitHub (the start screen's link).
-pub const PIRA_GITHUB: &str = "https://github.com/PIRA-Paint/PIRA";
+pub const PIRA_GITHUB: &str = "https://github.com/PIRA-Painting-Illustration/PIRA";
 
 /// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`.
 pub const COMMANDS: &[(&str, &str)] =
