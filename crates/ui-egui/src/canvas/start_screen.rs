@@ -32,7 +32,7 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let side_by_side = 2.0 * button_width + HOME_BUTTON_GAP <= card_width;
     // Stacked buttons take one more row.
     let stacked_h = if side_by_side { 0.0 } else { 44.0 };
-    let card = Rect::from_center_size(area.center(), egui::vec2(card_width, 350.0 + recent_h + stacked_h));
+    let card = Rect::from_center_size(area.center(), egui::vec2(card_width, 356.0 + recent_h + stacked_h));
     ui.scope_builder(egui::UiBuilder::new().max_rect(card), |ui| {
         ui.vertical_centered(|ui| {
             // PIRA's chrome wordmark, named for screen readers.
@@ -42,7 +42,8 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
             response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, "PIRA"));
             crate::brand::paint_wordmark(ui, r);
             ui.add_space(4.0);
-            ui.label(egui::RichText::new(tl!("Painting, Illustration & Raster Art")).color(t.accent_text).size(13.0));
+            // The tagline in PIRA's secondary type.
+            ui.label(egui::RichText::new(tl!("Painting, Illustration & Raster Art")).font(crate::theme::pira_italic(ui.ctx(), 19.0)).color(t.accent_text));
             ui.add_space(6.0);
             ui.label(egui::RichText::new(tl!("Create a new document or open an existing file.")).color(t.text_dim).size(14.0));
             ui.add_space(22.0);

@@ -952,6 +952,14 @@ impl Tokens {
     }
 }
 
+/// Philosopher (SIL Open Font License, assets/fonts/OFL-Philosopher.txt): PIRA's secondary type.
+const PHILOSOPHER_REGULAR: &[u8] = include_bytes!("../../../assets/fonts/Philosopher-Regular.ttf");
+const PHILOSOPHER_ITALIC: &[u8] = include_bytes!("../../../assets/fonts/Philosopher-Italic.ttf");
+const PHILOSOPHER_BOLD: &[u8] = include_bytes!("../../../assets/fonts/Philosopher-Bold.ttf");
+const PIRA_SERIF: &str = "pira-serif";
+const PIRA_ITALIC: &str = "pira-serif-italic";
+const PIRA_BOLD: &str = "pira-serif-bold";
+
 /// Register Inter (UI) and JetBrains Mono (numbers) plus named weights.
 pub fn install_fonts(ctx: &egui::Context) {
     install_fonts_with(ctx, crate::cjk_fonts::Sources::system());
@@ -975,6 +983,10 @@ pub fn install_fonts_with(ctx: &egui::Context, cjk: crate::cjk_fonts::Sources) {
     let medium = add(&mut fonts, "Inter-Medium", photocraft_text::fonts::INTER_MEDIUM.as_slice());
     let semibold = add(&mut fonts, "Inter-SemiBold", photocraft_text::fonts::INTER_SEMIBOLD.as_slice());
     let mono = add(&mut fonts, "JetBrainsMono", photocraft_text::fonts::JETBRAINS_MONO_REGULAR.as_slice());
+    // PIRA's secondary type, Philosopher (SIL OFL), for taglines and section titles.
+    let pira_serif = add(&mut fonts, "Philosopher", PHILOSOPHER_REGULAR);
+    let pira_italic = add(&mut fonts, "Philosopher-Italic", PHILOSOPHER_ITALIC);
+    let pira_bold = add(&mut fonts, "Philosopher-Bold", PHILOSOPHER_BOLD);
     if let Some(inter) = inter {
         fonts.families.entry(FontFamily::Proportional).or_default().insert(0, inter);
     }
@@ -996,7 +1008,7 @@ pub fn install_fonts_with(ctx: &egui::Context, cjk: crate::cjk_fonts::Sources) {
     }
     // Named weights fall back to the default stack for missing glyphs.
     let fallback: Vec<String> = fonts.families.get(&FontFamily::Proportional).cloned().unwrap_or_default();
-    for (fam, primary) in [("medium", medium), ("semibold", semibold)] {
+    for (fam, primary) in [("medium", medium), ("semibold", semibold), (PIRA_SERIF, pira_serif), (PIRA_ITALIC, pira_italic), (PIRA_BOLD, pira_bold)] {
         let mut stack: Vec<String> = primary.into_iter().collect();
         stack.extend(fallback.iter().cloned());
         fonts.families.insert(FontFamily::Name(fam.into()), stack);
@@ -1117,6 +1129,22 @@ pub fn medium(size: f32) -> FontId {
 }
 pub fn semibold(size: f32) -> FontId {
     FontId::new(size, FontFamily::Name("semibold".into()))
+}
+
+/// PIRA's secondary type (Philosopher): taglines, quotes and section titles, never body text.
+/// Falls back to the UI font before [`install_fonts`] has run (tests without fonts).
+fn pira_family(ctx: &egui::Context, name: &str, fallback: FontFamily) -> FontFamily {
+    let fam = FontFamily::Name(name.into());
+    if ctx.fonts(|f| f.families().contains(&fam)) { fam } else { fallback }
+}
+pub fn pira_serif(ctx: &egui::Context, size: f32) -> FontId {
+    FontId::new(size, pira_family(ctx, PIRA_SERIF, FontFamily::Proportional))
+}
+pub fn pira_italic(ctx: &egui::Context, size: f32) -> FontId {
+    FontId::new(size, pira_family(ctx, PIRA_ITALIC, FontFamily::Proportional))
+}
+pub fn pira_bold(ctx: &egui::Context, size: f32) -> FontId {
+    FontId::new(size, pira_family(ctx, PIRA_BOLD, FontFamily::Proportional))
 }
 pub fn mono(size: f32) -> FontId {
     FontId::monospace(size)

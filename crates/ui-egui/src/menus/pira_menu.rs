@@ -29,7 +29,7 @@ const TILE: egui::Vec2 = egui::vec2(200.0, 52.0);
 fn tile_text(ui: &egui::Ui, title: &str, hint: &str) -> egui::text::LayoutJob {
     let t = crate::theme::Tokens::get(ui.ctx());
     let mut job = egui::text::LayoutJob::default();
-    job.append(title, 0.0, egui::TextFormat { font_id: crate::theme::semibold(14.5), color: t.text, ..Default::default() });
+    job.append(title, 0.0, egui::TextFormat { font_id: crate::theme::pira_bold(ui.ctx(), 16.0), color: t.text, ..Default::default() });
     job.append("\n", 0.0, egui::TextFormat::default());
     job.append(hint, 0.0, egui::TextFormat { font_id: egui::FontId::proportional(11.5), color: t.text_faint, ..Default::default() });
     job
@@ -47,7 +47,7 @@ pub fn app_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let mark = egui::Button::new("").fill(egui::Color32::TRANSPARENT).corner_radius(17.0).min_size(egui::vec2(34.0, 34.0));
     let (button, _) = egui::containers::menu::MenuButton::from_button(mark).ui(ui, |ui| {
         ui.spacing_mut().item_spacing = egui::vec2(8.0, 8.0);
-        ui.label(egui::RichText::new("PIRA").font(crate::theme::semibold(13.0)).color(t.accent_text));
+        ui.label(egui::RichText::new("PIRA").font(crate::theme::pira_italic(ui.ctx(), 15.0)).color(t.accent_text));
         let items = items.get_or_insert_with(|| menu_items(app_ref));
         egui::Grid::new("pira-app-menu").num_columns(2).spacing(egui::vec2(8.0, 8.0)).show(ui, |ui| {
             for (i, (top, hint)) in TILES.iter().enumerate() {
@@ -72,6 +72,8 @@ pub fn app_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
             }
         });
     });
+    // The logo carries no text, so name the button for screen readers.
+    button.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "PIRA menu"));
     let logo = egui::Rect::from_center_size(button.rect.center(), egui::vec2(30.0, 30.0));
     crate::brand::paint_mark(ui, logo);
     nav.store(ui.ctx());
