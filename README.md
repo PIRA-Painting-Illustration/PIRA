@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/ai.storyteller.photocraft.png" alt="PIRA logo" width="112">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/pira-lockup-chrome-dark.png">
+    <img src="assets/brand/pira-lockup-chrome-light.png" alt="PIRA — Painting, Illustration &amp; Raster Art" width="560">
+  </picture>
 </p>
-
-<h1 align="center">PIRA</h1>
-<p align="center"><b>Painting, Illustration &amp; Raster Art</b><br>
-Create · Explore · Share · Belong</p>
+<p align="center">Create · Explore · Share · Belong</p>
 
 ---
 
