@@ -1,7 +1,7 @@
 """Build PIRA's app icons from the round logo (assets/app-icon/pira-logo-round.png).
 
 Writes every PNG size in assets/app-icon/hicolor/ (the title bar mark, the Android launcher and
-the desktop builds all load these), the padded 1024 px macOS master and the Windows .ico. The
+the desktop builds all load these), the padded 1024 px macOS master, the Windows .ico and the Android adaptive icon's foreground. The
 logo is masked to its circle first, so faint stray paint outside the disc never shows.
 
 Needs Pillow:
@@ -46,6 +46,14 @@ def main():
     # Windows .ico, every size drawn from the full-resolution logo.
     big = logo.resize((256, 256), Image.LANCZOS)
     big.save(os.path.join(ICONS, "photocraft.ico"), sizes=[(s, s) for s in ICO_SIZES])
+    # Android adaptive icon foreground: 108 dp layer (432 px at xxxhdpi) with the disc filling the
+    # 72 dp the launcher's mask shows, so the launcher draws the logo itself, not a shrunk tile
+    # on a white plate. The background is the disc's navy (res/values/ic_launcher_background.xml).
+    fg = Image.new("RGBA", (432, 432), (0, 0, 0, 0))
+    disc = 290
+    fg.paste(logo.resize((disc, disc), Image.LANCZOS), ((432 - disc) // 2,) * 2)
+    os.makedirs(os.path.join(ICONS, "android"), exist_ok=True)
+    fg.save(os.path.join(ICONS, "android", "ic_launcher_foreground.png"), optimize=True)
     print("icons written to", ICONS)
 
 
