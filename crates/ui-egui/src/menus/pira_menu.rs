@@ -1,5 +1,5 @@
-//! PIRA's app menu: the touch themes' replacement for the desktop menu row. One button (the P
-//! mark) opens a sheet of large tiles, one per top-level menu, each naming what it holds; a tile
+//! PIRA's app menu: the touch themes' replacement for the desktop menu row. One button (the
+//! PIRA logo) opens a sheet of large tiles, one per top-level menu, each naming what it holds; a tile
 //! opens that menu's items beside it, with the same rows, checks, shortcuts and commands as the
 //! menu bar, so nothing becomes unreachable.
 
@@ -43,11 +43,9 @@ pub fn app_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let mut nav = crate::menu_nav::Nav::load(ui.ctx());
     let mut items: Option<Vec<MenuItem>> = None;
     let app_ref: &PhotocraftApp = app;
-    let mark = egui::Button::new(egui::RichText::new("P").font(crate::theme::semibold(16.0)).color(t.primary_text))
-        .fill(t.accent)
-        .corner_radius(t.radius_sm)
-        .min_size(egui::vec2(32.0, 32.0));
-    egui::containers::menu::MenuButton::from_button(mark).ui(ui, |ui| {
+    // The PIRA logo, painted over an empty round button once it is laid out.
+    let mark = egui::Button::new("").fill(egui::Color32::TRANSPARENT).corner_radius(17.0).min_size(egui::vec2(34.0, 34.0));
+    let (button, _) = egui::containers::menu::MenuButton::from_button(mark).ui(ui, |ui| {
         ui.spacing_mut().item_spacing = egui::vec2(8.0, 8.0);
         ui.label(egui::RichText::new("PIRA").font(crate::theme::semibold(13.0)).color(t.accent_text));
         let items = items.get_or_insert_with(|| menu_items(app_ref));
@@ -74,6 +72,8 @@ pub fn app_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
             }
         });
     });
+    let logo = egui::Rect::from_center_size(button.rect.center(), egui::vec2(30.0, 30.0));
+    crate::brand::paint_mark(ui, logo);
     nav.store(ui.ctx());
     if let Some(id) = clicked {
         let ctx = ui.ctx().clone();

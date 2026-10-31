@@ -10,6 +10,11 @@ def copyIcon = tasks.register('copyLauncherIcon', Copy) {
     into(iconRes.map { it.dir('mipmap-xxxhdpi') })
     rename { 'ic_launcher.png' }
 }
+// The adaptive icon's foreground (res/mipmap-anydpi-v26/ic_launcher.xml), from the same logo.
+def copyIconForeground = tasks.register('copyLauncherIconForeground', Copy) {
+    from(rootProject.file('../../../assets/app-icon/android/ic_launcher_foreground.png'))
+    into(iconRes.map { it.dir('mipmap-xxxhdpi') })
+}
 
 // The app version is the workspace's (Cargo.toml), so the APK never lags behind the engine, plus
 // the Android build number (RELEASE_BUILD, from build.sh) for repeat releases of one version:
@@ -69,7 +74,7 @@ android {
     }
 }
 
-tasks.named('preBuild') { dependsOn copyIcon }
+tasks.named('preBuild') { dependsOn copyIcon, copyIconForeground }
 
 dependencies {
     // AndroidX pulls kotlin-stdlib 1.8 next to the old split -jdk7/-jdk8 artifacts; align them.
