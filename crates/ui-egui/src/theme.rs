@@ -63,9 +63,8 @@ pub enum ThemeKind {
 }
 
 impl ThemeKind {
+    // PIRA's themes come last: tests set contexts up with `ALL[0]`, PhotoCraft's Pro layout.
     pub const ALL: [ThemeKind; 16] = [
-        ThemeKind::Pira,
-        ThemeKind::PiraLight,
         ThemeKind::Pro,
         ThemeKind::ProMedium,
         ThemeKind::ProLightGray,
@@ -80,6 +79,8 @@ impl ThemeKind {
         ThemeKind::BreezeDark,
         ThemeKind::SoftDark,
         ThemeKind::SoftLight,
+        ThemeKind::Pira,
+        ThemeKind::PiraLight,
     ];
     pub fn label(self) -> &'static str {
         match self {
@@ -234,6 +235,12 @@ impl Tokens {
     /// Tool outlines need contrast on arbitrary document pixels, independently of UI theme.
     pub(crate) fn cursor_outline() -> [Color32; 2] {
         [Color32::from_black_alpha(160), Color32::from_white_alpha(235)]
+    }
+
+    /// The touch themes (PIRA): a slim top bar instead of the menu row, a size and opacity strip
+    /// instead of the brush tools' options bar, and roomier controls for fingers and pens.
+    pub fn touch(&self) -> bool {
+        matches!(self.kind, ThemeKind::Pira | ThemeKind::PiraLight)
     }
 
     pub fn for_kind(kind: ThemeKind) -> Self {
@@ -1133,7 +1140,8 @@ pub fn apply(ctx: &egui::Context, kind: ThemeKind) {
     v.slider_trailing_fill = true;
     v.handle_shape = egui::style::HandleShape::Circle;
     v.striped = false;
-    let r = CornerRadius::same(t.radius_sm as u8);
+    // Touch themes round their controls like their cards.
+    let r = CornerRadius::same(if t.touch() { t.radius as u8 } else { t.radius_sm as u8 });
     let w = &mut v.widgets;
     w.noninteractive.bg_fill = t.card;
     w.noninteractive.weak_bg_fill = t.card;
@@ -1184,6 +1192,17 @@ pub fn apply(ctx: &egui::Context, kind: ThemeKind) {
         }
         s.spacing.scroll = scroll;
         s.spacing.tooltip_width = 280.0;
+        if t.touch() {
+            // Fingertip-sized targets and a little more air (PIRA).
+            s.text_styles.insert(TextStyle::Body, FontId::proportional(13.5));
+            s.text_styles.insert(TextStyle::Button, FontId::proportional(13.5));
+            s.spacing.item_spacing = egui::vec2(10.0, 8.0);
+            s.spacing.button_padding = egui::vec2(12.0, 7.0);
+            s.spacing.interact_size = egui::vec2(32.0, 32.0);
+            s.spacing.menu_margin = egui::Margin::same(10);
+            s.spacing.icon_width = 16.0;
+            s.spacing.scroll.floating_width = 6.0;
+        }
     });
     // egui selects its style branch using OS appearance, independently of PhotoCraft's fixed
     // Dark/Light mode or platform appearance service. Both branches need the selected palette.

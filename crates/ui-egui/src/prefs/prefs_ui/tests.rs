@@ -288,7 +288,14 @@ fn assert_palette(ctx: &egui::Context, kind: ThemeKind) {
         assert_eq!(style.visuals.override_text_color, Some(t.text));
         assert_eq!(style.visuals.widgets.inactive.bg_fill, t.field);
         assert_eq!(style.visuals.dark_mode, t.dark());
-        assert_eq!(style.text_styles[&egui::TextStyle::Body].size, if t.pro { 12.0 } else { 12.5 });
+        let body = if t.touch() {
+            13.5
+        } else if t.pro {
+            12.0
+        } else {
+            12.5
+        };
+        assert_eq!(style.text_styles[&egui::TextStyle::Body].size, body);
     }
     assert_eq!(ctx.options(|o| o.theme_preference), egui::ThemePreference::System);
 }

@@ -217,7 +217,10 @@ impl PhotocraftApp {
         if (chrome || tabbed_in) && self.ui.panels.menu_bar {
             panels::title_bar(self, ui);
         }
-        if ((chrome || self.full_screen_toolbar) && self.ui.panels.options_bar) || tabbed_in {
+        // The touch themes cover the brush tools' options with the bar's brush pill and the strip.
+        let touch = theme::Tokens::get(&ctx).touch();
+        let pill = touch && panels::pira_bar::pill_tool(self.ui.tool);
+        if (((chrome || self.full_screen_toolbar) && self.ui.panels.options_bar) || tabbed_in) && !pill {
             panels::options_bar(self, ui);
         }
         if chrome && self.ui.panels.status_bar {
@@ -225,6 +228,9 @@ impl PhotocraftApp {
         }
         if ((chrome || self.full_screen_toolbar) && self.ui.panels.toolbar) || tabbed_in {
             panels::toolbar(self, ui);
+            if pill {
+                panels::pira_strip(self, ui);
+            }
         }
         // craft-ui's layout holds the canvas as its protected `canvas` panel.
         let docking = (chrome && self.ui.panels.dock) || tabbed_in;

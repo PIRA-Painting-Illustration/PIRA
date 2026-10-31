@@ -420,7 +420,9 @@ fn dropdown_items_have_room() {
         // #402: rows touch (no dialog spacing between them), so long menus fit the window.
         let next = harness.get_by_label_contains("New from Clipboard").rect();
         assert!((next.top() - a.bottom()).abs() < 0.5, "{theme:?}: {} pt between rows", next.top() - a.bottom());
-        assert!(next.top() - a.top() <= 24.5, "{theme:?}: rows {} apart", next.top() - a.top());
+        // The touch themes (PIRA) have fingertip-sized rows.
+        let most = if crate::theme::Tokens::for_kind(theme).touch() { 34.5 } else { 24.5 };
+        assert!(next.top() - a.top() <= most, "{theme:?}: rows {} apart", next.top() - a.top());
     }
 }
 
