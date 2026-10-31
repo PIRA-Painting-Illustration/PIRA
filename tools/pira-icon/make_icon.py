@@ -1,4 +1,7 @@
-"""Draw PIRA's placeholder app icon (pure Python, no dependencies).
+"""Superseded: PIRA's icons now come from the real logo (tools/pira-icon/from_logo.py).
+Running this would overwrite them with the old placeholder.
+
+Draw PIRA's placeholder app icon (pure Python, no dependencies).
 
 A stand-in until the real logo is ready: a rounded teal-navy tile with a brush-stroke "P"
 (violet-to-teal stem, coral-to-yellow bowl) in the PIRA palette. It overwrites the PNGs in
