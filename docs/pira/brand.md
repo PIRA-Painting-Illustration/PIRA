@@ -3,9 +3,10 @@
 **PIRA — Painting, Illustration & Raster Art.** Tagline: *Create · Explore · Share · Belong.*
 Secondary lines: "Art Without Limits", "Create Freely. Share Openly."
 
-The logo is being drawn by the project owner. `brand-concept.webp` is an AI-generated concept
-board for direction only: it is not the logo and none of its artwork ships in the app. The icon
-in `assets/app-icon/hicolor/` is a placeholder (`tools/pira-icon/make_icon.py`).
+The logo is drawn by the project owner: `assets/app-icon/pira-logo-round.png`, a painted feather
+"P" on a dark disc. `brand-concept.webp` is an AI-generated concept
+board for direction only: it is not the logo and none of its artwork ships in the app. Every app icon
+size is made from the logo with `tools/pira-icon/from_logo.py`.
 
 ## Palette
 
