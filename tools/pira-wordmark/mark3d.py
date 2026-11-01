@@ -20,6 +20,36 @@ def mask(cap):
     return g.word("linebold", (255, 255, 255), cap, italic=True).getchannel("A")
 
 
+def triangle_mask(cap):
+    """The A's floating triangle on its own, as an L mask the size of [`mask`]."""
+    full = mask(cap)
+    g.NO_TRIANGLE = True
+    try:
+        bare = mask(cap)
+    finally:
+        g.NO_TRIANGLE = False
+    return ImageChops.subtract(full, bare)
+
+
+# The logo's colours, for the A's triangle: teal, violet, coral, yellow.
+LOGO_STOPS = [(0.0, (56, 196, 180)), (0.38, (139, 112, 255)), (0.7, (255, 107, 90)), (1.0, (255, 209, 102))]
+
+
+def diag_grad(size, stops):
+    """A gradient from the top centre (the triangle's tip) to the bottom right corner: across a
+    triangle that fills the box, every stop shows."""
+    w, h = size
+    small = Image.new("RGB", (64, 64))
+    for y in range(64):
+        for x in range(64):
+            t = min(1.0, max(0.0, ((x + y) / 126 - 0.25) / 0.75))
+            for (a, ca), (b, cb) in zip(stops, stops[1:]):
+                if a <= t <= b:
+                    small.putpixel((x, y), lerp(ca, cb, (t - a) / (b - a)))
+                    break
+    return small.resize((max(1, w), max(1, h)), Image.BICUBIC)
+
+
 def lerp(a, b, t):
     return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
 
@@ -44,8 +74,9 @@ def hgrad(size, stops):
     return row.resize((w, h))
 
 
-def render(cap, face, side, depth_k=0.10, direction=(1.0, 0.75), bevel=True, shadow=True, outline=None):
-    """face/side: callables (size) -> RGB image. Returns RGBA."""
+def render(cap, face, side, depth_k=0.10, direction=(1.0, 0.75), bevel=True, shadow=True, outline=None, accent=None):
+    """face/side: callables (size) -> RGB image. accent: gradient stops for the A's triangle
+    face (None keeps it chrome). Returns RGBA."""
     m = mask(cap)
     depth = int(cap * depth_k)
     dx, dy = direction
@@ -69,6 +100,15 @@ def render(cap, face, side, depth_k=0.10, direction=(1.0, 0.75), bevel=True, sha
     fm = Image.new("L", (W, H), 0)
     fm.paste(m, (ox, oy))
     out.paste(face((W, H)), (0, 0), fm)
+    if accent:
+        tm = Image.new("L", (W, H), 0)
+        tm.paste(triangle_mask(cap), (ox, oy))
+        box = tm.getbbox()
+        if box:
+            grad = diag_grad((box[2] - box[0], box[3] - box[1]), accent)
+            layer = Image.new("RGB", (W, H), (0, 0, 0))
+            layer.paste(grad, box[:2])
+            out.paste(layer, (0, 0), tm)
     if bevel:
         # Light from the top left: a bright inner edge on top/left, a darker one bottom/right.
         e = max(1, int(cap * 0.012))
@@ -89,7 +129,7 @@ TREATMENTS = [
     ("C  Gradient face, deep navy extrusion", lambda s: hgrad(s, [(0.0, (90, 210, 195)), (0.4, (160, 140, 255)), (0.75, CORAL), (1.0, YELLOW)]),
      lambda s: vgrad(s, (24, 52, 64), (8, 18, 24)), dict(depth_k=0.12)),
     ("D  Chrome face, steel extrusion", lambda s: vgrad(s, (255, 255, 255), (150, 165, 175)),
-     lambda s: vgrad(s, (90, 105, 115), (40, 50, 58)), dict(depth_k=0.08)),
+     lambda s: vgrad(s, (90, 105, 115), (40, 50, 58)), dict(depth_k=0.08, accent=LOGO_STOPS)),
 ]
 
 if __name__ == "__main__":

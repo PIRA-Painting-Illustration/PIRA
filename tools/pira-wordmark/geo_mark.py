@@ -23,6 +23,8 @@ STYLES = {
     "linebold": dict(s=12.5, wP=74, wR=78, wA=96, gap=10, round=True, chamfer=0, track=15),
 }
 ITALIC = 0.21  # shear: about 12 degrees
+# Leave out the A's floating triangle (mark3d uses it to find the triangle and colour it).
+NO_TRIANGLE = False
 B = 60  # bowl height
 
 
@@ -117,6 +119,8 @@ def glyph_A(st, kind):
         m = ImageChops.lighter(m, ImageChops.multiply(bar, inner))
     else:
         # A floating triangle where the crossbar would be.
+        if NO_TRIANGLE:
+            return m
         t = 13 + (st["s"] - 8) * 0.5
         cy = 74 + (st["s"] - 8) * 0.3
         poly(m, [(w / 2, cy - t), (w / 2 + t * 0.9, cy + t * 0.6), (w / 2 - t * 0.9, cy + t * 0.6)])
