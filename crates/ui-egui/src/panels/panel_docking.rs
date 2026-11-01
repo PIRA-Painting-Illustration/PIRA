@@ -200,33 +200,32 @@ fn studio_properties_rect(app: &PhotocraftApp) -> [f32; 4] {
     }
 }
 
-/// Width of PIRA's start-edge column (brushes and colour) and end-edge column (layers).
-const PIRA_START_WIDTH: f32 = 220.0;
-const PIRA_END_WIDTH: f32 = 230.0;
+/// Widths in PIRA's studio layout: the Layers column, and a column of panel icons.
+const PIRA_LAYERS_WIDTH: f32 = 270.0;
+const PIRA_ICONS_WIDTH: f32 = 48.0;
 
-/// PIRA's default arrangement, for a fresh install: a painting layout with the tools on both
-/// sides of the canvas. The start edge holds the brush list over the colour picker (with
-/// Swatches); the end edge holds Properties over Layers, Channels and Paths. Hidden panels go
-/// back where the native dock would put them.
+/// PIRA's studio arrangement (`crate::pira::studio_layout`), after the painting apps artists
+/// already know: the brushes as an icon at the start edge, beside the tools; at the end edge a
+/// full-height Layers column (with Channels and Paths) and, against the window edge, a column of
+/// icons for Properties, Color, Swatches, History and Navigator. A tap on an icon opens its
+/// panel beside the column. Hidden panels go back where the native dock would put them.
 pub(crate) fn pira_workspace(app: &PhotocraftApp) -> Workspace {
-    let group = |panels: &[&str], height: Option<f32>| craft_ui::docking::Group {
-        height,
-        ..craft_ui::docking::Group::new(panels.iter().map(|p| (*p).to_owned()).collect(), 0)
-    };
-    let start = Node::Dock {
-        side: Side::Start,
-        // The last group of a column takes the height left, so the brush list gets its own.
-        columns: vec![Column::new(vec![group(&["brushes"], Some(460.0)), group(&["color", "swatches"], None)], PIRA_START_WIDTH)],
-    };
+    let group = |panels: &[&str]| craft_ui::docking::Group::new(panels.iter().map(|p| (*p).to_owned()).collect(), 0);
+    let icons = |groups: Vec<craft_ui::docking::Group<String>>| Column { iconic: true, iconic_width: Some(PIRA_ICONS_WIDTH), ..Column::new(groups, 260.0) };
+    let start = Node::Dock { side: Side::Start, columns: vec![icons(vec![group(&["brushes"])])] };
     let end = Node::Dock {
         side: Side::End,
-        columns: vec![Column::new(vec![group(&["properties"], Some(240.0)), group(&["layers", "channels", "paths"], None)], PIRA_END_WIDTH)],
+        // The first column is the one against the window edge.
+        columns: vec![
+            icons(vec![group(&["properties"]), group(&["color", "swatches"]), group(&["history"]), group(&["navigator"])]),
+            Column::new(vec![group(&["layers", "channels", "paths"])], PIRA_LAYERS_WIDTH),
+        ],
     };
     let root = Node::Split {
         axis: SplitAxis::Horizontal,
-        size: SplitSize::FixedFirst(PIRA_START_WIDTH),
+        size: SplitSize::FixedFirst(PIRA_ICONS_WIDTH),
         first: Box::new(start),
-        second: Box::new(with_canvas(end, PIRA_END_WIDTH)),
+        second: Box::new(with_canvas(end, PIRA_LAYERS_WIDTH + PIRA_ICONS_WIDTH)),
     };
     let layout = Layout { root: Some(root), floating: Vec::new() };
     let hidden = migration_hidden(app, &layout);
@@ -1251,7 +1250,34 @@ fn panel_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui, panel: &str) {
     }
 }
 
+/// A panel's icon in an iconic column (as on the native dock's rail).
+fn panel_icon(id: &str) -> Option<&'static str> {
+    Some(match id {
+        "properties" | "adjustments" => "sliders-horizontal",
+        "color" => "palette",
+        "swatches" => "swatch-book",
+        "gradients" => "gradient",
+        "patterns" => "grid-2x2",
+        "navigator" => "navigation",
+        "histogram" => "gauge",
+        "info" => "info",
+        "history" => "clock",
+        "actions" => "play",
+        "layerComps" => "copy",
+        "layers" => "layers",
+        "channels" => "image",
+        "paths" => "spline",
+        "brushes" => "brush",
+        "character" | "paragraph" => "type",
+        _ => return None,
+    })
+}
+
 impl craft_ui::docking::DockContent<String> for PanelContent<'_> {
+    fn icon(&self, panel: &String) -> Option<egui::ImageSource<'static>> {
+        panel_icon(panel).map(crate::icons::source)
+    }
+
     fn body(&mut self, ui: &mut egui::Ui, id: &String) {
         #[cfg(test)]
         ui.ctx().data_mut(|data| data.get_temp_mut_or_default::<Vec<(String, egui::Rect)>>(bodies_id()).push((id.clone(), ui.max_rect())));

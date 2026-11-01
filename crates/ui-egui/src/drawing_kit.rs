@@ -77,6 +77,42 @@ pub struct KitBrush {
     pub preset: Option<String>,
 }
 
+/// The size and opacity a brush was last left at, so a brush picked again comes back as it was
+/// (each brush keeps its own, as on paper: the fine liner doesn't take the marker's size).
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct BrushMemory {
+    pub preset: String,
+    pub size: f32,
+    pub opacity: f32,
+}
+
+/// Keep each brush's own size and opacity: when the brush in use changes, the one left is
+/// remembered as it was last frame, and the new one takes what it was left at, if it was used
+/// before. Run once a frame while a drawing tool is in use.
+pub fn recall(app: &mut PhotocraftApp) {
+    let now = app.session.tools.current_preset.clone();
+    if let Some(last) = app.ui.brush_last.take()
+        && now.as_deref() != Some(last.preset.as_str())
+    {
+        match app.ui.brush_memory.iter_mut().find(|m| m.preset == last.preset) {
+            Some(m) => *m = last,
+            None => app.ui.brush_memory.push(last),
+        }
+        if let Some(name) = &now
+            && let Some(m) = app.ui.brush_memory.iter().find(|m| &m.preset == name).cloned()
+        {
+            let b = &mut app.session.tools.brush;
+            if (b.size - m.size).abs() > f32::EPSILON || (b.opacity - m.opacity).abs() > f32::EPSILON {
+                b.resize_with_dual_brush(m.size);
+                b.opacity = m.opacity;
+                app.session.tools.brush_changed();
+            }
+        }
+    }
+    let b = &app.session.tools.brush;
+    app.ui.brush_last = now.map(|preset| BrushMemory { preset, size: b.size, opacity: b.opacity });
+}
+
 /// The tool a preset paints with: the Mixer Brush for the mixing brushes, else the Brush Tool.
 fn tool_for(preset: Option<&str>) -> Tool {
     if preset.is_some_and(presets::mixes) { Tool::MixerBrush } else { Tool::Brush }
@@ -142,6 +178,7 @@ pub fn follow_preset(app: &mut PhotocraftApp) {
     if !matches!(app.ui.tool, Tool::Brush | Tool::MixerBrush) {
         return;
     }
+    recall(app);
     let Some(name) = app.session.tools.current_preset.clone() else { return };
     if let Some(kit) = presets::find(&app.session.tools.presets, &name).and_then(|p| Kit::of_group(&p.group)) {
         app.ui.kit = kit;
@@ -201,6 +238,28 @@ mod tests {
         assert_eq!(app.ui.tool, Tool::Brush);
         assert_eq!(app.session.tools.current_preset.as_deref(), Some("Dry Gouache"));
         assert_eq!(active(&app), Some(Kit::Brush));
+    }
+
+    #[test]
+    fn each_brush_keeps_its_own_size_and_opacity() {
+        let mut app = app();
+        switch(&mut app, Kit::Pen);
+        follow_preset(&mut app);
+        app.session.tools.brush.size = 4.0;
+        app.session.tools.brush.opacity = 0.5;
+        follow_preset(&mut app);
+        app.run("tools.setBrush", serde_json::json!({ "preset": "Marker" })).unwrap();
+        follow_preset(&mut app);
+        let marker = app.session.tools.brush.size;
+        assert_ne!(marker, 4.0, "the marker starts at its own size");
+        app.session.tools.brush.size = 40.0;
+        follow_preset(&mut app);
+        app.run("tools.setBrush", serde_json::json!({ "preset": "G-Pen" })).unwrap();
+        follow_preset(&mut app);
+        assert_eq!((app.session.tools.brush.size, app.session.tools.brush.opacity), (4.0, 0.5), "the G-Pen comes back as it was left");
+        app.run("tools.setBrush", serde_json::json!({ "preset": "Marker" })).unwrap();
+        follow_preset(&mut app);
+        assert_eq!(app.session.tools.brush.size, 40.0);
     }
 
     #[test]

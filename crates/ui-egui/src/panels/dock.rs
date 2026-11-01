@@ -19,7 +19,8 @@ pub fn dock_area(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
         return;
     }
     let t = Tokens::get(ui.ctx());
-    if app.ui.panels.rail && !t.pro {
+    // The touch themes' studio layout has its own column of panel icons.
+    if app.ui.panels.rail && !t.pro && !t.touch() {
         rail(app, ui, &t);
     }
     egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| crate::panel_docking::show(app, ui));

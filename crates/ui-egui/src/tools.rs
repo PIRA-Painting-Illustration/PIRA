@@ -4,6 +4,8 @@ pub mod anchor_tools;
 pub mod artboard_tool;
 pub(crate) mod brush_cursor;
 pub mod brush_picker;
+pub mod color_popup;
+pub mod kit_popup;
 pub mod brush_resize;
 pub(super) mod cam_transform;
 pub mod cas_transform;

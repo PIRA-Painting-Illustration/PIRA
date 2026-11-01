@@ -30,7 +30,7 @@ fn c32(c: [f32; 3]) -> Color32 {
 }
 
 /// Display colours of every swatch, rebuilt when the library or the working spaces change.
-fn colors(app: &PhotocraftApp, ctx: &egui::Context) -> Arc<Vec<Vec<Color32>>> {
+pub(crate) fn colors(app: &PhotocraftApp, ctx: &egui::Context) -> Arc<Vec<Vec<Color32>>> {
     let c = &app.session.color.settings;
     let key = egui::Id::unique(("swatch-colors", app.session.presets.rev, &c.working_rgb, &c.working_cmyk, &c.working_gray));
     if let Some(v) = ctx.data(|d| d.get_temp::<Arc<Vec<Vec<Color32>>>>(key)) {

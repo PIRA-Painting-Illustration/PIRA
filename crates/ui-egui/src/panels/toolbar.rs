@@ -83,7 +83,23 @@ pub(super) fn tool_flyout_release(row: Rect, pointer: Option<Pos2>, released: bo
 pub fn toolbar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let t = Tokens::get(ui.ctx());
     let (w1, bx, m) = if t.pro { (40.0, 30.0, 5i8) } else { (50.0, 36.0, 7i8) };
-    let sections = visible_sections(&app.session.prefs().toolbar.hidden);
+    let mut sections = visible_sections(&app.session.prefs().toolbar.hidden);
+    // The touch themes paint with the Pen, Pencil and Brush at the top of the columns
+    // ([`kit_buttons`]), so the Brush Tool and Mixer Brush leave their slot.
+    let touch = t.touch();
+    if touch {
+        sections = sections
+            .into_iter()
+            .map(|section| {
+                section
+                    .into_iter()
+                    .map(|(i, tools)| (i, tools.into_iter().filter(|tool| !matches!(tool, Tool::Brush | Tool::MixerBrush)).collect::<Vec<_>>()))
+                    .filter(|(_, tools)| !tools.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|section| !section.is_empty())
+            .collect();
+    }
     // Two columns when the header chevron asks for them; a column that doesn't fit scrolls.
     let double = app.ui.panels.toolbar_double;
     let w = if double { w1 + bx + 2.0 } else { w1 };
@@ -143,9 +159,12 @@ pub fn toolbar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 .show(ui, |ui| {
                     // Pro has no group dividers, so its two columns fill every row across groups.
                     let sections: Vec<Vec<(usize, Vec<Tool>)>> = if t.pro { vec![sections.into_iter().flatten().collect()] } else { sections };
+                    if touch {
+                        kit_buttons(app, ui, bx, double, &t);
+                    }
                     for (si, section) in sections.iter().enumerate() {
                         // Photoshop 2026 draws one uninterrupted column (no group dividers).
-                        if si > 0 && !t.pro {
+                        if (si > 0 || touch) && !t.pro {
                             ui.add_space(4.0);
                             let (r, _) = ui.allocate_exact_size(vec2(if double { bx * 2.0 + 2.0 } else { bx }, 1.0), Sense::hover());
                             ui.painter().line_segment([r.left_center() + vec2(8.0, 0.0), r.right_center() - vec2(8.0, 0.0)], Stroke::new(1.0, t.separator));
@@ -382,6 +401,37 @@ pub fn toolbar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 });
             });
         });
+    if touch {
+        crate::kit_popup::show(app, ui.ctx());
+        crate::color_popup::show(app, ui.ctx());
+    }
+}
+
+/// The touch themes' Pen, Pencil and Brush, at the top of the tool columns. A tap picks the tool
+/// with the brush it last used; a tap on the one in use opens its brushes and settings
+/// ([`crate::kit_popup`]).
+fn kit_buttons(app: &mut PhotocraftApp, ui: &mut egui::Ui, bx: f32, double: bool, t: &Tokens) {
+    use crate::drawing_kit::{self, Kit};
+    let active = drawing_kit::active(app);
+    let rows: Vec<&[Kit]> = Kit::ALL.chunks(if double { 2 } else { 1 }).collect();
+    for row in rows {
+        ui.horizontal(|ui| {
+            for &kit in row {
+                let label = kit.label();
+                let resp = icons::button_with_icon_size(ui, kit.icon(), bx, toolbar_icon_size(bx, t.pro), active == Some(kit), tl!(label));
+                let resp = crate::brush_picker::named(resp, label);
+                if resp.clicked() {
+                    crate::color_popup::close(ui.ctx());
+                    if active == Some(kit) {
+                        crate::kit_popup::toggle(ui.ctx(), resp.rect);
+                    } else {
+                        crate::kit_popup::close(ui.ctx());
+                        drawing_kit::switch(app, kit);
+                    }
+                }
+            }
+        });
+    }
 }
 
 /// Glyph size of a toolbar tool button. Pro fills two thirds of the button, close to Photoshop's
@@ -483,9 +533,15 @@ pub(super) fn color_chips(app: &mut PhotocraftApp, ui: &mut egui::Ui, two_column
     // Photoshop: clicking a chip opens the Color Picker for that colour.
     let bg_resp = ui.interact(bg, ui.scope_id().with("bgchip"), Sense::click());
     let fg_resp = ui.interact(fg, ui.scope_id().with("fgchip"), Sense::click());
-    if fg_resp.on_hover_text(tl!("Set foreground color")).clicked() {
+    // The touch themes open the colour popup beside the chips instead (`color_popup`).
+    let fg_click = fg_resp.on_hover_text(tl!("Set foreground color")).clicked();
+    let bg_click = bg_resp.on_hover_text(tl!("Set background color")).clicked();
+    if t.touch() && (fg_click || bg_click) {
+        crate::kit_popup::close(ui.ctx());
+        crate::color_popup::toggle(app, ui.ctx(), fg.union(bg), bg_click);
+    } else if fg_click {
         crate::color_picker_ui::open(app, "foreground");
-    } else if bg_resp.on_hover_text(tl!("Set background color")).clicked() {
+    } else if bg_click {
         crate::color_picker_ui::open(app, "background");
     }
     // Default Colors at the left, Switch Colors at the right, over the chips.

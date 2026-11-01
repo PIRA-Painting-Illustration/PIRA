@@ -124,6 +124,20 @@ fn big_ring(wheel: egui::Pos2, radius: f32, screen: egui::Rect, side: Side) -> B
 /// Brush sizes the engine accepts (`photocraft_paint::MAX_BRUSH_SIZE`).
 const MAX_BRUSH_SIZE: f32 = 5000.0;
 
+/// Put saved Shortcut Pad keys back to the defaults (Esc, Ctrl, Shift, Alt, Space), keeping the
+/// side, wheel and sizes: once, when an older install moves to PIRA's studio layout.
+pub fn use_default_keys(files_dir: &std::path::Path) {
+    let path = files_dir.join("shortcut-pad.json");
+    if !path.exists() {
+        return;
+    }
+    let mut config = PadConfig::load(&path);
+    config.keys = PadConfig::default().keys;
+    if let Err(e) = config.save(&path) {
+        log::warn!("shortcut pad keys: {e}");
+    }
+}
+
 impl Pad {
     pub fn new(files_dir: &std::path::Path) -> Self {
         let path = files_dir.join("shortcut-pad.json");
@@ -891,7 +905,7 @@ mod tests {
     fn a_key_presses_its_shortcut_and_releases_it() {
         let (mut p, dir) = pad();
         let k0 = p.layout.clone().unwrap().keys[0].center();
-        // Default key 1: Undo (Ctrl+Z).
+        p.shared.borrow_mut().config.keys[0].shortcut = "Ctrl+Z".into();
         let down = run(&mut p, vec![touch(1, TouchPhase::Start, k0)]);
         assert_eq!(keys(&down), [(Key::ControlLeft, true), (Key::Z, true)]);
         assert!(!down.iter().any(|e| matches!(e, Event::Touch { .. } | Event::PointerButton { .. })), "the finger doesn't reach the canvas");
@@ -903,7 +917,7 @@ mod tests {
     #[test]
     fn a_modifier_key_is_held_while_touched() {
         let (mut p, dir) = pad();
-        let k2 = p.layout.clone().unwrap().keys[2].center(); // default: Alt
+        let k2 = p.layout.clone().unwrap().keys[3].center(); // default: Alt
         assert_eq!(keys(&run(&mut p, vec![touch(1, TouchPhase::Start, k2)])), [(Key::AltLeft, true)]);
         assert!(keys(&run(&mut p, vec![touch(1, TouchPhase::Move, k2)])).is_empty(), "held, not repeated");
         // Hiding the pad releases it (no stuck Alt).
