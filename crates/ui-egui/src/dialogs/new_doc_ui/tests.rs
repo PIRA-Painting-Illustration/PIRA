@@ -383,6 +383,25 @@ mod dialog {
         assert!((c[0] * 255.0 - 51.0).abs() < 1.0 && (c[1] * 255.0 - 102.0).abs() < 1.0 && (c[2] * 255.0 - 153.0).abs() < 1.0, "{c:?}");
     }
 
+    /// A paper chip sets the background, the menu names the paper, and the document starts on it.
+    #[test]
+    fn a_paper_chip_becomes_the_background() {
+        let mut h = harness_with_store(&Arc::new(Mutex::new(None)));
+        let nd = h.state().ui.dialogs[0].id;
+        for (name, _) in super::super::PAPERS {
+            assert!(h.query_by_label(name).is_some(), "{name} has a chip");
+        }
+        h.get_by_label("Yellow Legal Pad").click();
+        h.run_steps(3);
+        let bg = h.state().ui.dialogs.iter().find(|d| d.id == nd).unwrap().fields["background"].clone();
+        assert_eq!(bg, "#fbf1a6");
+        assert_eq!(super::super::paper_name("#FBF1A6"), Some("Yellow Legal Pad"));
+        crate::dialogs::confirm(h.state_mut(), nd).unwrap();
+        let doc = &h.state().session.active().unwrap().doc;
+        let px = photocraft_compose::flatten(doc).px[0];
+        assert!((px[0] * 255.0 - 251.0).abs() < 1.0 && (px[1] * 255.0 - 241.0).abs() < 1.0 && (px[2] * 255.0 - 166.0).abs() < 1.0, "{px:?}");
+    }
+
     fn name_preset(h: &mut Harness<'static, PhotocraftApp>, name: &str) {
         h.get_by_label("Save Preset…").click();
         h.run_steps(2);
