@@ -270,6 +270,8 @@ pub use tools::anchor_tools;
 pub use tools::artboard_tool;
 pub(crate) use tools::brush_cursor;
 pub use tools::brush_picker;
+pub use tools::color_popup;
+pub use tools::kit_popup;
 pub use tools::brush_resize;
 use tools::cam_transform;
 pub use tools::cas_transform;

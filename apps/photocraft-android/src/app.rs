@@ -58,6 +58,13 @@ fn run(android: AndroidApp) -> Result<(), String> {
             services.inbox = Some(inbox.clone());
             // The Shortcut Pad (Window › Shortcut Pad) and updates (Help › Check for Updates…):
             // their menu rows go to the app's menus.
+            // PIRA's studio layout (menu row, command bar, two tool columns, Layers on the right
+            // and the edge keys) replaces an older install's layout and pad keys once.
+            let studio = files_dir.join("pira-studio-layout-v3");
+            let studio_pending = !studio.exists();
+            if studio_pending {
+                crate::pad::use_default_keys(&files_dir);
+            }
             let pad = crate::pad::Pad::new(&files_dir);
             let touch = crate::touch::TouchInput::new(&files_dir);
             let layout = crate::layout::Layout::new(&files_dir);
@@ -88,6 +95,13 @@ fn run(android: AndroidApp) -> Result<(), String> {
                 photocraft_ui_egui::pira::first_launch(&mut app);
                 if let Err(e) = std::fs::write(&first_run, b"1") {
                     log::warn!("couldn't record the first run: {e}");
+                }
+            }
+            if studio_pending {
+                // The saved layout loaded with the app, so this replaces it.
+                photocraft_ui_egui::pira::studio_layout(&mut app);
+                if let Err(e) = std::fs::write(&studio, b"1") {
+                    log::warn!("couldn't record the studio layout: {e}");
                 }
             }
             // No theme set here: `set_theme` saves its choice as the preference, and this ran

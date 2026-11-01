@@ -115,7 +115,14 @@ impl Default for PadConfig {
         Self {
             enabled: true,
             side: Side::Right,
-            keys: vec![KeySlot::new("Undo", "Ctrl+Z"), KeySlot::new("Redo", "Ctrl+Shift+Z"), KeySlot::new("Alt", "Alt"), KeySlot::new("Pan", "Space")],
+            // The edge keys painters know: Undo and Redo are on the command bar.
+            keys: vec![
+                KeySlot::new("Esc", "Escape"),
+                KeySlot::new("Ctrl", "Ctrl"),
+                KeySlot::new("Shift", "Shift"),
+                KeySlot::new("Alt", "Alt"),
+                KeySlot::new("Space", "Space"),
+            ],
             wheel_modes: vec![WheelMode::Zoom, WheelMode::Rotate, WheelMode::BrushSize],
             enlarge: true,
             wheel_size: 150.0,
@@ -174,6 +181,7 @@ impl PadConfig {
 /// Shortcuts the settings offer: (name in the menu, label on the key, shortcut). Key labels
 /// stay within 8 characters so they fit the key; any other shortcut can be typed.
 pub const PRESETS: &[(&str, &str, &str)] = &[
+    ("Escape", "Esc", "Escape"),
     ("Undo", "Undo", "Ctrl+Z"),
     ("Redo", "Redo", "Ctrl+Shift+Z"),
     ("Alt (hold)", "Alt", "Alt"),
@@ -273,8 +281,8 @@ mod tests {
         let mut c = PadConfig::default();
         c.set_key_count(7);
         let shortcuts: Vec<&str> = c.keys.iter().map(|k| k.shortcut.as_str()).collect();
-        // The defaults (Undo, Redo, Alt, Space), then the first presets they don't use.
-        assert_eq!(shortcuts, ["Ctrl+Z", "Ctrl+Shift+Z", "Alt", "Space", "Shift", "Ctrl", "B"]);
+        // The defaults (Esc, Ctrl, Shift, Alt, Space), then the first presets they don't use.
+        assert_eq!(shortcuts, ["Escape", "Ctrl", "Shift", "Alt", "Space", "Ctrl+Z", "Ctrl+Shift+Z"]);
         c.set_key_count(MAX_KEYS + 5);
         assert_eq!(c.keys.len(), MAX_KEYS, "clamped");
         let mut seen: Vec<&str> = c.keys.iter().map(|k| k.shortcut.as_str()).collect();
@@ -282,7 +290,7 @@ mod tests {
         seen.dedup();
         assert_eq!(seen.len(), MAX_KEYS, "no shortcut twice");
         c.set_key_count(3);
-        assert_eq!(c.keys.iter().map(|k| k.label.as_str()).collect::<Vec<_>>(), ["Undo", "Redo", "Alt"]);
+        assert_eq!(c.keys.iter().map(|k| k.label.as_str()).collect::<Vec<_>>(), ["Esc", "Ctrl", "Shift"]);
         c.set_key_count(0);
         assert_eq!(c.keys.len(), MIN_KEYS);
     }

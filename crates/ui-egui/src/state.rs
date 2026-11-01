@@ -320,6 +320,12 @@ pub struct UiState {
     pub kit: crate::drawing_kit::Kit,
     #[serde(default)]
     pub kit_brushes: Vec<crate::drawing_kit::KitBrush>,
+    /// The size and opacity each PIRA brush was last left at ([`crate::drawing_kit::recall`]).
+    pub brush_memory: Vec<crate::drawing_kit::BrushMemory>,
+    /// The brush in use last frame, as it was then.
+    pub brush_last: Option<crate::drawing_kit::BrushMemory>,
+    /// The colours picked most recently, newest first ([`crate::color_popup`]).
+    pub recent_colors: Vec<[f32; 4]>,
     /// Pen path under construction.
     #[serde(default)]
     pub pen: Option<crate::vector_ui::PenPath>,
@@ -547,6 +553,9 @@ impl Default for UiState {
             tool_brushes: Vec::new(),
             kit: crate::drawing_kit::Kit::default(),
             kit_brushes: Vec::new(),
+            brush_memory: Vec::new(),
+            brush_last: None,
+            recent_colors: Vec::new(),
             clone_source: None,
             clone_offset: None,
             pattern_stamp_phase: None,
