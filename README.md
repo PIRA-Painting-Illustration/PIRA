@@ -23,7 +23,7 @@ You don't need an account, a subscription or an internet connection to draw, sav
 | | |
 |---|---|
 | **PIRA look** | A new default theme, **PIRA** (teal-navy, cream, teal and coral) and **PIRA Light** (paper cream). Picked in Preferences › Interface. |
-| **Pen-ready brushes** | A new **PIRA Essentials** group: HB, 2B and 6B pencils, mechanical and coloured pencil, fine liner, inking pen, brush pen, marker, airbrush and dry gouache. A fresh install starts on the 2B pencil. |
+| **Pen, Pencil and Brush** | Three drawing tools on the touch bar, each with its own brushes and remembering the last one you used. **Pens** for line art (G-pen, inking and mapping pens, fine liner, brush pen, marker): solid ink, width from pressure, steady lines. **Pencils** for sketching (HB, 2B, 6B, mechanical, coloured, vine charcoal, soft pastel): paper grain, pressure darkens, tilt shades. **Brushes** for painting (watercolour, oil paint, blender and a round mixing brush that pick up the colour on the canvas, plus dry gouache and airbrush). A fresh install starts on the 2B pencil. |
 | **Tilt shading** | Lean the pen and the tip turns into the side of a lead: longer, flatter and lighter along the lean, on top of pressure. Upright writing stays crisp. Tune it under Brush Settings › Brush Tip Shape › Pen Tilt Shading. |
 | **Pressure on every preset** | Every Dry and Wet Media preset now follows pressure (several ignored it), and Dry Media shades with tilt. |
 | **Painting layout** | Tools on both sides of the canvas: Brushes over Color and Swatches on the left, Properties over Layers on the right. |

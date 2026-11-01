@@ -41,6 +41,8 @@ pub(crate) fn pill_text(app: &PhotocraftApp) -> String {
 
 /// The PIRA bar (drawn by [`title_bar`] in the touch themes).
 pub fn pira_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+    // A brush picked anywhere keeps the Pen, Pencil and Brush buttons in step.
+    crate::drawing_kit::follow_preset(app);
     let t = Tokens::get(ui.ctx());
     let (caption_left, caption_right) = crate::titlebar::reserved(app, ui.ctx());
     let margin = |reserved: f32| if reserved > 0.0 { 0 } else { 10 };
@@ -91,6 +93,16 @@ pub fn pira_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                     }
                     if icons::button(ui, "undo-2", ICON, false, tl!("Undo")).clicked() {
                         run(app, ui.ctx(), "edit.undo");
+                    }
+                    ui.add_space(10.0);
+                    // Pen, Pencil and Brush, laid out from the end inwards so Pen reads first.
+                    let active = crate::drawing_kit::active(app);
+                    for kit in crate::drawing_kit::Kit::ALL.into_iter().rev() {
+                        let label = kit.label();
+                        let b = crate::brush_picker::named(icons::button(ui, kit.icon(), ICON, active == Some(kit), tl!(label)), label);
+                        if b.clicked() {
+                            crate::drawing_kit::switch(app, kit);
+                        }
                     }
                     ui.min_rect().left()
                 };

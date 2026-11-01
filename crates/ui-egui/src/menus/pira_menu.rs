@@ -73,7 +73,7 @@ pub fn app_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
         });
     });
     // The logo carries no text, so name the button for screen readers.
-    button.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, "PIRA menu"));
+    button.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "PIRA menu"));
     let logo = egui::Rect::from_center_size(button.rect.center(), egui::vec2(30.0, 30.0));
     crate::brand::paint_mark(ui, logo);
     nav.store(ui.ctx());
