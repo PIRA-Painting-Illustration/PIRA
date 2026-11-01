@@ -317,6 +317,75 @@ const CUSTOM: &str = "custom";
 /// Side of the Background Contents colour swatch.
 const SWATCH: f32 = 22.0;
 
+/// PIRA's papers, shown as chips under Background Contents: whites, sketch and toned papers,
+/// canvas, pastels, then darks. A paper is kept as its Background Contents key ("white",
+/// "black" or a lowercase "#rrggbb"), so documents and presets need nothing new.
+const PAPERS: &[(&str, &str)] = &[
+    ("Bright White", "white"),
+    ("Warm White", "#fbf8f1"),
+    ("Ivory", "#f7f1e1"),
+    ("Cream Sketchbook", "#f1e7d0"),
+    ("Yellow Legal Pad", "#fbf1a6"),
+    ("Newsprint", "#e4dfd3"),
+    ("Toned Tan", "#d6c3a1"),
+    ("Blueline", "#eaf0f7"),
+    ("Dot Grid", "#faf8f3"),
+    ("Primed Canvas", "#eee9df"),
+    ("Raw Linen", "#cbbc9c"),
+    ("Sky", "#cfe0ea"),
+    ("Sage", "#d3dcc7"),
+    ("Blush", "#f0d9d2"),
+    ("Lavender", "#dcd5e8"),
+    ("Butter", "#f6e7a9"),
+    ("Charcoal Paper", "#3a3a39"),
+    ("Slate", "#2e3741"),
+    ("Midnight", "#1b2236"),
+    ("Black", "black"),
+];
+
+/// The paper a Background Contents value names, if it is one of [`PAPERS`].
+fn paper_name(background: &str) -> Option<&'static str> {
+    PAPERS.iter().find(|(_, key)| key.eq_ignore_ascii_case(background)).map(|(name, _)| *name)
+}
+
+/// A paper key's colour.
+fn paper_rgb(key: &str) -> [f32; 3] {
+    match key {
+        "white" => [1.0; 3],
+        "black" => [0.0; 3],
+        hex => crate::color_picker_ui::parse_hex(hex).unwrap_or([1.0; 3]),
+    }
+}
+
+/// The paper chips: a click makes that paper the new document's background.
+fn paper_chips(ui: &mut egui::Ui, f: &mut Map<String, Value>) {
+    let t = Tokens::get(ui.ctx());
+    let side = if t.touch() { 30.0 } else { 20.0 };
+    let current = get_s(f, "background", "white");
+    ui.horizontal_wrapped(|ui| {
+        ui.set_max_width(240.0);
+        ui.spacing_mut().item_spacing = vec2(4.0, 4.0);
+        for (name, key) in PAPERS {
+            let (r, resp) = ui.allocate_exact_size(vec2(side, side), Sense::click());
+            let c = paper_rgb(key).map(|v| (v * 255.0).round() as u8);
+            ui.painter().rect_filled(r, 3.0, egui::Color32::from_rgb(c[0], c[1], c[2]));
+            if current.eq_ignore_ascii_case(key) {
+                ui.painter().rect_stroke(r, 3.0, Stroke::new(2.0, t.accent), StrokeKind::Outside);
+            } else {
+                ui.painter().rect_stroke(r, 3.0, Stroke::new(1.0, t.field_border), StrokeKind::Inside);
+            }
+            let label = tl!(name);
+            let resp = resp.on_hover_text(label).on_hover_cursor(egui::CursorIcon::PointingHand);
+            resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
+            if resp.clicked() {
+                f.insert("background".into(), json!(key));
+                f.remove("backgroundColor");
+                f.remove("__savedPreset");
+            }
+        }
+    });
+}
+
 /// The colour the new document's background starts with: white, black, the captured or current
 /// toolbox background colour, or a custom `"#rrggbb"`; `None` for Transparent.
 fn background_rgb(app: &crate::PhotocraftApp, f: &Map<String, Value>) -> Option<[f32; 3]> {
@@ -623,7 +692,7 @@ pub fn body(app: &mut crate::PhotocraftApp, ui: &mut egui::Ui, f: &mut Map<Strin
                                         "black" => tl!("Black"),
                                         "transparent" => tl!("Transparent"),
                                         "backgroundColor" => tl!("Background Color"),
-                                        hex => hex,
+                                        hex => paper_name(hex).map_or(hex, |name| tl!(name)),
                                     };
                                     resp.on_hover_text(format!("{} · {size} · {}/{} · {background}", tl!(c.title()), s.mode.to_uppercase(), s.depth))
                                 }
@@ -795,14 +864,19 @@ pub fn body(app: &mut crate::PhotocraftApp, ui: &mut egui::Ui, f: &mut Map<Strin
             small_label(ui, tl!("Background Contents"));
             // A custom colour is kept as its "#rrggbb", which `file.new` takes as is (#4789).
             let current = get_s(f, "background", "white");
-            let mut bg = if crate::color_picker_ui::parse_hex(&current).is_some() { CUSTOM.to_string() } else { current.clone() };
-            let opts = [
+            // A paper chosen from the chips shows by name in the menu rather than as Custom….
+            let paper = paper_name(&current).filter(|_| crate::color_picker_ui::parse_hex(&current).is_some());
+            let mut bg = if paper.is_none() && crate::color_picker_ui::parse_hex(&current).is_some() { CUSTOM.to_string() } else { current.clone() };
+            let mut opts = vec![
                 ("white".to_string(), tl!("White")),
                 ("black".to_string(), tl!("Black")),
                 ("backgroundColor".to_string(), tl!("Background Color")),
                 ("transparent".to_string(), tl!("Transparent")),
-                (CUSTOM.to_string(), tl!("Custom…")),
             ];
+            if let Some(name) = paper {
+                opts.push((current.clone(), tl!(name)));
+            }
+            opts.push((CUSTOM.to_string(), tl!("Custom…")));
             let shown = background_rgb(app, f);
             let mut pick = false;
             ui.horizontal(|ui| {
@@ -839,6 +913,9 @@ pub fn body(app: &mut crate::PhotocraftApp, ui: &mut egui::Ui, f: &mut Map<Strin
                     f.remove("__savedPreset");
                 }
             });
+            ui.add_space(4.0);
+            small_label(ui, tl!("Paper"));
+            paper_chips(ui, f);
             if pick {
                 let start = shown.unwrap_or([1.0; 3]);
                 f.insert("background".into(), json!(crate::color_picker_ui::hex(start)));
