@@ -315,6 +315,11 @@ pub struct UiState {
     pub brush_tool: Tool,
     #[serde(default)]
     pub tool_brushes: Vec<(Tool, photocraft_engine::paint::BrushSettings)>,
+    /// The touch bar's drawing tool in use (Pen, Pencil or Brush) and each one's last brush.
+    #[serde(default)]
+    pub kit: crate::drawing_kit::Kit,
+    #[serde(default)]
+    pub kit_brushes: Vec<crate::drawing_kit::KitBrush>,
     /// Pen path under construction.
     #[serde(default)]
     pub pen: Option<crate::vector_ui::PenPath>,
@@ -540,6 +545,8 @@ impl Default for UiState {
             selected_guide: None,
             brush_tool: Tool::Brush,
             tool_brushes: Vec::new(),
+            kit: crate::drawing_kit::Kit::default(),
+            kit_brushes: Vec::new(),
             clone_source: None,
             clone_offset: None,
             pattern_stamp_phase: None,

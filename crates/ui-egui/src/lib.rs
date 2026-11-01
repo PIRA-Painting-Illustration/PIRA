@@ -45,6 +45,7 @@ pub mod notices;
 pub mod os_window;
 pub mod panels;
 pub mod pira;
+pub mod drawing_kit;
 pub mod platform_menu;
 pub mod preset_files_ui;
 pub mod proxy;

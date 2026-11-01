@@ -39,7 +39,7 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
             let height = HOME_WORDMARK_HEIGHT;
             let width = crate::brand::wordmark_width(ui.ctx(), height).min(card.width());
             let (r, response) = ui.allocate_exact_size(egui::vec2(width, height), Sense::hover());
-            response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, "PIRA"));
+            response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Label, true, "PIRA"));
             crate::brand::paint_wordmark(ui, r);
             ui.add_space(4.0);
             // The tagline in PIRA's secondary type.

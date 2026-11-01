@@ -19,7 +19,13 @@ fn dragging_a_brush_shows_its_tip_preview() {
             if mode == 2 {
                 app.ui.brush_picker = Some([300.0, 120.0]);
             }
-            let name = app.session.tools.presets[0].name.clone();
+            // The first brush the panel or picker shows: on a touch layout the picker lists only
+            // the drawing tool's own brushes (`drawing_kit::picker_presets`).
+            let touch_picker = mode == 2 && crate::theme::Tokens::for_kind(theme).touch();
+            let name = crate::drawing_kit::picker_presets(&app)
+                .filter(|_| touch_picker)
+                .and_then(|v| v.first().map(|p| p.name.clone()))
+                .unwrap_or_else(|| app.session.tools.presets[0].name.clone());
             let brush = app.session.tools.brush.clone();
             let presets = app.session.tools.presets.clone();
             let mut h = Harness::builder().with_size(vec2(1200.0, 900.0)).build_eframe(move |cc| {
@@ -154,8 +160,17 @@ fn rows_are_centred(h: &Harness<'_, PhotocraftApp>, indent: f32, groups: usize) 
         groups_rows.push(rows);
     }
     let wrapped = groups_rows.iter().any(|rows| rows.len() > 1);
-    // A full row is as wide as the widest in any group (a short group can fill only part of one).
-    let cols = groups_rows.iter().flatten().map(Vec::len).max().unwrap_or(0);
+    // A full row is as wide as the widest row anywhere in the list: the groups checked may all be
+    // short enough to fill only part of one.
+    let mut all_rows: Vec<(f32, usize)> = Vec::new();
+    for r in &tiles {
+        match all_rows.iter_mut().find(|(top, _)| (top - r.top()).abs() < 0.5) {
+            Some((_, n)) => *n += 1,
+            None => all_rows.push((r.top(), 1)),
+        }
+    }
+    let widest = all_rows.iter().map(|(_, n)| *n).max().unwrap_or(0);
+    let cols = widest;
     let (list_left, list_right) = (headers[0].left(), headers[0].right());
     let left = |row: &Vec<Rect>| row.iter().map(|r| r.left()).fold(f32::MAX, f32::min) - list_left;
     let first = left(&groups_rows[0][0]);
@@ -344,7 +359,8 @@ fn the_brushes_tab_grid_is_centred_past_its_indent() {
     );
     PhotocraftApp::setup_context(&h.ctx, crate::theme::ThemeKind::ALL[0]);
     h.run_steps(6);
-    rows_are_centred(&h, PANEL_LIST.indent, 2);
+    // Through General, the first group long enough to wrap onto a second row.
+    rows_are_centred(&h, PANEL_LIST.indent, 4);
 }
 
 /// #4454: a card's size number sat under the tip thumbnail of any medium or large brush (the

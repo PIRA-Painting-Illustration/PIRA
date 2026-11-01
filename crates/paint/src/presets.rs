@@ -1,7 +1,8 @@
 //! Built-in brush presets (our own designs; sampled tips and textures are generated procedurally).
 //!
-//! PIRA Essentials comes first (pencils, liners, ink, marker, airbrush, gouache tuned for pen
-//! pressure and tilt), then groups like Photoshop's default Brushes panel folders: General, Dry
+//! PIRA's own three families come first, split the way Clip Studio Paint splits its drawing
+//! tools: Pens for line art, Pencils for sketching and shading, Brushes for painting (some of
+//! which mix with the canvas through the Mixer Brush, [`MIXING`]). Then groups like Photoshop's default Brushes panel folders: General, Dry
 //! Media, Wet Media and Special Effects, made pen-ready ([`pen_ready`]). Every preset is plain [`BrushSettings`] data, so it serialises, journals and
 //! can be edited like any user preset.
 
@@ -9,10 +10,11 @@ use crate::brush::{
     BrushPreset, BrushSettings, ColorDynamics, Control, DualBrush, Dynamic, MaskMode, Pattern, PatternStyle, Scattering, ShapeDynamics, Smoothing, Texture,
     TiltShading, TipShape, Transfer,
 };
+use crate::mixer::MixerSettings;
 use crate::procedural::{bristle_tip, chalk_tip, charcoal_tip, grass_tip, leaf_tip, rake_tip, spatter_tip, sponge_tip, star_tip};
 
 /// Preset groups, in panel order.
-pub const GROUPS: [&str; 5] = ["PIRA Essentials", "General", "Dry Media", "Wet Media", "Special Effects"];
+pub const GROUPS: [&str; 7] = [PENS, PENCILS, BRUSHES, "General", "Dry Media", "Wet Media", "Special Effects"];
 
 fn preset(group: &str, name: &str, brush: BrushSettings) -> BrushPreset {
     BrushPreset { name: name.to_string(), brush, builtin: true, group: group.to_string(), folder: Vec::new(), captures: Default::default() }
@@ -49,11 +51,59 @@ fn smooth(amount: f32) -> Smoothing {
     Smoothing { amount, ..Default::default() }
 }
 
-/// PIRA's own starter set: every preset follows pen pressure, and the dry ones shade with tilt,
-/// with no setting to switch on first (PIRA tiers 1: graphite, liner, ink, marker, airbrush,
-/// gouache).
-fn pira_essentials(base: &BrushSettings) -> Vec<BrushPreset> {
-    let g = |n: &str, b: BrushSettings| preset("PIRA Essentials", n, b);
+/// PIRA's pens: line art. Solid ink with no paper grain, pressure sets the width with a long
+/// taper, and strong smoothing for clean curves.
+pub const PENS: &str = "PIRA Pens";
+/// PIRA's pencils: sketching and shading. Paper grain, pressure mostly sets how dark the line
+/// is, the tip shades with tilt, and light smoothing keeps lines loose.
+pub const PENCILS: &str = "PIRA Pencils";
+/// PIRA's brushes: painting. Soft, bristly or watery tips; the [`MIXING`] ones pick up and
+/// blend the colour already on the canvas.
+pub const BRUSHES: &str = "PIRA Brushes";
+
+/// The PIRA brushes that paint through the Mixer Brush, picking up canvas colour.
+pub const MIXING: [&str; 4] = ["Watercolour", "Oil Paint", "Blender", "Round Mixing Brush"];
+
+/// Whether the preset named `name` paints through the Mixer Brush ([`MIXING`]).
+pub fn mixes(name: &str) -> bool {
+    MIXING.iter().any(|m| m.eq_ignore_ascii_case(name))
+}
+
+/// Pens: crisp, opaque and steady (Clip Studio's G-pen, mapping pen and markers).
+fn pira_pens(base: &BrushSettings) -> Vec<BrushPreset> {
+    let g = |n: &str, b: BrushSettings| preset(PENS, n, b);
+    let pen = |size: f32, min_size: f32, smoothing: f32| BrushSettings {
+        size,
+        hardness: 1.0,
+        spacing: 0.03,
+        shape_dynamics: size_dyn(pressure_min(min_size)),
+        smoothing: smooth(smoothing),
+        ..base.clone()
+    };
+    vec![
+        g("G-Pen", pen(9.0, 0.0, 0.5)),
+        g("Inking Pen", pen(10.0, 0.05, 0.45)),
+        g("Mapping Pen", pen(4.0, 0.1, 0.5)),
+        g("Fine Liner", BrushSettings { spacing: 0.04, ..pen(3.0, 0.8, 0.3) }),
+        g("Brush Pen", BrushSettings { size: 18.0, hardness: 0.95, tilt_shading: TiltShading { start: 30.0, ..tilt(0.8, 0.5, 0.1) }, ..pen(18.0, 0.02, 0.4) }),
+        g(
+            "Marker",
+            BrushSettings {
+                hardness: 0.85,
+                flow: 0.6,
+                spacing: 0.05,
+                mode: photocraft_color::BlendMode::Multiply,
+                tilt_shading: tilt(0.8, 0.4, 0.15),
+                ..pen(24.0, 0.6, 0.2)
+            },
+        ),
+    ]
+}
+
+/// Pencils: grainy, pressure darkens more than it widens, and the tip shades with tilt
+/// (Clip Studio's real pencil, mechanical pencil, charcoal and pastel).
+fn pira_pencils(base: &BrushSettings) -> Vec<BrushPreset> {
+    let g = |n: &str, b: BrushSettings| preset(PENCILS, n, b);
     let pencil = |size: f32, hardness: f32, min_size: f32, min_opacity: f32, depth: f32, seed: u32| BrushSettings {
         size,
         hardness,
@@ -75,50 +125,96 @@ fn pira_essentials(base: &BrushSettings) -> Vec<BrushPreset> {
         ),
         g("Colored Pencil", BrushSettings { tilt_shading: tilt(1.6, 0.55, 0.35), ..pencil(8.0, 0.55, 0.5, 0.2, 0.9, 31) }),
         g(
-            "Fine Liner",
-            BrushSettings { size: 3.0, hardness: 1.0, spacing: 0.04, shape_dynamics: size_dyn(pressure_min(0.8)), smoothing: smooth(0.3), ..base.clone() },
-        ),
-        g(
-            "Inking Pen",
-            BrushSettings { size: 10.0, hardness: 1.0, spacing: 0.03, shape_dynamics: size_dyn(pressure_min(0.05)), smoothing: smooth(0.45), ..base.clone() },
-        ),
-        g(
-            "Brush Pen",
+            "Vine Charcoal",
             BrushSettings {
-                size: 18.0,
-                hardness: 0.95,
-                spacing: 0.03,
-                shape_dynamics: size_dyn(pressure_min(0.02)),
-                tilt_shading: TiltShading { start: 30.0, ..tilt(0.8, 0.5, 0.1) },
-                smoothing: smooth(0.4),
-                ..base.clone()
+                tip: TipShape::Sampled(charcoal_tip(64, 12)),
+                spacing: 0.1,
+                texture: Texture { mode: MaskMode::Subtract, invert: true, ..paper(14, 0.75) },
+                tilt_shading: tilt(2.0, 0.6, 0.35),
+                ..pencil(22.0, 0.5, 0.5, 0.1, 0.75, 14)
             },
         ),
         g(
-            "Marker",
+            "Soft Pastel",
             BrushSettings {
-                size: 24.0,
-                hardness: 0.85,
-                flow: 0.6,
-                spacing: 0.05,
-                mode: photocraft_color::BlendMode::Multiply,
-                shape_dynamics: size_dyn(pressure_min(0.6)),
-                tilt_shading: tilt(0.8, 0.4, 0.15),
+                tip: TipShape::Sampled(chalk_tip(64, 33)),
+                spacing: 0.12,
+                texture: Texture {
+                    enabled: true,
+                    pattern: Pattern::Procedural { style: PatternStyle::Canvas, size: 64, seed: 3 },
+                    depth: 0.55,
+                    mode: MaskMode::Subtract,
+                    invert: true,
+                    ..Default::default()
+                },
+                tilt_shading: tilt(1.8, 0.55, 0.4),
+                ..pencil(30.0, 0.5, 0.6, 0.2, 0.6, 33)
+            },
+        ),
+    ]
+}
+
+/// Brushes: painting. The [`MIXING`] four paint through the Mixer Brush and blend with what is
+/// on the canvas (Clip Studio's watercolour, oil and blending brushes); gouache and the airbrush
+/// lay colour down without mixing.
+fn pira_brushes(base: &BrushSettings) -> Vec<BrushPreset> {
+    let g = |n: &str, b: BrushSettings| preset(BRUSHES, n, b);
+    let mixer = |wet: f32, load: f32, mix: f32, flow: f32| MixerSettings { wet, load, mix, flow, ..MixerSettings::default() };
+    vec![
+        g(
+            "Watercolour",
+            BrushSettings {
+                size: 50.0,
+                hardness: 0.35,
+                spacing: 0.06,
+                wet_edges: true,
+                shape_dynamics: size_dyn(pressure_min(0.4)),
+                texture: Texture { scale: 1.5, ..paper(9, 0.3) },
+                mixer: mixer(0.8, 0.35, 0.7, 0.6),
                 smoothing: smooth(0.2),
                 ..base.clone()
             },
         ),
         g(
-            "Airbrush",
+            "Oil Paint",
             BrushSettings {
-                size: 120.0,
-                hardness: 0.0,
-                flow: 0.08,
-                spacing: 0.1,
-                build_up: true,
-                build_up_rate: 25.0,
-                transfer: transfer(Dynamic::default(), pressure()),
-                tilt_shading: tilt(1.2, 0.5, 0.2),
+                size: 40.0,
+                tip: TipShape::Sampled(bristle_tip(64, 43)),
+                spacing: 0.03,
+                shape_dynamics: ShapeDynamics { enabled: true, angle: Dynamic::controlled(Control::Direction), size: pressure_min(0.5), ..Default::default() },
+                texture: Texture {
+                    enabled: true,
+                    pattern: Pattern::Procedural { style: PatternStyle::Canvas, size: 64, seed: 4 },
+                    depth: 0.25,
+                    ..Default::default()
+                },
+                mixer: mixer(0.35, 0.85, 0.45, 1.0),
+                smoothing: smooth(0.2),
+                ..base.clone()
+            },
+        ),
+        g(
+            "Blender",
+            BrushSettings {
+                size: 40.0,
+                hardness: 0.3,
+                spacing: 0.05,
+                shape_dynamics: size_dyn(pressure_min(0.4)),
+                // A clean, wet brush with no paint of its own: it only moves the canvas colour.
+                mixer: MixerSettings { load_after_stroke: false, ..mixer(1.0, 0.0, 1.0, 0.8) },
+                smoothing: smooth(0.2),
+                ..base.clone()
+            },
+        ),
+        g(
+            "Round Mixing Brush",
+            BrushSettings {
+                size: 30.0,
+                hardness: 0.8,
+                spacing: 0.04,
+                shape_dynamics: size_dyn(pressure_min(0.45)),
+                mixer: mixer(0.5, 0.6, 0.5, 0.9),
+                smoothing: smooth(0.2),
                 ..base.clone()
             },
         ),
@@ -139,6 +235,20 @@ fn pira_essentials(base: &BrushSettings) -> Vec<BrushPreset> {
                     ..Default::default()
                 },
                 tilt_shading: tilt(0.8, 0.4, 0.25),
+                ..base.clone()
+            },
+        ),
+        g(
+            "Airbrush",
+            BrushSettings {
+                size: 120.0,
+                hardness: 0.0,
+                flow: 0.08,
+                spacing: 0.1,
+                build_up: true,
+                build_up_rate: 25.0,
+                transfer: transfer(Dynamic::default(), pressure()),
+                tilt_shading: tilt(1.2, 0.5, 0.2),
                 ..base.clone()
             },
         ),
@@ -576,7 +686,9 @@ pub fn builtin() -> Vec<BrushPreset> {
 /// The built-in brushes as the desktop has them (Photoshop's set).
 fn desktop() -> Vec<BrushPreset> {
     let base = BrushSettings { pressure_size: false, spacing: 0.25, ..Default::default() };
-    let mut v = pira_essentials(&base);
+    let mut v = pira_pens(&base);
+    v.extend(pira_pencils(&base));
+    v.extend(pira_brushes(&base));
     v.extend(general(&base));
     v.extend(dry_media(&base).into_iter().map(pen_ready));
     v.extend(wet_media(&base).into_iter().map(pen_ready));
@@ -660,7 +772,7 @@ mod tests {
     #[test]
     fn builtins_are_grouped_and_unique() {
         let v = builtin();
-        assert!((40..=56).contains(&v.len()), "{}", v.len());
+        assert!((40..=72).contains(&v.len()), "{}", v.len());
         let mut names: Vec<&str> = v.iter().map(|p| p.name.as_str()).collect();
         names.sort_unstable();
         names.dedup();
@@ -696,7 +808,7 @@ mod tests {
     /// setting to turn on (PIRA's out-of-the-box promise).
     #[test]
     fn drawing_presets_follow_pressure_out_of_the_box() {
-        for p in builtin().iter().filter(|p| ["PIRA Essentials", "Dry Media", "Wet Media"].contains(&p.group.as_str())) {
+        for p in builtin().iter().filter(|p| [PENS, PENCILS, BRUSHES, "Dry Media", "Wet Media"].contains(&p.group.as_str())) {
             let light = crate::dynamics::base_diameter(&p.brush, &step(at(0.0, 0.1, 0.0)));
             let firm = crate::dynamics::base_diameter(&p.brush, &step(at(0.0, 1.0, 0.0)));
             let flow_driven = p.brush.transfer.enabled && p.brush.transfer.flow.control == Control::PenPressure;
@@ -737,6 +849,32 @@ mod tests {
         }
         let odd = BrushSettings { tilt_shading: TiltShading { start: 80.0, full: 10.0, size: f32::NAN, ..TiltShading::pencil() }, ..Default::default() };
         assert!(dab(&odd, at(0.0, 1.0, 90.0)).radius.is_finite());
+    }
+
+    /// Each PIRA family keeps its character: pens are solid ink with no paper grain and steady
+    /// lines; pencils have grain and shade with tilt; the mixing brushes are brushes, carry their
+    /// own mixer settings and are the only ones [`mixes`] names.
+    #[test]
+    fn pira_families_keep_their_character() {
+        let v = builtin();
+        let family = |g: &'static str| v.iter().filter(move |p| p.group == g);
+        for p in family(PENS) {
+            assert!(!p.brush.texture.enabled, "{}: pens have no paper grain", p.name);
+            assert!(p.brush.smoothing.amount >= 0.2, "{}: pens hold a steady line", p.name);
+            assert!(!mixes(&p.name), "{}", p.name);
+        }
+        for p in family(PENCILS) {
+            assert!(p.brush.texture.enabled, "{}: pencils catch the paper", p.name);
+            assert!(p.brush.tilt_shading.enabled, "{}: pencils shade with tilt", p.name);
+            assert!(p.brush.transfer.enabled && p.brush.transfer.opacity.control == Control::PenPressure, "{}: pressure darkens", p.name);
+            assert!(!mixes(&p.name), "{}", p.name);
+        }
+        for name in MIXING {
+            let p = find(&v, name).unwrap_or_else(|| panic!("{name} is built in"));
+            assert_eq!(p.group, BRUSHES, "{name}");
+            assert!(p.brush.mixer.wet > 0.0, "{name} picks up canvas colour");
+        }
+        assert!(mixes("oil paint") && !mixes("Dry Gouache") && !mixes("2B Pencil"));
     }
 
     #[test]

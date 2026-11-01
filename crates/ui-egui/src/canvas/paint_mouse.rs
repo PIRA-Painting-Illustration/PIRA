@@ -265,9 +265,13 @@ pub fn show_picker(app: &mut PhotocraftApp, ctx: &egui::Context) {
     let area = egui::Area::new(id).order(egui::Order::Foreground).fixed_pos(pos).show(ctx, |ui| {
         let before = app.session.tools.brush.clone();
         let mut b = before.clone();
+        // On a touch layout the Pen, Pencil and Brush each list their own brushes (and the
+        // user's own presets); elsewhere the picker lists them all.
+        let kit_list = crate::theme::Tokens::get(ui.ctx()).touch().then(|| crate::drawing_kit::picker_presets(app)).flatten();
         let list = &mut app.ui.brush_picker_list;
+        let presets = kit_list.as_deref().unwrap_or(&app.session.tools.presets);
         let frame = egui::Frame::popup(ui.style())
-            .show(ui, |ui| crate::brush_picker::body(ui, &mut b, &app.session.tools.presets, app.session.tools.current_preset.as_deref(), list, content));
+            .show(ui, |ui| crate::brush_picker::body(ui, &mut b, presets, app.session.tools.current_preset.as_deref(), list, content));
         let picks = frame.inner;
         // The corner grip resizes the picker, and the size is remembered across opens.
         if let Some(new) = crate::brush_picker::resize_grip(ui, frame.response.rect, content) {
