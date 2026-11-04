@@ -16,6 +16,7 @@ pub mod comps;
 pub mod effects;
 pub mod mode;
 pub mod pattern;
+pub mod scene3d;
 pub mod slices;
 pub mod text;
 pub mod text_styles;
@@ -37,6 +38,7 @@ pub use effects::{
 };
 pub use mode::{ColorTable, Duotone, DuotoneInk, StackMode};
 pub use pattern::Pattern;
+pub use scene3d::{Body3d, Camera3d, Figure3d, Look3d, Scene3d, Scene3dLayer, Shading3d};
 pub use photocraft_color::{BlendMode, Color, ColorMode, PixelFormat, SampleType};
 pub use photocraft_geom::{Affine, Rect, Size};
 pub use photocraft_raster::Surface;
@@ -591,6 +593,8 @@ pub enum LayerContent {
     Text(TextLayer),
     Shape(ShapeLayer),
     Smart(SmartObject),
+    /// A 3D layer: posable figures rendered through a camera.
+    Scene3d(Scene3dLayer),
 }
 
 impl LayerContent {
@@ -603,6 +607,7 @@ impl LayerContent {
             LayerContent::Text(_) => "Type",
             LayerContent::Shape(_) => "Shape",
             LayerContent::Smart(_) => "Smart Object",
+            LayerContent::Scene3d(_) => "3D",
         }
     }
 
@@ -732,6 +737,7 @@ impl Layer {
             LayerContent::Text(t) => t.cache.as_ref(),
             LayerContent::Shape(s) => s.cache.as_ref(),
             LayerContent::Smart(s) => s.cache.as_ref(),
+            LayerContent::Scene3d(s) => s.cache.as_ref(),
             _ => None,
         }
     }

@@ -340,6 +340,11 @@ pub enum ContentM {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         perspective: Option<[f64; 9]>,
     },
+    /// A 3D layer: its scene, plus the last render so other readers can show it without a renderer.
+    Scene3d {
+        scene: photocraft_doc::Scene3d,
+        cache: Option<SurfaceM>,
+    },
 }
 
 fn full_density() -> f32 {

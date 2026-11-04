@@ -1,0 +1,18 @@
+[package]
+name = "photocraft-posetrack"
+description = "Body and hand landmarks from a photo: Google's MediaPipe models (Apache 2.0), run on the CPU with tract"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+glam = "0.34"
+
+# The models need tract and add about 25 MB, so the browser build leaves them out
+# (`AVAILABLE` is false there), as it does face detection.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tract-onnx = "0.23"

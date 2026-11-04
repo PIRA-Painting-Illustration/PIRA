@@ -246,6 +246,7 @@ fn shift_shown(doc: &Document, l: &mut Layer, dx: i32, dy: i32) {
         }
         LayerContent::Shape(sh) => crate::vector_cmds::shift_shape(doc, sh, f64::from(dx), f64::from(dy)),
         LayerContent::Smart(sm) => crate::smart_cmds::shift_smart(sm, dx, dy),
+        LayerContent::Scene3d(sc) => sc.shift(dx, dy, |c| translate_surface(c, dx, dy)),
         LayerContent::Group(g) => {
             if let Some(ab) = &mut g.artboard {
                 ab.rect = ab.rect.translate(dx, dy);

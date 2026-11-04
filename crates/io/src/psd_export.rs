@@ -489,6 +489,9 @@ impl Ex {
                 }
             }
             LayerContent::Fill(f) => fill_rule(&mut raw, &mut regenerated, f),
+            LayerContent::Scene3d(_) => {
+                self.warnings.push(format!("layer \"{}\": 3D layers are saved to PSD as pixels (the scene stays editable in .pcraft)", l.name));
+            }
             LayerContent::Shape(sh) => {
                 if let Some(f) = &sh.fill {
                     fill_rule(&mut raw, &mut regenerated, f);
@@ -1014,6 +1017,10 @@ impl Ex {
                 }
                 LayerContent::Shape(sh) => {
                     let r = self.record(l, extra, sh.cache.as_ref());
+                    self.records.push(r);
+                }
+                LayerContent::Scene3d(sc) => {
+                    let r = self.record(l, extra, sc.cache.as_ref());
                     self.records.push(r);
                 }
                 LayerContent::Smart(sm) => {

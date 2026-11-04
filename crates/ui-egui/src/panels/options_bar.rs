@@ -134,6 +134,7 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                             || crate::analysis_ui::options_bar(app, ui, tool)
                             || crate::slice_ui::options_bar(app, ui, tool)
                             || crate::frame_tool::options_bar(app, ui, tool)
+                            || crate::object_tool::options_bar(app, ui, tool)
                             || crate::artboard_tool::options_bar(app, ui, tool)
                         {
                             // The Background Eraser and retouch tools draw their own bars, and

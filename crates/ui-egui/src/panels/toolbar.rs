@@ -7,7 +7,7 @@ use super::{Align2, Color32, PhotocraftApp, Pos2, Rect, Sense, Stroke, StrokeKin
 /// Photoshop toolbar: divider-separated sections of slots; each slot is a flyout group whose button
 /// shows the group's last-used tool.
 pub(super) const TOOL_SECTIONS: &[&[&[Tool]]] = &[
-    &[&[Tool::Move, Tool::Artboard]],
+    &[&[Tool::Move, Tool::Artboard, Tool::Object]],
     &[
         &[Tool::RectMarquee, Tool::EllipseMarquee, Tool::SingleRowMarquee, Tool::SingleColumnMarquee],
         &[Tool::Lasso, Tool::PolygonLasso, Tool::MagneticLasso],

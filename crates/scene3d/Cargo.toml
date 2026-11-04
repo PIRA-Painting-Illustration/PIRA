@@ -1,0 +1,23 @@
+[package]
+name = "photocraft-scene3d"
+description = "3D layers: posable mannequins, their pose library and a CPU renderer into layer pixels"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+photocraft-geom = { workspace = true }
+photocraft-color = { workspace = true }
+photocraft-raster = { workspace = true }
+photocraft-doc = { workspace = true }
+glam = "0.34"
+serde = { workspace = true }
+serde_json = { workspace = true }
+flate2 = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+rayon = { workspace = true }

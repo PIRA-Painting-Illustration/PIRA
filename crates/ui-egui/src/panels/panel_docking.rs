@@ -41,6 +41,7 @@ const PANELS: &[(&str, &str, Group)] = &[
     ("channels", "Channels", Group::Layers),
     ("paths", "Paths", Group::Layers),
     ("brushes", "Brushes", Group::Brushes),
+    ("materials3d", "3D", Group::Brushes),
 ];
 
 /// PhotoCraft's wording of craft-ui's docking labels, translated through `tl!`. The others keep
@@ -212,7 +213,7 @@ const PIRA_ICONS_WIDTH: f32 = 48.0;
 pub(crate) fn pira_workspace(app: &PhotocraftApp) -> Workspace {
     let group = |panels: &[&str]| craft_ui::docking::Group::new(panels.iter().map(|p| (*p).to_owned()).collect(), 0);
     let icons = |groups: Vec<craft_ui::docking::Group<String>>| Column { iconic: true, iconic_width: Some(PIRA_ICONS_WIDTH), ..Column::new(groups, 260.0) };
-    let start = Node::Dock { side: Side::Start, columns: vec![icons(vec![group(&["brushes"])])] };
+    let start = Node::Dock { side: Side::Start, columns: vec![icons(vec![group(&["brushes"]), group(&["materials3d"])])] };
     let end = Node::Dock {
         side: Side::End,
         // The first column is the one against the window edge.
@@ -1268,6 +1269,7 @@ fn panel_icon(id: &str) -> Option<&'static str> {
         "channels" => "image",
         "paths" => "spline",
         "brushes" => "brush",
+        "materials3d" => "figure-3d",
         "character" | "paragraph" => "type",
         _ => return None,
     })

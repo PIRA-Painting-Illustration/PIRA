@@ -29,6 +29,8 @@ photocraft-algo = { path = "crates/algo" }
 photocraft-io = { path = "crates/io" }
 photocraft-text = { path = "crates/text" }
 photocraft-vector = { path = "crates/vector" }
+photocraft-scene3d = { path = "crates/scene3d" }
+photocraft-posetrack = { path = "crates/posetrack" }
 photocraft-format = { path = "crates/format" }
 photocraft-automation = { path = "crates/automation" }
 photocraft-plugins = { path = "crates/plugins" }

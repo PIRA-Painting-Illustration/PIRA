@@ -1,0 +1,16 @@
+CMU Graphics Lab Motion Capture Database
+http://mocap.cs.cmu.edu/  (terms: http://mocap.cs.cmu.edu/faqs.php)
+
+The poses in cmu-poses.json.gz are single frames of the database's motion-capture takes,
+retargeted to PIRA's mannequin skeleton and de-duplicated. Each entry's "source" names its take
+and frame.
+
+Terms, in summary (see the FAQ above for CMU's own wording): the data is free to use, and may be
+included in products that are sold, but may not be resold directly, even in a converted form.
+CMU asks that published work using it carry their acknowledgement, given below.
+
+PIRA ships these poses inside the app as its 3D pose library; they are not sold as a separate
+pack.
+
+Acknowledgement: The data used in this project was obtained from mocap.cs.cmu.edu.
+The database was created with funding from NSF EIA-0196217.

@@ -331,7 +331,7 @@ pub(crate) fn shapeless_stroke_bounds(layer: &Layer) -> Option<Rect> {
     }
 
     match &layer.content {
-        LayerContent::Raster(_) | LayerContent::Text(_) | LayerContent::Shape(_) | LayerContent::Smart(_) => {
+        LayerContent::Raster(_) | LayerContent::Text(_) | LayerContent::Shape(_) | LayerContent::Smart(_) | LayerContent::Scene3d(_) => {
             let b = layer.surface().map_or(Rect::EMPTY, bounds::content_bounds);
             // A filled shape's effects follow its outline, also where its fill is transparent (as
             // in `layer_bounds`).

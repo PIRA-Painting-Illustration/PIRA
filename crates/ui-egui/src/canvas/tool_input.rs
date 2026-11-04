@@ -179,6 +179,10 @@ fn filter_event_before_tool(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::
     if crate::slice_ui::pointer(app, ev, mods) {
         return None;
     }
+    // Object tool: pose 3D figures and turn the 3D camera.
+    if crate::object_tool::pointer(app, ev, mods) {
+        return None;
+    }
     // Frame tool: draw rectangular and elliptical frames.
     if crate::frame_tool::pointer(app, ev, mods) {
         return None;

@@ -27,6 +27,8 @@ photocraft-paint = { workspace = true }
 photocraft-algo = { workspace = true }
 photocraft-text = { workspace = true }
 photocraft-vector = { workspace = true }
+photocraft-scene3d = { workspace = true }
+photocraft-posetrack = { workspace = true }
 photocraft-io = { workspace = true }
 photocraft-psd = { workspace = true }
 photocraft-format = { workspace = true }

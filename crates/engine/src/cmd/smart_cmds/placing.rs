@@ -99,6 +99,7 @@ pub(super) fn shift_layer(l: &mut Layer, dx: i32, dy: i32) {
             }
         }
         LayerContent::Smart(sm) => shift_smart(sm, dx, dy),
+        LayerContent::Scene3d(sc) => sc.shift(dx, dy, mv),
         LayerContent::Group(g) => g.children.iter_mut().for_each(|c| shift_layer(c, dx, dy)),
         LayerContent::Adjustment(_) | LayerContent::Fill(_) => {}
     }
