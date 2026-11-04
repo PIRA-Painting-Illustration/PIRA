@@ -2435,7 +2435,7 @@ cameraRaw	Blending	混合
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	自动模式会在可用时使用 GPU 加速，出错时改用 CPU 渲染。
 	Switched to CPU rendering	已切换到 CPU 渲染
 	GPU acceleration could not continue. Your documents are unchanged.	GPU 加速无法继续。您的文档未更改。
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft 正在使用 CPU 合成图像。窗口仍可能使用您的显卡。
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA 正在使用 CPU 合成图像。窗口仍可能使用您的显卡。
 	Retry GPU requires a restart. Save your work first.	重试 GPU 需要重新启动。请先保存您的工作。
 	Retry GPU tries the graphics processor again now.	重试 GPU 会立即再次尝试使用图形处理器。
 	GPU acceleration resumed.	已恢复 GPU 加速。
@@ -2983,17 +2983,17 @@ curves	Smooth	平滑
 	Kept {name}: written by another application	已保留 {name}：由其他应用程序写入
 	Shadow Tint	阴影色调
 	Check for Updates…	检查更新…
-	PhotoCraft Updates	PhotoCraft 更新
+	PIRA Updates	PIRA 更新
 	Checking for updates…	正在检查更新…
 	Open the release page to choose an installer for your system.	打开发布页，选择适合您系统的安装包。
 	Open Download Page	打开下载页面
-	PhotoCraft is up to date.	PhotoCraft 已是最新版本。
+	PIRA is up to date.	PIRA 已是最新版本。
 	Could not check for updates.	无法检查更新。
 	Updates have not been checked yet.	尚未检查更新。
 	Check Again	重新检查
 	Automatically Check for Updates	自动检查更新
 	Installed version: {version}	已安装版本：{version}
-	PhotoCraft {version} is available.	PhotoCraft {version} 已发布。
+	PIRA {version} is available.	PIRA {version} 已发布。
 	Paints from the History panel's source state	从历史记录面板的源状态绘画
 	Sets the source for the history brush	设置历史记录画笔的源
 	Highlight Mode	高光模式

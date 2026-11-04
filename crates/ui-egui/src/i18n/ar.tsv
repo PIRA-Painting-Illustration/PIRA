@@ -2343,7 +2343,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	يستخدم الوضع التلقائي تسريع GPU عند توفره ويعود إلى تصيير CPU عند حدوث أخطاء.
 	Switched to CPU rendering	تم التبديل إلى تصيير CPU
 	GPU acceleration could not continue. Your documents are unchanged.	تعذّر استمرار تسريع GPU. مستنداتك لم تتغير.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	يستخدم PhotoCraft مركب الصور على CPU. قد تظل النافذة تستخدم محول الرسومات لديك.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	يستخدم PIRA مركب الصور على CPU. قد تظل النافذة تستخدم محول الرسومات لديك.
 	Retry GPU requires a restart. Save your work first.	تتطلب إعادة محاولة GPU إعادة التشغيل. احفظ عملك أولًا.
 	Retry GPU tries the graphics processor again now.	تؤدي إعادة محاولة GPU إلى تجربة معالج الرسومات مرة أخرى الآن.
 	GPU acceleration resumed.	تم استئناف تسريع GPU.
@@ -3330,17 +3330,17 @@ curves	Smooth	تنعيم
 	Shadow Tint	صبغة الظلال
 # PhotoCraft release checks.
 	Check for Updates…	التحقق من وجود تحديثات…
-	PhotoCraft Updates	تحديثات PhotoCraft
+	PIRA Updates	تحديثات PIRA
 	Checking for updates…	جارٍ التحقق من وجود تحديثات…
 	Open the release page to choose an installer for your system.	افتح صفحة الإصدار لاختيار برنامج التثبيت المناسب لنظامك.
 	Open Download Page	فتح صفحة التنزيل
-	PhotoCraft is up to date.	PhotoCraft محدّث.
+	PIRA is up to date.	PIRA محدّث.
 	Could not check for updates.	تعذر التحقق من وجود تحديثات.
 	Updates have not been checked yet.	لم يتم التحقق من التحديثات بعد.
 	Check Again	التحقق مرة أخرى
 	Automatically Check for Updates	التحقق من وجود تحديثات تلقائيًا
 	Installed version: {version}	الإصدار المثبت: {version}
-	PhotoCraft {version} is available.	يتوفر PhotoCraft {version}.
+	PIRA {version} is available.	يتوفر PIRA {version}.
 # History panel › History Brush source (#2966)
 	Paints from the History panel's source state	يرسم من حالة المصدر في لوحة السجل
 	Sets the source for the history brush	يحدد مصدر فرشاة السجل

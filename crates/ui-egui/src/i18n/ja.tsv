@@ -2359,7 +2359,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	自動モードは利用可能な場合にGPUを使用し、エラー時はCPU描画に切り替えます。
 	Switched to CPU rendering	CPU 描画に切り替えました
 	GPU acceleration could not continue. Your documents are unchanged.	GPU アクセラレーションを継続できませんでした。ドキュメントは変更されていません。
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft は CPU で画像を合成しています。ウィンドウは引き続きグラフィックスアダプターを使用する場合があります。
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA は CPU で画像を合成しています。ウィンドウは引き続きグラフィックスアダプターを使用する場合があります。
 	Retry GPU requires a restart. Save your work first.	GPU の再試行には再起動が必要です。先に作業を保存してください。
 	Retry GPU tries the graphics processor again now.	GPU を再試行すると、すぐにグラフィックプロセッサーをもう一度試します。
 	GPU acceleration resumed.	GPU アクセラレーションを再開しました。
@@ -4001,17 +4001,17 @@ curves	Smooth	スムーズ
 	Kept {name}: written by another application	{name} はそのままにしました: 別のアプリケーションが書き込んだファイルです
 	Shadow Tint	シャドウの色かぶり補正
 	Check for Updates…	アップデートを確認…
-	PhotoCraft Updates	PhotoCraft のアップデート
+	PIRA Updates	PIRA のアップデート
 	Checking for updates…	アップデートを確認中…
 	Open the release page to choose an installer for your system.	リリースページでお使いのシステム用のインストーラーを選択してください。
 	Open Download Page	ダウンロードページを開く
-	PhotoCraft is up to date.	PhotoCraft は最新です。
+	PIRA is up to date.	PIRA は最新です。
 	Could not check for updates.	アップデートを確認できませんでした。
 	Updates have not been checked yet.	まだアップデートを確認していません。
 	Check Again	再確認
 	Automatically Check for Updates	アップデートを自動的に確認
 	Installed version: {version}	インストール済みのバージョン: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} が利用可能です。
+	PIRA {version} is available.	PIRA {version} が利用可能です。
 	Paints from the History panel's source state	ヒストリーパネルのソース状態からペイントします
 	Sets the source for the history brush	ヒストリーブラシのソースを設定します
 	Highlight Mode	ハイライトモード

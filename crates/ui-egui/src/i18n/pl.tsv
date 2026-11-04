@@ -2794,7 +2794,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Tryb automatyczny używa akceleracji GPU, gdy jest dostępna, a w razie błędów przełącza się na renderowanie CPU.
 	Switched to CPU rendering	Przełączono na renderowanie CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Akceleracja GPU nie mogła być kontynuowana. Twoje dokumenty nie zostały zmienione.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft używa kompozytora obrazu CPU. Okno może nadal korzystać z karty graficznej.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA używa kompozytora obrazu CPU. Okno może nadal korzystać z karty graficznej.
 	Retry GPU requires a restart. Save your work first.	Ponowna próba z GPU wymaga restartu. Najpierw zapisz swoją pracę.
 	Retry GPU tries the graphics processor again now.	Spróbuj ponownie z GPU od razu ponawia próbę z procesorem graficznym.
 	GPU acceleration resumed.	Akceleracja GPU wznowiona.
@@ -3942,17 +3942,17 @@ curves	Smooth	Wygładź
 	Kept {name}: written by another application	Zachowano {name}: zapisany przez inną aplikację
 	Shadow Tint	Tinta cieni
 	Check for Updates…	Sprawdź aktualizacje…
-	PhotoCraft Updates	Aktualizacje PhotoCraft
+	PIRA Updates	Aktualizacje PIRA
 	Checking for updates…	Sprawdzanie aktualizacji…
 	Open the release page to choose an installer for your system.	Otwórz stronę wydania, aby wybrać instalator dla swojego systemu.
 	Open Download Page	Otwórz stronę pobierania
-	PhotoCraft is up to date.	PhotoCraft jest aktualny.
+	PIRA is up to date.	PIRA jest aktualny.
 	Could not check for updates.	Nie udało się sprawdzić aktualizacji.
 	Updates have not been checked yet.	Aktualizacje nie zostały jeszcze sprawdzone.
 	Check Again	Sprawdź ponownie
 	Automatically Check for Updates	Automatycznie sprawdzaj aktualizacje
 	Installed version: {version}	Zainstalowana wersja: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} jest dostępny.
+	PIRA {version} is available.	PIRA {version} jest dostępny.
 	Paints from the History panel's source state	Maluje ze stanu źródłowego panelu Historia
 	Sets the source for the history brush	Ustawia źródło dla pędzla historii
 	Highlight Mode	Tryb świateł

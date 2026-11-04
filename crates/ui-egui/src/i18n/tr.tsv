@@ -2312,7 +2312,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Otomatik, mümkün olduğunda GPU hızlandırmayı kullanır ve hatalarda CPU oluşturmaya geri döner.
 	Switched to CPU rendering	CPU oluşturmaya geçildi
 	GPU acceleration could not continue. Your documents are unchanged.	GPU hızlandırması devam edemedi. Belgeleriniz değişmedi.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft, CPU görüntü birleştiricisini kullanıyor. Pencere yine de grafik bağdaştırıcınızı kullanıyor olabilir.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA, CPU görüntü birleştiricisini kullanıyor. Pencere yine de grafik bağdaştırıcınızı kullanıyor olabilir.
 	Retry GPU requires a restart. Save your work first.	GPU'yu yeniden dene, yeniden başlatma gerektirir. Öncelikle çalışmanızı kaydedin.
 	Keep Using CPU	CPU'yu Kullanmaya Devam Et
 	Retry GPU tries the graphics processor again now.	GPU'yu yeniden dene, grafik işlemciyi hemen yeniden dener.
@@ -4033,17 +4033,17 @@ cameraData	Lens	Lens
 	Shadow Color	Gölge Rengi
 	Shadow Opacity	Gölge Opaklığı
 	Check for Updates…	Güncellemeleri Denetle…
-	PhotoCraft Updates	PhotoCraft Güncellemeleri
+	PIRA Updates	PIRA Güncellemeleri
 	Checking for updates…	Güncellemeler denetleniyor…
 	Open the release page to choose an installer for your system.	Sisteminize uygun yükleyiciyi seçmek için sürüm sayfasını açın.
 	Open Download Page	İndirme Sayfasını Aç
-	PhotoCraft is up to date.	PhotoCraft güncel.
+	PIRA is up to date.	PIRA güncel.
 	Could not check for updates.	Güncellemeler denetlenemedi.
 	Updates have not been checked yet.	Güncellemeler henüz denetlenmedi.
 	Check Again	Yeniden Denetle
 	Automatically Check for Updates	Güncellemeleri Otomatik Denetle
 	Installed version: {version}	Yüklü sürüm: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} kullanılabilir.
+	PIRA {version} is available.	PIRA {version} kullanılabilir.
 	Use the embedded profile ({profile})	Gömülü profili kullanın ({profile})
 	Convert to the working space ({profile})	Çalışma alanına dönüştürün ({profile})
 	Remember this choice for future images	Bu seçimi sonraki görüntüler için hatırla

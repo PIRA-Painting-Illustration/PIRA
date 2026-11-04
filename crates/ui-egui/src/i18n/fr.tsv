@@ -2788,7 +2788,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Le mode automatique utilise l'accélération GPU lorsqu'elle est disponible et repasse au rendu CPU en cas d'erreur.
 	Switched to CPU rendering	Passage au rendu CPU
 	GPU acceleration could not continue. Your documents are unchanged.	L'accélération GPU n'a pas pu continuer. Vos documents sont intacts.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft utilise le compositeur d'images CPU. La fenêtre peut encore utiliser votre carte graphique.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA utilise le compositeur d'images CPU. La fenêtre peut encore utiliser votre carte graphique.
 	Retry GPU requires a restart. Save your work first.	Réessayer le GPU nécessite un redémarrage. Enregistrez votre travail au préalable.
 	Retry GPU tries the graphics processor again now.	Réessayer le GPU sollicite de nouveau le processeur graphique dès maintenant.
 	GPU acceleration resumed.	Accélération GPU rétablie.
@@ -3333,17 +3333,17 @@ curves	Smooth	Lisser
 	Kept {name}: written by another application	{name} conservé : écrit par une autre application
 	Shadow Tint	Teinte des ombres
 	Check for Updates…	Rechercher des mises à jour…
-	PhotoCraft Updates	Mises à jour de PhotoCraft
+	PIRA Updates	Mises à jour de PIRA
 	Checking for updates…	Recherche de mises à jour…
 	Open the release page to choose an installer for your system.	Ouvrez la page de la version pour choisir un programme d’installation pour votre système.
 	Open Download Page	Ouvrir la page de téléchargement
-	PhotoCraft is up to date.	PhotoCraft est à jour.
+	PIRA is up to date.	PIRA est à jour.
 	Could not check for updates.	Impossible de rechercher des mises à jour.
 	Updates have not been checked yet.	Les mises à jour n’ont pas encore été vérifiées.
 	Check Again	Vérifier à nouveau
 	Automatically Check for Updates	Rechercher automatiquement des mises à jour
 	Installed version: {version}	Version installée : {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} est disponible.
+	PIRA {version} is available.	PIRA {version} est disponible.
 	Paints from the History panel's source state	Peint à partir de l'état source du panneau Historique
 	Sets the source for the history brush	Définit la source du pinceau d'historique
 	Highlight Mode	Mode des tons clairs
@@ -4184,7 +4184,7 @@ curves	Smooth	Lisser
 	Save a Copy	Enregistrer une copie
 	Save before closing?	Enregistrer avant de fermer ?
 	Save for Web (Legacy)	Enregistrer pour le Web (ancien)
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Enregistrez votre travail et redémarrez PhotoCraft pour réessayer l'accélération GPU. Le rendu CPU reste actif pour cette session.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Enregistrez votre travail et redémarrez PIRA pour réessayer l'accélération GPU. Le rendu CPU reste actif pour cette session.
 	Saved a copy as {path}	Copie enregistrée sous {path}
 	Saved {path}; image assets: {n} in {dir}	{path} enregistré ; ressources d'image : {n} dans {dir}
 	Saving…	Enregistrement…

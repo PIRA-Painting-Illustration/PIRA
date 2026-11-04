@@ -2376,7 +2376,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Automatický režim používá dostupnou GPU a při chybě přejde na CPU.
 	Switched to CPU rendering	Přepnuto na vykreslování CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Akcelerace GPU nemohla pokračovat. Dokumenty zůstaly nezměněny.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft skládá obraz pomocí CPU. Okno může nadále používat grafický adaptér.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA skládá obraz pomocí CPU. Okno může nadále používat grafický adaptér.
 	Retry GPU requires a restart. Save your work first.	Opakování GPU vyžaduje restart. Nejprve uložte práci.
 	Retry GPU tries the graphics processor again now.	Opakování GPU zkusí grafický procesor znovu hned teď.
 	GPU acceleration resumed.	Akcelerace GPU obnovena.
@@ -3763,7 +3763,7 @@ curves	Smooth	Vyhladit
 	Preferences can't be saved	Předvolby nelze uložit
 	PhotoCraft keeps retrying; until a save succeeds, preference changes are lost when it closes.	PhotoCraft se nadále pokouší o uložení; dokud nebude úspěšné, změny předvoleb se při zavření ztratí.
 	GPU retry scheduled	Naplánován další pokus o použití GPU
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Chcete-li znovu zkusit akceleraci GPU, uložte práci a restartujte PhotoCraft. V této relaci zůstane aktivní vykreslování pomocí CPU.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Chcete-li znovu zkusit akceleraci GPU, uložte práci a restartujte PIRA. V této relaci zůstane aktivní vykreslování pomocí CPU.
 	GPU device was lost; using the CPU renderer.	Spojení se zařízením GPU bylo ztraceno; používá se vykreslování pomocí CPU.
 	GPU error; using the CPU renderer.	Chyba GPU; používá se vykreslování pomocí CPU.
 @plural	{what} with {n} warning|{what} with {n} warnings	{what} ({n} upozornění)|{what} ({n} upozornění)|{what} ({n} upozornění)
@@ -3943,17 +3943,17 @@ navigator	Zoom	Zvětšení
 	Kept {name}: written by another application	Soubor {name} ponechán: zapsala ho jiná aplikace
 	Shadow Tint	Odstín stínů
 	Check for Updates…	Zkontrolovat aktualizace…
-	PhotoCraft Updates	Aktualizace PhotoCraft
+	PIRA Updates	Aktualizace PIRA
 	Checking for updates…	Kontrola aktualizací…
 	Open the release page to choose an installer for your system.	Otevřete stránku vydání a vyberte instalační program pro svůj systém.
 	Open Download Page	Otevřít stránku ke stažení
-	PhotoCraft is up to date.	PhotoCraft je aktuální.
+	PIRA is up to date.	PIRA je aktuální.
 	Could not check for updates.	Aktualizace se nepodařilo zkontrolovat.
 	Updates have not been checked yet.	Aktualizace ještě nebyly zkontrolovány.
 	Check Again	Zkontrolovat znovu
 	Automatically Check for Updates	Automaticky kontrolovat aktualizace
 	Installed version: {version}	Nainstalovaná verze: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} je k dispozici.
+	PIRA {version} is available.	PIRA {version} je k dispozici.
 	Paints from the History panel's source state	Maluje ze zdrojového stavu panelu Historie
 	Sets the source for the history brush	Nastaví zdroj pro štětec historie
 	Highlight Mode	Režim světel

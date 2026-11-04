@@ -2540,7 +2540,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Automatiskt använder GPU-acceleration när det är tillgängligt och återgår till CPU-rendering vid fel.
 	Switched to CPU rendering	Bytte till CPU-rendering
 	GPU acceleration could not continue. Your documents are unchanged.	GPU-accelerationen kunde inte fortsätta. Dina dokument är oförändrade.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft använder CPU-bildkompositören. Fönstret kan fortfarande använda ditt grafikkort.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA använder CPU-bildkompositören. Fönstret kan fortfarande använda ditt grafikkort.
 	Retry GPU requires a restart. Save your work first.	Att försöka med GPU igen kräver en omstart. Spara ditt arbete först.
 	Retry GPU tries the graphics processor again now.	”Försök med GPU igen” provar grafikprocessorn på nytt nu.
 	GPU acceleration resumed.	GPU-accelerationen har återupptagits.
@@ -3276,17 +3276,17 @@ curves	Smooth	Jämna ut
 	Shadow Opacity	Skuggopacitet
 # PhotoCraft release checks.
 	Check for Updates…	Sök efter uppdateringar…
-	PhotoCraft Updates	PhotoCraft-uppdateringar
+	PIRA Updates	PIRA-uppdateringar
 	Checking for updates…	Söker efter uppdateringar…
 	Open the release page to choose an installer for your system.	Öppna versionssidan för att välja ett installationsprogram för ditt system.
 	Open Download Page	Öppna hämtningssida
-	PhotoCraft is up to date.	PhotoCraft är uppdaterat.
+	PIRA is up to date.	PIRA är uppdaterat.
 	Could not check for updates.	Det gick inte att söka efter uppdateringar.
 	Updates have not been checked yet.	Ingen sökning efter uppdateringar har gjorts ännu.
 	Check Again	Sök igen
 	Automatically Check for Updates	Sök efter uppdateringar automatiskt
 	Installed version: {version}	Installerad version: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} finns tillgänglig.
+	PIRA {version} is available.	PIRA {version} finns tillgänglig.
 # Embedded Profile Mismatch: profile names beside the choices, Remember this choice
 	Use the embedded profile ({profile})	Använd den inbäddade profilen ({profile})
 	Convert to the working space ({profile})	Konvertera till arbetsfärgrymden ({profile})
@@ -4302,7 +4302,7 @@ curves	Smooth	Jämna ut
 	Save a Copy	Spara en kopia
 	Save before closing?	Vill du spara innan du stänger?
 	Save for Web (Legacy)	Spara för webben (äldre)
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Spara ditt arbete och starta om PhotoCraft för att försöka med GPU-acceleration igen. CPU-rendering används under resten av sessionen.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Spara ditt arbete och starta om PIRA för att försöka med GPU-acceleration igen. CPU-rendering används under resten av sessionen.
 	Saved a copy as {path}	Sparade en kopia som {path}
 	Saved {path}; image assets: {n} in {dir}	Sparade {path}; bildresurser: {n} i {dir}
 	Saving…	Sparar…

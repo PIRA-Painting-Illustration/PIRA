@@ -2804,7 +2804,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Automatski režim koristi GPU ubrzanje kada je dostupno, a u slučaju grešaka prelazi na renderovanje procesorom.
 	Switched to CPU rendering	Prebačeno na renderovanje procesorom
 	GPU acceleration could not continue. Your documents are unchanged.	GPU ubrzanje nije moglo da se nastavi. Vaši dokumenti su nepromenjeni.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft koristi CPU kompozitor slike. Prozor i dalje može da koristi vaš grafički adapter.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA koristi CPU kompozitor slike. Prozor i dalje može da koristi vaš grafički adapter.
 	Retry GPU requires a restart. Save your work first.	Ponovni pokušaj sa GPU-om zahteva ponovno pokretanje. Prvo sačuvajte svoj rad.
 	Retry GPU tries the graphics processor again now.	Ponovo pokušaj sa GPU-om odmah ponovo isprobava grafički procesor.
 	GPU acceleration resumed.	GPU ubrzanje je nastavljeno.
@@ -4099,7 +4099,7 @@ layerLabel	No Color	Bez boje
 	Preferences can't be saved	Podešavanja ne mogu da se sačuvaju
 	PhotoCraft keeps retrying; until a save succeeds, preference changes are lost when it closes.	PhotoCraft nastavlja da pokušava; dok čuvanje ne uspe, izmene podešavanja se gube pri zatvaranju.
 	GPU retry scheduled	Zakazan je ponovni pokušaj sa GPU-om
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Sačuvajte svoj rad i ponovo pokrenite PhotoCraft da biste ponovo pokušali GPU ubrzanje. Renderovanje procesorom ostaje aktivno do kraja ove sesije.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Sačuvajte svoj rad i ponovo pokrenite PIRA da biste ponovo pokušali GPU ubrzanje. Renderovanje procesorom ostaje aktivno do kraja ove sesije.
 	GPU device was lost; using the CPU renderer.	GPU uređaj je izgubljen; koristi se renderovanje procesorom.
 	GPU error; using the CPU renderer.	Greška GPU-a; koristi se renderovanje procesorom.
 	Couldn't open {name}: {error}	Otvaranje {name} nije uspelo: {error}
@@ -4524,17 +4524,17 @@ shape	Appearance	Izgled
 	Not rendered: this adjustment ({key}) is kept as imported.	Није приказано: ово прилагођавање ({key}) је задржано онако како је увезено.
 	Print preview image	Print preview image
 	Check for Updates…	Proveri ažuriranja…
-	PhotoCraft Updates	Ažuriranja za PhotoCraft
+	PIRA Updates	Ažuriranja za PIRA
 	Checking for updates…	Provera ažuriranja…
 	Open the release page to choose an installer for your system.	Otvorite stranicu izdanja da biste izabrali instalacioni program za svoj sistem.
 	Open Download Page	Otvori stranicu za preuzimanje
-	PhotoCraft is up to date.	PhotoCraft je ažuran.
+	PIRA is up to date.	PIRA je ažuran.
 	Could not check for updates.	Nije moguće proveriti ažuriranja.
 	Updates have not been checked yet.	Ažuriranja još nisu proverena.
 	Check Again	Proveri ponovo
 	Automatically Check for Updates	Automatski proveravaj ažuriranja
 	Installed version: {version}	Instalirana verzija: {version}
-	PhotoCraft {version} is available.	Dostupan je PhotoCraft {version}.
+	PIRA {version} is available.	Dostupan je PIRA {version}.
 	Hue Cube	Kocka nijanse
 	Brightness Cube	Kocka osvetljenosti
 	Color Wheel	Točak boja

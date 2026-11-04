@@ -2542,7 +2542,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Automatisk bruger GPU-acceleration, når det er muligt, og falder tilbage til CPU-gengivelse ved fejl.
 	Switched to CPU rendering	Skiftede til CPU-gengivelse
 	GPU acceleration could not continue. Your documents are unchanged.	GPU-accelerationen kunne ikke fortsætte. Dine dokumenter er uændrede.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft bruger CPU-billedsammensætteren. Vinduet bruger muligvis stadig din grafikadapter.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA bruger CPU-billedsammensætteren. Vinduet bruger muligvis stadig din grafikadapter.
 	Retry GPU requires a restart. Save your work first.	Genstart kræves for at prøve GPU igen. Gem dit arbejde først.
 	Retry GPU tries the graphics processor again now.	Prøv GPU igen forsøger at bruge grafikprocessoren igen nu.
 	GPU acceleration resumed.	GPU-accelerationen er genoptaget.
@@ -3278,17 +3278,17 @@ curves	Smooth	Udjævn
 	Shadow Opacity	Skyggeopacitet
 # PhotoCraft release checks.
 	Check for Updates…	Søg efter opdateringer…
-	PhotoCraft Updates	PhotoCraft-opdateringer
+	PIRA Updates	PIRA-opdateringer
 	Checking for updates…	Søger efter opdateringer…
 	Open the release page to choose an installer for your system.	Åbn udgivelsessiden for at vælge et installationsprogram til dit system.
 	Open Download Page	Åbn downloadsiden
-	PhotoCraft is up to date.	PhotoCraft er opdateret.
+	PIRA is up to date.	PIRA er opdateret.
 	Could not check for updates.	Kunne ikke søge efter opdateringer.
 	Updates have not been checked yet.	Der er endnu ikke søgt efter opdateringer.
 	Check Again	Søg igen
 	Automatically Check for Updates	Søg automatisk efter opdateringer
 	Installed version: {version}	Installeret version: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} er tilgængelig.
+	PIRA {version} is available.	PIRA {version} er tilgængelig.
 # Embedded Profile Mismatch: profile names beside the choices, Remember this choice
 	Use the embedded profile ({profile})	Brug den indlejrede profil ({profile})
 	Convert to the working space ({profile})	Konvertér til arbejdsfarverummet ({profile})
@@ -4304,7 +4304,7 @@ curves	Smooth	Udjævn
 	Save a Copy	Gem en kopi
 	Save before closing?	Gem før lukning?
 	Save for Web (Legacy)	Gem til web (ældre)
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Gem dit arbejde, og genstart PhotoCraft for at prøve GPU-acceleration igen. CPU-gengivelse er stadig aktiv i denne session.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Gem dit arbejde, og genstart PIRA for at prøve GPU-acceleration igen. CPU-gengivelse er stadig aktiv i denne session.
 	Saved a copy as {path}	Gemte en kopi som {path}
 	Saved {path}; image assets: {n} in {dir}	Gemte {path}; billedaktiver: {n} i {dir}
 	Saving…	Gemmer…

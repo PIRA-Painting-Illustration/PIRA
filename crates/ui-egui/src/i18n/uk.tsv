@@ -2595,7 +2595,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Автоматичний режим використовує прискорення GPU, коли воно доступне, та переходить на рендеринг CPU в разі помилок.
 	Switched to CPU rendering	Перехід на рендеринг CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Прискорення GPU не може продовжувати роботу. Ваші документи не змінено.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft використовує компонувальник зображень CPU. Вікно може й далі використовувати ваш графічний адаптер.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA використовує компонувальник зображень CPU. Вікно може й далі використовувати ваш графічний адаптер.
 	Retry GPU requires a restart. Save your work first.	Повторна спроба використати GPU потребує перезапуску. Спочатку збережіть роботу.
 	Retry GPU tries the graphics processor again now.	Повторити спробу з GPU — одразу знову спробувати графічний процесор.
 	GPU acceleration resumed.	Прискорення GPU відновлено.
@@ -4028,17 +4028,17 @@ curves	Smooth	Згладити
 	Kept {name}: written by another application	{name} залишено без змін: записаний іншою програмою
 	Shadow Tint	Відтінок тіней
 	Check for Updates…	Перевірити оновлення…
-	PhotoCraft Updates	Оновлення PhotoCraft
+	PIRA Updates	Оновлення PIRA
 	Checking for updates…	Перевірка оновлень…
 	Open the release page to choose an installer for your system.	Відкрийте сторінку випуску й виберіть інсталятор для своєї системи.
 	Open Download Page	Відкрити сторінку завантаження
-	PhotoCraft is up to date.	PhotoCraft оновлено до останньої версії.
+	PIRA is up to date.	PIRA оновлено до останньої версії.
 	Could not check for updates.	Не вдалося перевірити оновлення.
 	Updates have not been checked yet.	Оновлення ще не перевірялися.
 	Check Again	Перевірити знову
 	Automatically Check for Updates	Автоматично перевіряти оновлення
 	Installed version: {version}	Встановлена версія: {version}
-	PhotoCraft {version} is available.	Доступна версія PhotoCraft {version}.
+	PIRA {version} is available.	Доступна версія PIRA {version}.
 	Paints from the History panel's source state	Малює з вихідного стану панелі «Історія»
 	Sets the source for the history brush	Задає джерело для пензля історії
 	Highlight Mode	Режим світлих тонів
