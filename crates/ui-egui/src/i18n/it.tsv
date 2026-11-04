@@ -2438,7 +2438,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Automatico usa accelerazione GPU quando disponibile e ripiega su CPU in caso di errori.
 	Switched to CPU rendering	Passato a rendering CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Accelerazione GPU non ha potuto continuare. I documenti sono invariati.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft sta componendo immagini su CPU. La finestra può ancora usare adattatore grafico.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA sta componendo immagini su CPU. La finestra può ancora usare adattatore grafico.
 	Retry GPU requires a restart. Save your work first.	Riprovare GPU richiede riavvio. Salva prima il lavoro.
 	Retry GPU tries the graphics processor again now.	Riprova GPU riprova subito il processore grafico.
 	GPU acceleration resumed.	Accelerazione GPU ripresa.
@@ -4129,7 +4129,7 @@ layerLabel	No Color	Nessun colore
 	Preferences can't be saved	Impossibile salvare le preferenze
 	PhotoCraft keeps retrying; until a save succeeds, preference changes are lost when it closes.	PhotoCraft continua a riprovare; finché un salvataggio non riesce, le modifiche alle preferenze andranno perse alla chiusura.
 	GPU retry scheduled	Nuovo tentativo GPU programmato
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Salva il lavoro e riavvia PhotoCraft per riprovare l'accelerazione GPU. Per questa sessione resta attivo il rendering su CPU.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Salva il lavoro e riavvia PIRA per riprovare l'accelerazione GPU. Per questa sessione resta attivo il rendering su CPU.
 	GPU device was lost; using the CPU renderer.	Dispositivo GPU perso; uso il rendering su CPU.
 	GPU error; using the CPU renderer.	Errore GPU; uso il rendering su CPU.
 	Couldn't open {name}: {error}	Impossibile aprire {name}: {error}
@@ -4289,17 +4289,17 @@ navigator	Zoom	Zoom
 	Kept {name}: written by another application	{name} mantenuto: scritto da un’altra applicazione
 	Shadow Tint	Tinta ombre
 	Check for Updates…	Cerca aggiornamenti…
-	PhotoCraft Updates	Aggiornamenti di PhotoCraft
+	PIRA Updates	Aggiornamenti di PIRA
 	Checking for updates…	Ricerca aggiornamenti…
 	Open the release page to choose an installer for your system.	Apri la pagina della versione per scegliere un programma di installazione per il tuo sistema.
 	Open Download Page	Apri pagina di download
-	PhotoCraft is up to date.	PhotoCraft è aggiornato.
+	PIRA is up to date.	PIRA è aggiornato.
 	Could not check for updates.	Impossibile cercare aggiornamenti.
 	Updates have not been checked yet.	Gli aggiornamenti non sono ancora stati verificati.
 	Check Again	Controlla di nuovo
 	Automatically Check for Updates	Cerca automaticamente aggiornamenti
 	Installed version: {version}	Versione installata: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} è disponibile.
+	PIRA {version} is available.	PIRA {version} è disponibile.
 	Paints from the History panel's source state	Dipinge dallo stato di origine del pannello Cronologia
 	Sets the source for the history brush	Imposta l'origine del pennello storia
 	Highlight Mode	Metodo luci

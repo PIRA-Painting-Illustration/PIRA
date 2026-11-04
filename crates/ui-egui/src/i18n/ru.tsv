@@ -2633,7 +2633,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Автоматический режим использует GPU, когда он доступен, и переходит на CPU при ошибках.
 	Switched to CPU rendering	Включена отрисовка на CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Ускорение GPU остановлено. Документы не изменены.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft обрабатывает изображения на CPU. Окно может продолжать использовать графический адаптер.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA обрабатывает изображения на CPU. Окно может продолжать использовать графический адаптер.
 	Retry GPU requires a restart. Save your work first.	Для повтора GPU нужен перезапуск. Сначала сохраните работу.
 	Retry GPU tries the graphics processor again now.	Повторить GPU — сразу снова попробовать графический процессор.
 	GPU acceleration resumed.	Ускорение GPU возобновлено.
@@ -3314,17 +3314,17 @@ curves	Smooth	Сгладить
 	Shadow Color	Цвет теней
 	Shadow Opacity	Непрозрачность теней
 	Check for Updates…	Проверить обновления…
-	PhotoCraft Updates	Обновления PhotoCraft
+	PIRA Updates	Обновления PIRA
 	Checking for updates…	Проверка обновлений…
 	Open the release page to choose an installer for your system.	Откройте страницу выпуска и выберите установщик для своей системы.
 	Open Download Page	Открыть страницу загрузки
-	PhotoCraft is up to date.	Установлена последняя версия PhotoCraft.
+	PIRA is up to date.	Установлена последняя версия PIRA.
 	Could not check for updates.	Не удалось проверить обновления.
 	Updates have not been checked yet.	Обновления ещё не проверялись.
 	Check Again	Проверить снова
 	Automatically Check for Updates	Автоматически проверять обновления
 	Installed version: {version}	Установленная версия: {version}
-	PhotoCraft {version} is available.	Доступна версия PhotoCraft {version}.
+	PIRA {version} is available.	Доступна версия PIRA {version}.
 	Use the embedded profile ({profile})	Использовать встроенный профиль ({profile})
 	Convert to the working space ({profile})	Преобразовать в рабочее пространство ({profile})
 	Remember this choice for future images	Запомнить этот выбор для следующих изображений
@@ -4313,7 +4313,7 @@ curves	Smooth	Сгладить
 	Save a Copy	Сохранить копию
 	Save before closing?	Сохранить перед закрытием?
 	Save for Web (Legacy)	Сохранить для Web (устаревшее)
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Сохраните работу и перезапустите PhotoCraft, чтобы повторить попытку ускорения GPU. Отрисовка на CPU остаётся активной в этом сеансе.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Сохраните работу и перезапустите PIRA, чтобы повторить попытку ускорения GPU. Отрисовка на CPU остаётся активной в этом сеансе.
 	Saved a copy as {path}	Копия сохранена как {path}
 	Saved {path}; image assets: {n} in {dir}	Сохранено: {path}; графические ресурсы: {n} в {dir}
 	Saving…	Сохранение…

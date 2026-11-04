@@ -699,7 +699,7 @@ pub fn native(automation: Option<photocraft_automation::AuthorizedWorkspace>) ->
         inbox: None,
         open_url: Some(Box::new(|url: &str| open::that(url).map_err(|e| e.to_string()))),
         beep: Some(platform_beep),
-        check_updates: Some(crate::updates::service()),
+        check_updates: photocraft_ui_egui::UPDATES_ENABLED.then(crate::updates::service),
         clipboard_set_image: Some({
             let clip = clip.clone();
             guarded_clipboard_set(move |w: u32, h: u32, px: &[u8]| {

@@ -2783,7 +2783,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	O modo automático usa a aceleração por GPU quando disponível e volta para a renderização por CPU em caso de erros.
 	Switched to CPU rendering	Renderização alterada para CPU
 	GPU acceleration could not continue. Your documents are unchanged.	A aceleração por GPU não pôde continuar. Seus documentos não foram alterados.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	O PhotoCraft está usando o compositor de imagens da CPU. A janela ainda pode usar seu adaptador gráfico.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	O PIRA está usando o compositor de imagens da CPU. A janela ainda pode usar seu adaptador gráfico.
 	Retry GPU requires a restart. Save your work first.	Tentar a GPU novamente exige reiniciar. Salve seu trabalho primeiro.
 	Retry GPU tries the graphics processor again now.	Tentar a GPU novamente tenta o processador gráfico de novo agora.
 	GPU acceleration resumed.	Aceleração por GPU retomada.
@@ -4125,17 +4125,17 @@ layerLabel	No Color	Sem cor
 	Kept {name}: written by another application	{name} mantido: gravado por outro aplicativo
 	Shadow Tint	Matiz das sombras
 	Check for Updates…	Verificar atualizações…
-	PhotoCraft Updates	Atualizações do PhotoCraft
+	PIRA Updates	Atualizações do PIRA
 	Checking for updates…	Verificando atualizações…
 	Open the release page to choose an installer for your system.	Abra a página da versão para escolher um instalador para o seu sistema.
 	Open Download Page	Abrir página de download
-	PhotoCraft is up to date.	O PhotoCraft está atualizado.
+	PIRA is up to date.	O PIRA está atualizado.
 	Could not check for updates.	Não foi possível verificar atualizações.
 	Updates have not been checked yet.	As atualizações ainda não foram verificadas.
 	Check Again	Verificar novamente
 	Automatically Check for Updates	Verificar atualizações automaticamente
 	Installed version: {version}	Versão instalada: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} está disponível.
+	PIRA {version} is available.	PIRA {version} está disponível.
 	Paints from the History panel's source state	Pinta a partir do estado de origem do painel Histórico
 	Sets the source for the history brush	Define a origem do pincel do histórico
 	Highlight Mode	Modo de realces
@@ -4312,7 +4312,7 @@ layerLabel	No Color	Sem cor
 	This session: {reason}	Nesta sessão: {reason}
 	Platform: {os} {arch}	Plataforma: {os} {arch}
 	GPU retry scheduled	Nova tentativa da GPU agendada
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Salve seu trabalho e reinicie o PhotoCraft para tentar a aceleração por GPU novamente. A renderização pela CPU continua ativa nesta sessão.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Salve seu trabalho e reinicie o PIRA para tentar a aceleração por GPU novamente. A renderização pela CPU continua ativa nesta sessão.
 	GPU device was lost; using the CPU renderer.	O dispositivo da GPU foi perdido; usando o renderizador da CPU.
 	GPU error; using the CPU renderer.	Erro da GPU; usando o renderizador da CPU.
 	Monitor profile: {profile}	Perfil do monitor: {profile}

@@ -2543,7 +2543,7 @@
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Automaattinen käyttää GPU-kiihdytystä, kun se on käytettävissä, ja siirtyy virhetilanteissa CPU-renderöintiin.
 	Switched to CPU rendering	Siirryttiin CPU-renderöintiin
 	GPU acceleration could not continue. Your documents are unchanged.	GPU-kiihdytystä ei voitu jatkaa. Asiakirjasi ovat ennallaan.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft käyttää CPU-kuvankoostinta. Ikkuna voi silti käyttää näytönohjainta.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA käyttää CPU-kuvankoostinta. Ikkuna voi silti käyttää näytönohjainta.
 	Retry GPU requires a restart. Save your work first.	GPU:n uudelleenyritys vaatii uudelleenkäynnistyksen. Tallenna työsi ensin.
 	Retry GPU tries the graphics processor again now.	Yritä GPU:ta uudelleen -toiminto kokeilee grafiikkasuoritinta heti uudelleen.
 	GPU acceleration resumed.	GPU-kiihdytys on taas käytössä.
@@ -3279,17 +3279,17 @@ curves	Smooth	Tasoita
 	Shadow Opacity	Varjon peittävyys
 # PhotoCraft release checks.
 	Check for Updates…	Tarkista päivitykset…
-	PhotoCraft Updates	PhotoCraftin päivitykset
+	PIRA Updates	PIRAin päivitykset
 	Checking for updates…	Tarkistetaan päivityksiä…
 	Open the release page to choose an installer for your system.	Avaa julkaisusivu ja valitse järjestelmällesi sopiva asennusohjelma.
 	Open Download Page	Avaa lataussivu
-	PhotoCraft is up to date.	PhotoCraft on ajan tasalla.
+	PIRA is up to date.	PIRA on ajan tasalla.
 	Could not check for updates.	Päivityksiä ei voitu tarkistaa.
 	Updates have not been checked yet.	Päivityksiä ei ole vielä tarkistettu.
 	Check Again	Tarkista uudelleen
 	Automatically Check for Updates	Tarkista päivitykset automaattisesti
 	Installed version: {version}	Asennettu versio: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} on saatavilla.
+	PIRA {version} is available.	PIRA {version} on saatavilla.
 # Embedded Profile Mismatch: profile names beside the choices, Remember this choice
 	Use the embedded profile ({profile})	Käytä upotettua profiilia ({profile})
 	Convert to the working space ({profile})	Muunna työavaruuteen ({profile})
@@ -4305,7 +4305,7 @@ curves	Smooth	Tasoita
 	Save a Copy	Tallenna kopio
 	Save before closing?	Tallennetaanko ennen sulkemista?
 	Save for Web (Legacy)	Tallenna verkkoa varten (vanha)
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	Tallenna työsi ja käynnistä PhotoCraft uudelleen, niin GPU-kiihdytystä yritetään uudelleen. CPU-renderöinti pysyy käytössä tämän istunnon ajan.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Tallenna työsi ja käynnistä PIRA uudelleen, niin GPU-kiihdytystä yritetään uudelleen. CPU-renderöinti pysyy käytössä tämän istunnon ajan.
 	Saved a copy as {path}	Kopio tallennettu nimellä {path}
 	Saved {path}; image assets: {n} in {dir}	Tallennettu {path}; kuvaresurssit: {n} kansiossa {dir}
 	Saving…	Tallennetaan…

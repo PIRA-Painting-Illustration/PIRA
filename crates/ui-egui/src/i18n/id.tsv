@@ -2817,7 +2817,7 @@ cameraRaw	Blending	Pembauran
 	Automatic uses GPU acceleration when available and falls back to CPU rendering on errors.	Mode otomatis memakai akselerasi GPU bila tersedia dan beralih ke rendering CPU jika terjadi galat.
 	Switched to CPU rendering	Beralih ke rendering CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Akselerasi GPU tidak dapat dilanjutkan. Dokumen Anda tidak berubah.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft menggunakan kompositor gambar CPU. Jendela mungkin masih menggunakan adaptor grafis Anda.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA menggunakan kompositor gambar CPU. Jendela mungkin masih menggunakan adaptor grafis Anda.
 	Retry GPU requires a restart. Save your work first.	Mencoba GPU lagi memerlukan mulai ulang. Simpan pekerjaan Anda terlebih dahulu.
 	Retry GPU tries the graphics processor again now.	Coba GPU Lagi mencoba prosesor grafis lagi sekarang.
 	GPU acceleration resumed.	Akselerasi GPU dilanjutkan.
@@ -3338,17 +3338,17 @@ curves	Smooth	Haluskan
 	Kept {name}: written by another application	{name} dipertahankan: ditulis oleh aplikasi lain
 	Shadow Tint	Rona bayangan
 	Check for Updates…	Periksa Pembaruan…
-	PhotoCraft Updates	Pembaruan PhotoCraft
+	PIRA Updates	Pembaruan PIRA
 	Checking for updates…	Memeriksa pembaruan…
 	Open the release page to choose an installer for your system.	Buka halaman rilis untuk memilih penginstal bagi sistem Anda.
 	Open Download Page	Buka Halaman Unduhan
-	PhotoCraft is up to date.	PhotoCraft sudah versi terbaru.
+	PIRA is up to date.	PIRA sudah versi terbaru.
 	Could not check for updates.	Tidak dapat memeriksa pembaruan.
 	Updates have not been checked yet.	Pembaruan belum diperiksa.
 	Check Again	Periksa Lagi
 	Automatically Check for Updates	Periksa Pembaruan Secara Otomatis
 	Installed version: {version}	Versi terpasang: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} tersedia.
+	PIRA {version} is available.	PIRA {version} tersedia.
 	Paints from the History panel's source state	Melukis dari status sumber panel Riwayat
 	Sets the source for the history brush	Menetapkan sumber untuk kuas riwayat
 	Highlight Mode	Mode Sorotan

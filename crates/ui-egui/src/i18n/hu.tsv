@@ -3512,7 +3512,7 @@ cameraRaw	Yellow	Sárga
 	Performance	Teljesítmény
 	Perimeter	Kerület
 	Perspective Crop Tool	Perspektivikus körbevágás
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	A PhotoCraft a CPU-s képösszeállítót használja. Az ablak megjelenítése ettől még használhatja a grafikus adaptert.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	A PIRA a CPU-s képösszeállítót használja. Az ablak megjelenítése ettől még használhatja a grafikus adaptert.
 	PhotoCraft website	PhotoCraft-weboldal
 	PhotoCraft — Screen Color Picker	PhotoCraft — Képernyő-színválasztó
 	Photomerge	Fotóegyesítés
@@ -3595,7 +3595,7 @@ cameraRaw	Yellow	Sárga
 	Sample a pixel anywhere on the screen	Mintavétel a képernyő bármely pixeléből
 	Sampler	Színmintavevő
 	Save in background	Mentés a háttérben
-	Save your work and restart PhotoCraft to retry GPU acceleration. CPU rendering remains active for this session.	A GPU-gyorsítás újrapróbálásához mentsd a munkádat, majd indítsd újra a PhotoCraftot. Ebben a munkamenetben a CPU-s megjelenítés marad aktív.
+	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	A GPU-gyorsítás újrapróbálásához mentsd a munkádat, majd indítsd újra a PIRAot. Ebben a munkamenetben a CPU-s megjelenítés marad aktív.
 	Saved a copy as {path}	Másolat mentve: {path}
 	Saved {name}	Mentve: {name}
 	Saved {path}; image assets: {n} in {dir}	Mentve: {path}; képelemek: {n} ({dir})
@@ -4226,17 +4226,17 @@ cameraRaw	Yellow	Sárga
 	Shadow Color	Árnyék színe
 	Shadow Opacity	Árnyék fedettsége
 	Check for Updates…	Frissítések keresése…
-	PhotoCraft Updates	PhotoCraft-frissítések
+	PIRA Updates	PIRA-frissítések
 	Checking for updates…	Frissítések keresése…
 	Open the release page to choose an installer for your system.	Nyissa meg a kiadás oldalát, és válassza ki a rendszerének megfelelő telepítőt.
 	Open Download Page	Letöltési oldal megnyitása
-	PhotoCraft is up to date.	A PhotoCraft naprakész.
+	PIRA is up to date.	A PIRA naprakész.
 	Could not check for updates.	Nem sikerült ellenőrizni a frissítéseket.
 	Updates have not been checked yet.	A frissítések még nem lettek ellenőrizve.
 	Check Again	Újraellenőrzés
 	Automatically Check for Updates	Frissítések automatikus keresése
 	Installed version: {version}	Telepített verzió: {version}
-	PhotoCraft {version} is available.	Elérhető a PhotoCraft {version}.
+	PIRA {version} is available.	Elérhető a PIRA {version}.
 	Use the embedded profile ({profile})	A beágyazott profil használata ({profile})
 	Convert to the working space ({profile})	Átalakítás a munkaszíntérbe ({profile})
 	Remember this choice for future images	A választás megjegyzése a későbbi képekhez

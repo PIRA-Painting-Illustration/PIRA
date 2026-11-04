@@ -1710,7 +1710,7 @@ cameraRaw	Shadows	Vùng tối
 	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or run PhotoCraft under XWayland with `WAYLAND_DISPLAY= photocraft`.	Kéo thả tệp gốc chưa được hỗ trợ trên Wayland. Dùng Tệp › Mở, hoặc chạy PhotoCraft dưới XWayland với `WAYLAND_DISPLAY= photocraft`.
 	Switched to CPU rendering	Đã chuyển sang kết xuất CPU
 	GPU acceleration could not continue. Your documents are unchanged.	Không thể tiếp tục tăng tốc GPU. Tài liệu của bạn không đổi.
-	PhotoCraft is using the CPU image compositor. The window may still use your graphics adapter.	PhotoCraft đang dùng bộ kết hợp ảnh CPU. Cửa sổ vẫn có thể dùng bộ điều hợp đồ họa của bạn.
+	PIRA is using the CPU image compositor. The window may still use your graphics adapter.	PIRA đang dùng bộ kết hợp ảnh CPU. Cửa sổ vẫn có thể dùng bộ điều hợp đồ họa của bạn.
 	Retry GPU	Thử lại GPU
 	Retry GPU requires a restart. Save your work first.	Thử lại GPU cần khởi động lại. Hãy lưu công việc trước.
 	Retry GPU tries the graphics processor again now.	Thử lại GPU sẽ thử lại bộ xử lý đồ họa ngay bây giờ.
@@ -3794,17 +3794,17 @@ curves	Smooth	Làm mượt
 	Kept {name}: written by another application	Đã giữ {name}: do ứng dụng khác ghi
 	Shadow Tint	Sắc độ bóng tối
 	Check for Updates…	Kiểm tra bản cập nhật…
-	PhotoCraft Updates	Bản cập nhật PhotoCraft
+	PIRA Updates	Bản cập nhật PIRA
 	Checking for updates…	Đang kiểm tra bản cập nhật…
 	Open the release page to choose an installer for your system.	Mở trang phát hành để chọn bộ cài đặt cho hệ thống của bạn.
 	Open Download Page	Mở trang tải xuống
-	PhotoCraft is up to date.	PhotoCraft đã được cập nhật.
+	PIRA is up to date.	PIRA đã được cập nhật.
 	Could not check for updates.	Không thể kiểm tra bản cập nhật.
 	Updates have not been checked yet.	Chưa kiểm tra bản cập nhật.
 	Check Again	Kiểm tra lại
 	Automatically Check for Updates	Tự động kiểm tra bản cập nhật
 	Installed version: {version}	Phiên bản đã cài: {version}
-	PhotoCraft {version} is available.	PhotoCraft {version} đã có sẵn.
+	PIRA {version} is available.	PIRA {version} đã có sẵn.
 	Paints from the History panel's source state	Vẽ từ trạng thái nguồn của bảng Lịch sử
 	Sets the source for the history brush	Đặt nguồn cho cọ lịch sử
 	Highlight Mode	Chế độ vùng sáng
