@@ -1311,6 +1311,7 @@ fn paint_primary_overlays(app: &mut PhotocraftApp, ui: &mut egui::Ui, view: &mut
     crate::gradient_ui::draw_overlay(app, painter, xf);
     crate::slice_ui::draw_overlay(app, painter, xf);
     crate::frame_tool::draw_overlay(app, painter, xf);
+    crate::object_tool::draw_overlay(app, painter, xf);
     crate::artboard_tool::draw_overlay(app, painter, xf);
 
     draw_canvas_tool_cursor(app, ui, input, resizing);

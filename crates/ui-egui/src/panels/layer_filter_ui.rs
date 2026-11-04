@@ -114,6 +114,7 @@ fn kind(l: &Layer) -> &'static str {
         LayerContent::Text(_) => "type",
         LayerContent::Shape(_) => "shape",
         LayerContent::Smart(_) => "smart",
+        LayerContent::Scene3d(_) => "3d",
         LayerContent::Group(_) => "",
     }
 }

@@ -76,10 +76,12 @@ pub enum Tool {
     Slice,
     SliceSelect,
     Frame,
+    /// Poses the figures of a 3D layer and turns its camera (PIRA).
+    Object,
 }
 
 impl Tool {
-    pub const ALL: [Tool; 68] = [
+    pub const ALL: [Tool; 69] = [
         Tool::Move,
         Tool::Artboard,
         Tool::RectMarquee,
@@ -148,6 +150,7 @@ impl Tool {
         Tool::Slice,
         Tool::SliceSelect,
         Tool::Frame,
+        Tool::Object,
     ];
 
     pub fn label(self) -> &'static str {
@@ -179,6 +182,7 @@ impl Tool {
             Tool::Slice => "Slice Tool",
             Tool::SliceSelect => "Slice Select Tool",
             Tool::Frame => "Frame Tool",
+            Tool::Object => "Object Tool",
             Tool::Gradient => "Gradient Tool",
             Tool::PaintBucket => "Paint Bucket Tool",
             Tool::Type => "Horizontal Type Tool",
@@ -271,6 +275,8 @@ impl Tool {
             Tool::MagicWand => 'W',
             Tool::Crop | Tool::PerspectiveCrop | Tool::Slice | Tool::SliceSelect => 'C',
             Tool::Frame => 'K',
+            // O is the Dodge group's.
+            Tool::Object => ' ',
             Tool::Gradient | Tool::PaintBucket => 'G',
             Tool::Type | Tool::VerticalType | Tool::HorizontalTypeMask | Tool::VerticalTypeMask => 'T',
             Tool::Hand => 'H',

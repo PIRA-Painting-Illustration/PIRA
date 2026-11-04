@@ -54,6 +54,9 @@ pub const TABLE: &[(&str, Class)] = &[
     ("algo", Class::Layer(2)),
     ("text", Class::Layer(2)),
     ("vector", Class::Layer(2)),
+    // 3D layers: mannequins, pose library, CPU renderer.
+    ("scene3d", Class::Layer(2)),
+    ("posetrack", Class::Layer(0)),
     ("compose", Class::Layer(3)),
     ("gpu", Class::Layer(3)),
     ("format", Class::Layer(3)),

@@ -240,6 +240,7 @@ pub(crate) fn refresh(doc: &mut Document, what: Refresh) {
             match &mut l.content {
                 LayerContent::Group(g) => rec(snapshot, &mut g.children, what),
                 LayerContent::Shape(sh) => crate::vector_cmds::refresh_shape(snapshot, sh),
+                LayerContent::Scene3d(sc) => crate::scene3d_cmds::refresh(snapshot, sc),
                 LayerContent::Text(t) if what == Refresh::All => crate::type_cmds::refresh(snapshot, t),
                 LayerContent::Smart(_) if what == Refresh::All => {
                     let _ = crate::smart_cmds::refresh_layer(snapshot, l);

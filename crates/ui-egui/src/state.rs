@@ -392,6 +392,9 @@ pub struct UiState {
     /// Frame tool (see `frame_tool`).
     #[serde(default)]
     pub frame_tool: crate::frame_tool::FrameToolUi,
+    /// Object tool and 3D panel (see `object_tool`).
+    #[serde(default)]
+    pub object_tool: crate::object_tool::ObjectToolUi,
     /// Artboard tool (see `artboard_tool`).
     pub artboard_tool: crate::artboard_tool::ArtboardToolUi,
     /// Modifier Keys panel, custom pixel aspect ratios, workspace dialogs (see `workspace_ui`).
@@ -570,6 +573,7 @@ impl Default for UiState {
             timeline: Default::default(),
             slices: Default::default(),
             frame_tool: Default::default(),
+            object_tool: Default::default(),
             artboard_tool: Default::default(),
             shell: Default::default(),
             layer_filter: Vec::new(),
@@ -721,7 +725,7 @@ mod tests {
         assert!(!Tool::RedEye.is_brushlike());
         assert_eq!(Tool::from_name("patternStamp"), Some(Tool::PatternStamp));
         assert_eq!(Tool::from_name("Pattern Stamp Tool"), Some(Tool::PatternStamp));
-        assert_eq!(Tool::ALL.len(), 68);
+        assert_eq!(Tool::ALL.len(), 69);
     }
 
     fn vector_tool_names_parse() {

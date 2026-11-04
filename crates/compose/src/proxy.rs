@@ -60,6 +60,7 @@ fn shrink_layer(l: &mut Layer, k: u32) {
         }
         LayerContent::Text(t) => t.cache = t.cache.as_ref().map(|s| downsample(s, k)),
         LayerContent::Shape(sh) => sh.cache = sh.cache.as_ref().map(|s| downsample(s, k)),
+        LayerContent::Scene3d(sc) => sc.cache = sc.cache.as_ref().map(|s| downsample(s, k)),
         LayerContent::Smart(so) => shrink_smart(so, k),
         LayerContent::Adjustment(_) | LayerContent::Fill(_) => {}
     }

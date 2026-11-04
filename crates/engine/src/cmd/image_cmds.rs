@@ -58,6 +58,11 @@ pub(crate) fn for_each_surface(layers: &mut [Layer], masks: bool, f: &mut dyn Fn
                     f(&mut mask.surface, true);
                 }
             }
+            LayerContent::Scene3d(sc) => {
+                if let Some(c) = &mut sc.cache {
+                    f(c, false)
+                }
+            }
             LayerContent::Group(g) => for_each_surface(&mut g.children, masks, f),
             _ => {}
         }
