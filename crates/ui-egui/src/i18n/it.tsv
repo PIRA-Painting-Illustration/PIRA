@@ -909,9 +909,9 @@
 	Timeline	Timeline
 	Tool Presets	Predefiniti strumento
 	Tools	Strumenti
-	About PhotoCraft	Informazioni su PhotoCraft
+	About PIRA	Informazioni su PIRA
 	PhotoCraft Website	Sito web PhotoCraft
-	PhotoCraft on GitHub	PhotoCraft su GitHub
+	PIRA on GitHub	PIRA su GitHub
 	ArtCraft Website	Sito web ArtCraft
 	Join the ArtCraft Discord…	Unisciti al Discord di ArtCraft…
 	Report an Issue…	Segnala un problema…
@@ -968,7 +968,7 @@
 	All Caps	Tutto maiuscolo
 	All Slices	Tutte le sezioni
 	All User Slices	Tutte le sezioni utente
-	All shortcuts reset to PhotoCraft defaults.	Tutte le scorciatoie ripristinate ai predefiniti di PhotoCraft.
+	All shortcuts reset to PIRA defaults.	Tutte le scorciatoie ripristinate ai predefiniti di PIRA.
 	Alt	Alt
 	Always use pressure for opacity	Usa sempre pressione per opacità
 	Always use pressure for size	Usa sempre pressione per dimensione
@@ -1221,8 +1221,8 @@
 	Drop an image or PSD anywhere to open it.	Trascina un'immagine o PSD ovunque per aprirlo.
 	Native file drag-and-drop is unavailable	Il drag-and-drop nativo file non è disponibile su Wayland
 	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or copy the image in your file manager and paste it with {paste}.	Il drag-and-drop nativo non è ancora supportato su Wayland. Usa File › Apri, oppure copia l'immagine nel file manager e incollala con {paste}.
-	To drop files, start PhotoCraft under XWayland: `{command}`	Per trascinare file, avvia PhotoCraft sotto XWayland: `{command}`
-	Or set Preferences › Performance › Linux display server to X11: PhotoCraft then always starts under XWayland.	Oppure imposta Preferenze › Prestazioni › Server grafico Linux su X11: PhotoCraft partirà sempre sotto XWayland.
+	To drop files, start PIRA under XWayland: `{command}`	Per trascinare file, avvia PIRA sotto XWayland: `{command}`
+	Or set Preferences › Performance › Linux display server to X11: PIRA then always starts under XWayland.	Oppure imposta Preferenze › Prestazioni › Server grafico Linux su X11: PIRA partirà sempre sotto XWayland.
 	Edit › Paste	Modifica › Incolla
 	Duplicate Layers…	Duplica livelli…
 	Duplicate style	Duplica stile
@@ -1472,8 +1472,8 @@
 	Perspective Warp is not active	Altera prospettiva non attiva
 	Perspective Warp: draw planes along the image's perspective, then switch to Warp	Altera prospettiva: disegna piani lungo la prospettiva immagine, poi passa ad Altera
 	Photo Filter	Filtro fotografico
-	PhotoCraft	PhotoCraft
-	PhotoCraft Manages Colors	PhotoCraft gestisce i colori
+	PIRA	PIRA
+	PIRA Manages Colors	PIRA gestisce i colori
 	PhotoCraft — an open-source, native image editor written in Rust.	PhotoCraft — editor immagini nativo open-source scritto in Rust.
 	Pin Depth:	Profondità pin:
 	Pixel Length:	Lunghezza pixel:
@@ -1550,11 +1550,11 @@
 	Import Shortcuts…	Importa scorciatoie…
 	Load a keyboard shortcut set saved as .kys	Carica un set di scorciatoie da tastiera salvato come .kys
 	Imported {n} shortcuts from {file}. Click OK to keep them.	Importate {n} scorciatoie da {file}. Fai clic su OK per conservarle.
-	{n} commands are not in PhotoCraft.	{n} comandi non esistono in PhotoCraft.
+	{n} commands are not in PIRA.	{n} comandi non esistono in PIRA.
 	Keyboard shortcuts imported	Scorciatoie da tastiera importate
 	Your keyboard shortcut set {set} is in use here: {n} shortcuts differ from the defaults. Edit › Keyboard Shortcuts shows them; Reset All to Defaults undoes this.	Il tuo set di scorciatoie da tastiera {set} è in uso qui: {n} scorciatoie differiscono dai predefiniti. Modifica › Scorciatoie da tastiera le mostra; Ripristina tutto ai predefiniti annulla l'importazione.
 	Import keyboard shortcuts?	Importare le scorciatoie da tastiera?
-	PhotoCraft found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PhotoCraft's. Import it?	PhotoCraft ha trovato su questo computer il tuo set di scorciatoie da tastiera {set} di un altro editor di immagini: {n} delle sue scorciatoie differiscono da quelle di PhotoCraft. Importarlo?
+	PIRA found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PIRA's. Import it?	PIRA ha trovato su questo computer il tuo set di scorciatoie da tastiera {set} di un altro editor di immagini: {n} delle sue scorciatoie differiscono da quelle di PIRA. Importarlo?
 	Edit › Keyboard Shortcuts › Reset All to Defaults undoes an import.	Modifica › Scorciatoie da tastiera › Ripristina tutto ai predefiniti annulla un'importazione.
 	Don't Import	Non importare
 	The keyboard shortcut set was not imported: {error}	Il set di scorciatoie da tastiera non è stato importato: {error}
@@ -1779,7 +1779,7 @@
 	Current Tool	Strumento corrente
 	Custom Shape Tool	Strumento Forma personale
 	Cyans	Ciano
-	Default PhotoCraft Size	Dimensione predefinita PhotoCraft
+	Default PIRA Size	Dimensione predefinita PIRA
 	Delete Workspace	Elimina area di lavoro
 	Diamond	Diamante
 	Dimensions:	Dimensioni:
@@ -2223,7 +2223,7 @@
 	System Info	Info sistema
 	More panels	Altri pannelli
 	More documents	Altri documenti
-	These settings aren't available in PhotoCraft yet.	Queste impostazioni non sono ancora disponibili in PhotoCraft.
+	These settings aren't available in PIRA yet.	Queste impostazioni non sono ancora disponibili in PIRA.
 	Graphics	Grafica
 	Reset GPU Backend	Reimposta backend GPU
 	Applies at next launch.	Si applica al prossimo avvio.
@@ -2656,7 +2656,7 @@ fontWeight	Italic	Corsivo
 	Color to Alpha…	Colore ad alfa…
 	Transparency Threshold	Soglia di trasparenza
 	Opacity Threshold	Soglia di opacità
-	PhotoCraft — Screen Color Picker	PhotoCraft — Selettore colore schermo
+	PIRA — Screen Color Picker	PIRA — Selettore colore schermo
 	Rasterize svg groups deeper than	Rasterizza i gruppi SVG oltre questa profondità
 	0 turns this threshold off; SVG groups nested deeper than 100 levels are always rasterized.	0 disattiva questa soglia; i gruppi SVG annidati oltre 100 livelli vengono sempre rasterizzati.
 	Rule of Thirds	Regola dei terzi
@@ -4127,7 +4127,7 @@ layerLabel	No Color	Nessun colore
 	Saved {path}; image assets: {n} in {dir}	Salvato: {path}; risorse immagine: {n} in {dir}
 	{message} (notes: {n}; {warning})	{message} (note: {n}; {warning})
 	Preferences can't be saved	Impossibile salvare le preferenze
-	PhotoCraft keeps retrying; until a save succeeds, preference changes are lost when it closes.	PhotoCraft continua a riprovare; finché un salvataggio non riesce, le modifiche alle preferenze andranno perse alla chiusura.
+	PIRA keeps retrying; until a save succeeds, preference changes are lost when it closes.	PIRA continua a riprovare; finché un salvataggio non riesce, le modifiche alle preferenze andranno perse alla chiusura.
 	GPU retry scheduled	Nuovo tentativo GPU programmato
 	Save your work and restart PIRA to retry GPU acceleration. CPU rendering remains active for this session.	Salva il lavoro e riavvia PIRA per riprovare l'accelerazione GPU. Per questa sessione resta attivo il rendering su CPU.
 	GPU device was lost; using the CPU renderer.	Dispositivo GPU perso; uso il rendering su CPU.
@@ -4227,7 +4227,7 @@ navigator	Zoom	Zoom
 	{name} (Photoshop)	{name} (Photoshop)
 	{message} ({note})	{message} ({note})
 @plural	Loaded {n} action from {file}|Loaded {n} actions from {file}	Caricata {n} azione da {file}|Caricate {n} azioni da {file}
-@plural	{n} step has no PhotoCraft equivalent yet|{n} steps have no PhotoCraft equivalent yet	{n} passaggio non ha ancora un equivalente in PhotoCraft|{n} passaggi non hanno ancora un equivalente in PhotoCraft
+@plural	{n} step has no PIRA equivalent yet|{n} steps have no PIRA equivalent yet	{n} passaggio non ha ancora un equivalente in PIRA|{n} passaggi non hanno ancora un equivalente in PIRA
 @plural	Saved {n} action to {file}|Saved {n} actions to {file}	Salvata {n} azione in {file}|Salvate {n} azioni in {file}
 @plural	{n} step with no Photoshop equivalent left out|{n} steps with no Photoshop equivalent left out	Omesso {n} passaggio senza equivalente in Photoshop|Omessi {n} passaggi senza equivalente in Photoshop
 	File Naming	Denominazione file
@@ -4488,12 +4488,12 @@ shape	Appearance	Aspetto
 	Bicubic Smoother	Bicubica più morbida
 	Bicubic Sharper	Bicubica più nitida
 	Pasting from other apps is unavailable	Incollare da altre app non è disponibile
-	PhotoCraft can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PhotoCraft non può accedere agli appunti di sistema in questa sessione. Su Wayland, la sandbox di Flatpak nasconde il protocollo con cui vengono lette le immagini delle altre app.
-	To paste from other apps, start PhotoCraft under XWayland: `{command}`	Per incollare da altre app, avvia PhotoCraft in XWayland: `{command}`
-	Nothing to paste: PhotoCraft can't read the system clipboard here	Niente da incollare: qui PhotoCraft non può leggere gli appunti di sistema
+	PIRA can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PIRA non può accedere agli appunti di sistema in questa sessione. Su Wayland, la sandbox di Flatpak nasconde il protocollo con cui vengono lette le immagini delle altre app.
+	To paste from other apps, start PIRA under XWayland: `{command}`	Per incollare da altre app, avvia PIRA in XWayland: `{command}`
+	Nothing to paste: PIRA can't read the system clipboard here	Niente da incollare: qui PIRA non può leggere gli appunti di sistema
 	Delete this set	Elimina questo set
 	New Set…	Nuovo set…
-	PhotoCraft Defaults	Predefiniti di PhotoCraft
+	PIRA Defaults	Predefiniti di PIRA
 	Save a list of these shortcuts as a web page	Salva un elenco di queste scorciatoie come pagina web
 	Save the changes to this set	Salva le modifiche in questo set
 	Save these shortcuts as a .kys file	Salva queste scorciatoie come file .kys

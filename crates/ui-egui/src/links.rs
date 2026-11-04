@@ -10,13 +10,13 @@ pub const DISCORD: &str = "https://discord.gg/artcraft";
 pub const ARTCRAFT_WEBSITE: &str = "https://getartcraft.com";
 pub const APP_PAGE: &str = "https://getartcraft.com/apps/photocraft";
 pub const GITHUB: &str = "https://github.com/storytold/photocraft";
-pub const ISSUES: &str = "https://github.com/storytold/photocraft/issues";
+pub const ISSUES: &str = "https://github.com/PIRA-Painting-Illustration/PIRA/issues";
 /// PIRA's home on GitHub (the start screen's link).
 pub const PIRA_GITHUB: &str = "https://github.com/PIRA-Painting-Illustration/PIRA";
 
 /// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`.
 pub const COMMANDS: &[(&str, &str)] =
-    &[("help.discord", DISCORD), ("help.website", APP_PAGE), ("help.artcraftWebsite", ARTCRAFT_WEBSITE), ("help.github", GITHUB), ("help.reportIssue", ISSUES)];
+    &[("help.website", PIRA_GITHUB), ("help.artcraftWebsite", ARTCRAFT_WEBSITE), ("help.github", GITHUB), ("help.reportIssue", ISSUES)];
 
 pub fn url_for(id: &str) -> Option<&'static str> {
     COMMANDS.iter().find(|c| c.0 == id).map(|c| c.1)
@@ -108,7 +108,6 @@ mod tests {
         assert_eq!(
             help,
             [
-                "help.discord",
                 "help.website",
                 "help.artcraftWebsite",
                 "help.github",
@@ -129,8 +128,8 @@ mod tests {
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
         let ctx = egui::Context::default();
         for (id, url) in [
-            ("help.discord", "https://discord.gg/artcraft"),
-            ("help.website", "https://getartcraft.com/apps/photocraft"),
+            ("help.website", "https://github.com/PIRA-Painting-Illustration/PIRA"),
+            ("help.reportIssue", "https://github.com/PIRA-Painting-Illustration/PIRA/issues"),
             ("help.github", "https://github.com/storytold/photocraft"),
         ] {
             let r = crate::menus::invoke(&mut app, &ctx, id, serde_json::json!({})).unwrap();

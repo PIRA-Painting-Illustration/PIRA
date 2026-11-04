@@ -544,9 +544,9 @@
 	Hide All	Skjul alt
 
 # Help
-	About PhotoCraft	Om PhotoCraft
+	About PIRA	Om PIRA
 	PhotoCraft Website	PhotoCrafts websted
-	PhotoCraft on GitHub	PhotoCraft på GitHub
+	PIRA on GitHub	PIRA på GitHub
 	Report an Issue…	Rapportér et problem…
 	ArtCraft Website	ArtCrafts websted
 	Join the ArtCraft Discord…	Deltag i ArtCrafts Discord…
@@ -627,11 +627,11 @@
 	Import Shortcuts…	Importér genveje…
 	Load a keyboard shortcut set saved as .kys	Indlæs et tastaturgenvejssæt, der er gemt som .kys
 	Imported {n} shortcuts from {file}. Click OK to keep them.	Importerede {n} genveje fra {file}. Klik på OK for at beholde dem.
-	{n} commands are not in PhotoCraft.	{n} kommandoer findes ikke i PhotoCraft.
+	{n} commands are not in PIRA.	{n} kommandoer findes ikke i PIRA.
 	Keyboard shortcuts imported	Tastaturgenveje importeret
 	Your keyboard shortcut set {set} is in use here: {n} shortcuts differ from the defaults. Edit › Keyboard Shortcuts shows them; Reset All to Defaults undoes this.	Dit tastaturgenvejssæt {set} er i brug her: {n} genveje afviger fra standarden. Redigér › Tastaturgenveje viser dem; Nulstil alle til standardværdierne fortryder dette.
 	Import keyboard shortcuts?	Importér tastaturgenveje?
-	PhotoCraft found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PhotoCraft's. Import it?	PhotoCraft fandt dit tastaturgenvejssæt {set} fra et andet billedredigeringsprogram på denne computer: {n} af genvejene afviger fra PhotoCrafts. Vil du importere det?
+	PIRA found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PIRA's. Import it?	PIRA fandt dit tastaturgenvejssæt {set} fra et andet billedredigeringsprogram på denne computer: {n} af genvejene afviger fra PIRAs. Vil du importere det?
 	Edit › Keyboard Shortcuts › Reset All to Defaults undoes an import.	Redigér › Tastaturgenveje › Nulstil alle til standardværdierne fortryder en import.
 	Don't Import	Importér ikke
 	The keyboard shortcut set was not imported: {error}	Sættet med tastaturgenveje blev ikke importeret: {error}
@@ -935,7 +935,7 @@
 	Embed Color Profile	Indlejr farveprofil
 	Assign Profile…	Tildel profil…
 	Convert to Profile…	Konvertér til profil…
-	PhotoCraft Manages Colors	PhotoCraft styrer farver
+	PIRA Manages Colors	PIRA styrer farver
 	Printer Manages Colors	Printeren styrer farver
 	(print to the printer)	(udskriv til printeren)
 	Absolute Colorimetric	Absolut kolorimetrisk
@@ -1538,15 +1538,15 @@
 	Use File › Open, or paste a copied image with {paste}.	Brug Filer › Åbn, eller indsæt et kopieret billede med {paste}.
 	Native file drag-and-drop is unavailable	Indbygget træk-og-slip af filer er ikke tilgængeligt
 	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or copy the image in your file manager and paste it with {paste}.	Indbygget træk-og-slip af filer understøttes endnu ikke på Wayland. Brug Filer › Åbn, eller kopiér billedet i din filhåndtering, og indsæt det med {paste}.
-	To drop files, start PhotoCraft under XWayland: `{command}`	For at slippe filer skal du starte PhotoCraft under XWayland: `{command}`
-	Or set Preferences › Performance › Linux display server to X11: PhotoCraft then always starts under XWayland.	Eller sæt Præferencer › Ydeevne › Linux-visningsserver til X11: PhotoCraft starter derefter altid under XWayland.
+	To drop files, start PIRA under XWayland: `{command}`	For at slippe filer skal du starte PIRA under XWayland: `{command}`
+	Or set Preferences › Performance › Linux display server to X11: PIRA then always starts under XWayland.	Eller sæt Præferencer › Ydeevne › Linux-visningsserver til X11: PIRA starter derefter altid under XWayland.
 	Edit › Paste	Redigér › Indsæt
 	Photo	Foto
 	Print	Udskriv
 	Art & Illustration	Kunst og illustration
 	Mobile	Mobil
 	Film & Video	Film og video
-	Default PhotoCraft Size	PhotoCraft-standardstørrelse
+	Default PIRA Size	PIRA-standardstørrelse
 	Clipboard	Udklipsholder
 	Photo (2 × 3 in)	Foto (2 × 3 tommer)
 	Photo (4 × 6 in)	Foto (4 × 6 tommer)
@@ -1724,9 +1724,9 @@
 	Don't Save	Gem ikke
 	No	Nej
 	Yes	Ja
-	These settings aren't available in PhotoCraft yet.	Disse indstillinger er endnu ikke tilgængelige i PhotoCraft.
+	These settings aren't available in PIRA yet.	Disse indstillinger er endnu ikke tilgængelige i PIRA.
 	Shortcut removed.	Genvej fjernet.
-	All shortcuts reset to PhotoCraft defaults.	Alle genveje er nulstillet til PhotoCrafts standardindstillinger.
+	All shortcuts reset to PIRA defaults.	Alle genveje er nulstillet til PIRAs standardindstillinger.
 	Add Shortcut	Tilføj genvej
 	Delete Shortcut	Slet genvej
 	Press keys…	Tryk på taster…
@@ -2209,7 +2209,7 @@
 	Output:	Output:
 	Paint Overlay	Malingsoverlejring
 	Pattern Size	Mønsterstørrelse
-	PhotoCraft	PhotoCraft
+	PIRA	PIRA
 	PhotoCraft — an open-source, native image editor written in Rust.	PhotoCraft — et native open source-billedredigeringsprogram skrevet i Rust.
 	Position and Size	Placering og størrelse
 	Preserve Details	Bevar detaljer
@@ -2795,7 +2795,7 @@ fontWeight	Italic	Kursiv
 	Color to Alpha…	Farve til alfa…
 	Transparency Threshold	Grænseværdi for gennemsigtighed
 	Opacity Threshold	Grænseværdi for opacitet
-	PhotoCraft — Screen Color Picker	PhotoCraft — Skærmfarvevælger
+	PIRA — Screen Color Picker	PIRA — Skærmfarvevælger
 
 	Rasterize svg groups deeper than	Rasterisér svg-grupper dybere end
 	0 turns this threshold off; SVG groups nested deeper than 100 levels are always rasterized.	0 deaktiverer denne grænseværdi; SVG-grupper, der er indlejret dybere end 100 niveauer, rasteriseres altid.
@@ -3179,7 +3179,7 @@ curves	Smooth	Udjævn
 	{name} (Photoshop)	{name} (Photoshop)
 	{message} ({note})	{message} ({note})
 @plural	Loaded {n} action from {file}|Loaded {n} actions from {file}	Indlæste {n} handling fra {file}|Indlæste {n} handlinger fra {file}
-@plural	{n} step has no PhotoCraft equivalent yet|{n} steps have no PhotoCraft equivalent yet	{n} trin har ingen PhotoCraft-ækvivalent endnu|{n} trin har ingen PhotoCraft-ækvivalent endnu
+@plural	{n} step has no PIRA equivalent yet|{n} steps have no PIRA equivalent yet	{n} trin har ingen PIRA-ækvivalent endnu|{n} trin har ingen PIRA-ækvivalent endnu
 @plural	Saved {n} action to {file}|Saved {n} actions to {file}	Gemte {n} handling i {file}|Gemte {n} handlinger i {file}
 @plural	{n} step with no Photoshop equivalent left out|{n} steps with no Photoshop equivalent left out	{n} trin uden Photoshop-ækvivalent udeladt|{n} trin uden Photoshop-ækvivalent udeladt
 
@@ -3314,12 +3314,12 @@ curves	Smooth	Udjævn
 	Bicubic Smoother	Bikubisk glattere
 	Bicubic Sharper	Bikubisk skarpere
 	Pasting from other apps is unavailable	Indsættelse fra andre programmer er ikke tilgængelig
-	PhotoCraft can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PhotoCraft kan ikke få adgang til systemets udklipsholder i denne session. På Wayland skjuler en Flatpak-sandkasse den protokol, som billeder fra andre programmer læses igennem.
-	To paste from other apps, start PhotoCraft under XWayland: `{command}`	For at indsætte fra andre programmer skal du starte PhotoCraft under XWayland: `{command}`
-	Nothing to paste: PhotoCraft can't read the system clipboard here	Intet at indsætte: PhotoCraft kan ikke læse systemets udklipsholder her
+	PIRA can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PIRA kan ikke få adgang til systemets udklipsholder i denne session. På Wayland skjuler en Flatpak-sandkasse den protokol, som billeder fra andre programmer læses igennem.
+	To paste from other apps, start PIRA under XWayland: `{command}`	For at indsætte fra andre programmer skal du starte PIRA under XWayland: `{command}`
+	Nothing to paste: PIRA can't read the system clipboard here	Intet at indsætte: PIRA kan ikke læse systemets udklipsholder her
 	Delete this set	Slet dette sæt
 	New Set…	Nyt sæt…
-	PhotoCraft Defaults	PhotoCraft-standarder
+	PIRA Defaults	PIRA-standarder
 	Save a list of these shortcuts as a web page	Gem en liste over disse genveje som en webside
 	Save the changes to this set	Gem ændringerne i dette sæt
 	Save these shortcuts as a .kys file	Gem disse genveje som en .kys-fil
@@ -4171,7 +4171,7 @@ curves	Smooth	Udjævn
 	Pentagon	Femkant
 	Percentage	Procent
 	Permission denied	Adgang nægtet
-	PhotoCraft keeps retrying; until a save succeeds, preference changes are lost when it closes.	PhotoCraft bliver ved med at prøve igen; indtil det lykkes at gemme, går ændringer i præferencerne tabt, når programmet lukkes.
+	PIRA keeps retrying; until a save succeeds, preference changes are lost when it closes.	PIRA bliver ved med at prøve igen; indtil det lykkes at gemme, går ændringer i præferencerne tabt, når programmet lukkes.
 	Photomerge	Photomerge
 	Pick Color From Image	Vælg farve fra billede
 	Picture Frame	Billedramme

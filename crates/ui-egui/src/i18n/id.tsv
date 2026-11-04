@@ -875,9 +875,9 @@
 	Timeline	Timeline
 	Tool Presets	Preset Alat
 	Tools	Alat
-	About PhotoCraft	Tentang PhotoCraft
+	About PIRA	Tentang PIRA
 	PhotoCraft Website	Situs Web PhotoCraft
-	PhotoCraft on GitHub	PhotoCraft di GitHub
+	PIRA on GitHub	PIRA di GitHub
 	ArtCraft Website	Situs Web ArtCraft
 	Join the ArtCraft Discord…	Gabung ke Discord ArtCraft…
 	Report an Issue…	Laporkan Masalah…
@@ -948,7 +948,7 @@
 	All Caps	Huruf Kapital Semua
 	All Slices	Semua Slice
 	All User Slices	Semua Slice Pengguna
-	All shortcuts reset to PhotoCraft defaults.	Semua pintasan direset ke default PhotoCraft.
+	All shortcuts reset to PIRA defaults.	Semua pintasan direset ke default PIRA.
 	Alt	Alt
 	Alt-click to define a source point to clone from	Alt-klik untuk menentukan titik sumber yang mau di-clone
 	Always use pressure for opacity	Selalu pakai tekanan untuk opasitas
@@ -1445,8 +1445,8 @@
 	Perspective Warp is not active	Perspective Warp tidak aktif
 	Perspective Warp: draw planes along the image's perspective, then switch to Warp	Perspective Warp: gambar bidang mengikuti perspektif gambar, lalu pindah ke Warp
 	Photo Filter	Filter Foto
-	PhotoCraft	PhotoCraft
-	PhotoCraft Manages Colors	PhotoCraft Mengelola Warna
+	PIRA	PIRA
+	PIRA Manages Colors	PIRA Mengelola Warna
 	PhotoCraft — an open-source, native image editor written in Rust.	PhotoCraft — editor gambar native open-source yang ditulis dengan Rust.
 	Pin Depth:	Kedalaman Pin:
 	Pixel Length:	Panjang Piksel:
@@ -1523,11 +1523,11 @@
 	Import Shortcuts…	Impor Pintasan…
 	Load a keyboard shortcut set saved as .kys	Muat set pintasan keyboard yang disimpan sebagai .kys
 	Imported {n} shortcuts from {file}. Click OK to keep them.	{n} pintasan diimpor dari {file}. Klik OK untuk menyimpannya.
-	{n} commands are not in PhotoCraft.	{n} perintah tidak ada di PhotoCraft.
+	{n} commands are not in PIRA.	{n} perintah tidak ada di PIRA.
 	Keyboard shortcuts imported	Pintasan keyboard diimpor
 	Your keyboard shortcut set {set} is in use here: {n} shortcuts differ from the defaults. Edit › Keyboard Shortcuts shows them; Reset All to Defaults undoes this.	Set pintasan keyboard Anda {set} dipakai di sini: {n} pintasan berbeda dari bawaan. Edit › Pintasan Keyboard menampilkannya; Setel Ulang Semua ke Bawaan membatalkannya.
 	Import keyboard shortcuts?	Impor pintasan keyboard?
-	PhotoCraft found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PhotoCraft's. Import it?	PhotoCraft menemukan set pintasan keyboard Anda {set} dari editor gambar lain di komputer ini: {n} pintasannya berbeda dari PhotoCraft. Impor?
+	PIRA found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PIRA's. Import it?	PIRA menemukan set pintasan keyboard Anda {set} dari editor gambar lain di komputer ini: {n} pintasannya berbeda dari PIRA. Impor?
 	Edit › Keyboard Shortcuts › Reset All to Defaults undoes an import.	Edit › Pintasan Keyboard › Setel Ulang Semua ke Bawaan membatalkan impor.
 	Don't Import	Jangan Impor
 	The keyboard shortcut set was not imported: {error}	Set pintasan keyboard tidak diimpor: {error}
@@ -1750,7 +1750,7 @@
 	Current Tool	Alat Saat Ini
 	Custom Shape Tool	Alat Bentuk Kustom
 	Cyans	Cyan
-	Default PhotoCraft Size	Ukuran Default PhotoCraft
+	Default PIRA Size	Ukuran Default PIRA
 	Delete Workspace	Hapus Ruang Kerja
 	Diamond	Diamond
 	Dimensions:	Dimensi:
@@ -2189,7 +2189,7 @@
 	System Info	Info Sistem
 	More panels	Panel lainnya
 	More documents	Dokumen lainnya
-	These settings aren't available in PhotoCraft yet.	Pengaturan ini belum tersedia di PhotoCraft.
+	These settings aren't available in PIRA yet.	Pengaturan ini belum tersedia di PIRA.
 	Graphics	Grafis
 	Reset GPU Backend	Reset Backend GPU
 	Applies at next launch.	Berlaku saat dibuka berikutnya.
@@ -2776,8 +2776,8 @@
 	Overprint	Cetak Tindih
 	Native file drag-and-drop is unavailable	Seret dan lepas berkas native tidak tersedia
 	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or copy the image in your file manager and paste it with {paste}.	Seret dan lepas berkas native belum didukung di Wayland. Gunakan Berkas › Buka, atau salin gambar di pengelola berkas lalu tempel dengan {paste}.
-	To drop files, start PhotoCraft under XWayland: `{command}`	Untuk menjatuhkan berkas, jalankan PhotoCraft di XWayland: `{command}`
-	Or set Preferences › Performance › Linux display server to X11: PhotoCraft then always starts under XWayland.	Atau atur Preferensi › Performa › Server tampilan Linux ke X11: PhotoCraft lalu selalu berjalan di XWayland.
+	To drop files, start PIRA under XWayland: `{command}`	Untuk menjatuhkan berkas, jalankan PIRA di XWayland: `{command}`
+	Or set Preferences › Performance › Linux display server to X11: PIRA then always starts under XWayland.	Atau atur Preferensi › Performa › Server tampilan Linux ke X11: PIRA lalu selalu berjalan di XWayland.
 	Edit › Paste	Edit › Tempel
 	Use File › Open, or paste a copied image with {paste}.	Gunakan Berkas › Buka, atau tempel gambar yang disalin dengan {paste}.
 	Mixer Brush Tool	Alat Kuas Pencampur
@@ -3007,7 +3007,7 @@ fontWeight	Italic	Miring
 	Color to Alpha…	Warna ke Alpha…
 	Transparency Threshold	Ambang transparansi
 	Opacity Threshold	Ambang opasitas
-	PhotoCraft — Screen Color Picker	PhotoCraft — Pemilih Warna Layar
+	PIRA — Screen Color Picker	PIRA — Pemilih Warna Layar
 	Rasterize svg groups deeper than	Rasterisasi grup SVG yang lebih dalam dari ini
 	0 turns this threshold off; SVG groups nested deeper than 100 levels are always rasterized.	0 menonaktifkan ambang ini; grup SVG yang bersarang lebih dari 100 tingkat selalu dirasterisasi.
 	Rule of Thirds	Aturan Sepertiga
@@ -3275,7 +3275,7 @@ curves	Smooth	Haluskan
 	{name} (Photoshop)	{name} (Photoshop)
 	{message} ({note})	{message} ({note})
 @plural	Loaded {n} action from {file}|Loaded {n} actions from {file}	{n} tindakan dimuat dari {file}
-@plural	{n} step has no PhotoCraft equivalent yet|{n} steps have no PhotoCraft equivalent yet	{n} langkah belum memiliki padanan di PhotoCraft
+@plural	{n} step has no PIRA equivalent yet|{n} steps have no PIRA equivalent yet	{n} langkah belum memiliki padanan di PIRA
 @plural	Saved {n} action to {file}|Saved {n} actions to {file}	{n} tindakan disimpan ke {file}
 @plural	{n} step with no Photoshop equivalent left out|{n} steps with no Photoshop equivalent left out	{n} langkah tanpa padanan Photoshop dilewati
 	File Naming	Penamaan Berkas
@@ -3376,12 +3376,12 @@ curves	Smooth	Haluskan
 	Bicubic Smoother	Bicubic lebih halus
 	Bicubic Sharper	Bicubic lebih tajam
 	Pasting from other apps is unavailable	Menempel dari aplikasi lain tidak tersedia
-	PhotoCraft can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PhotoCraft tidak dapat mengakses papan klip sistem dalam sesi ini. Di Wayland, sandbox Flatpak menyembunyikan protokol yang digunakan untuk membaca gambar dari aplikasi lain.
-	To paste from other apps, start PhotoCraft under XWayland: `{command}`	Untuk menempel dari aplikasi lain, jalankan PhotoCraft di bawah XWayland: `{command}`
-	Nothing to paste: PhotoCraft can't read the system clipboard here	Tidak ada yang ditempel: PhotoCraft tidak dapat membaca papan klip sistem di sini
+	PIRA can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PIRA tidak dapat mengakses papan klip sistem dalam sesi ini. Di Wayland, sandbox Flatpak menyembunyikan protokol yang digunakan untuk membaca gambar dari aplikasi lain.
+	To paste from other apps, start PIRA under XWayland: `{command}`	Untuk menempel dari aplikasi lain, jalankan PIRA di bawah XWayland: `{command}`
+	Nothing to paste: PIRA can't read the system clipboard here	Tidak ada yang ditempel: PIRA tidak dapat membaca papan klip sistem di sini
 	Delete this set	Hapus set ini
 	New Set…	Set Baru…
-	PhotoCraft Defaults	Bawaan PhotoCraft
+	PIRA Defaults	Bawaan PIRA
 	Save a list of these shortcuts as a web page	Simpan daftar pintasan ini sebagai halaman web
 	Save the changes to this set	Simpan perubahan ke set ini
 	Save these shortcuts as a .kys file	Simpan pintasan ini sebagai file .kys

@@ -12,6 +12,22 @@ PhotoCraft and ArtCraft stays: it moves to a credits page (see the last section)
 Found 2026-11-03. Recheck before working through it:
 `git grep -n '"[^"]*PhotoCraft' -- ':!*test*'`.
 
+**Done 2026-11-04:** sections 1–4, apart from the items below, now say PIRA, with their
+translation keys renamed in all catalogs:
+- Help: "PIRA on GitHub" (until the website exists), "Built on PhotoCraft" (upstream credit),
+  "ArtCraft Website", "Report an Issue…" (PIRA's issues) and "About PIRA". "Join the ArtCraft
+  Discord…" is gone: it isn't PIRA's community.
+- Window title, OS app name, Windows .exe details, file-dialog filter, print, rasterize prompt,
+  screen picker, the New Document preset and every message in sections 2–3.
+- The built-in shortcut set is "PIRA Defaults"; "PhotoCraft Defaults" in saved preferences still
+  means it (`shortcut_sets::OLD_DEFAULTS_NAME`). The default action set is "PIRA Actions".
+- Android update messages.
+
+**Still open:** section 5 (names written into files, which needs profile aliases), section 6
+installers (.wxs, Info.plist, .desktop, Flatpak) and the desktop `APP_ID`, the web build's
+loading text, the CLI, the MCP description, the portable-mode folder names, and the user guide
+in `docs/user/` (it points at PhotoCraft's issue tracker and Discord).
+
 ## 1. Links (switch to the website when it's up)
 
 All Help-menu and start-screen links come from one file,

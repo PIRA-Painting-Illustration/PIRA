@@ -542,9 +542,9 @@
 	Hide All	Dölj alla
 
 # Help
-	About PhotoCraft	Om PhotoCraft
+	About PIRA	Om PIRA
 	PhotoCraft Website	PhotoCrafts webbplats
-	PhotoCraft on GitHub	PhotoCraft på GitHub
+	PIRA on GitHub	PIRA på GitHub
 	Report an Issue…	Rapportera ett problem…
 	ArtCraft Website	ArtCrafts webbplats
 	Join the ArtCraft Discord…	Gå med i ArtCraft på Discord…
@@ -625,11 +625,11 @@
 	Import Shortcuts…	Importera kortkommandon…
 	Load a keyboard shortcut set saved as .kys	Läs in en uppsättning kortkommandon som sparats som .kys
 	Imported {n} shortcuts from {file}. Click OK to keep them.	{n} kortkommandon har importerats från {file}. Klicka på OK för att behålla dem.
-	{n} commands are not in PhotoCraft.	{n} kommandon finns inte i PhotoCraft.
+	{n} commands are not in PIRA.	{n} kommandon finns inte i PIRA.
 	Keyboard shortcuts imported	Kortkommandon har importerats
 	Your keyboard shortcut set {set} is in use here: {n} shortcuts differ from the defaults. Edit › Keyboard Shortcuts shows them; Reset All to Defaults undoes this.	Din kortkommandouppsättning {set} används här: {n} kortkommandon skiljer sig från standardvärdena. Redigera › Kortkommandon visar dem; Återställ alla till standardvärden ångrar detta.
 	Import keyboard shortcuts?	Vill du importera kortkommandon?
-	PhotoCraft found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PhotoCraft's. Import it?	PhotoCraft hittade din uppsättning kortkommandon {set} från en annan bildredigerare på den här datorn: {n} av dess kortkommandon skiljer sig från PhotoCrafts. Vill du importera den?
+	PIRA found your keyboard shortcut set {set} from another image editor on this computer: {n} of its shortcuts differ from PIRA's. Import it?	PIRA hittade din uppsättning kortkommandon {set} från en annan bildredigerare på den här datorn: {n} av dess kortkommandon skiljer sig från PIRAs. Vill du importera den?
 	Edit › Keyboard Shortcuts › Reset All to Defaults undoes an import.	Redigera › Kortkommandon › Återställ alla till standardvärden ångrar en import.
 	Don't Import	Importera inte
 	The keyboard shortcut set was not imported: {error}	Kortkommandouppsättningen importerades inte: {error}
@@ -933,7 +933,7 @@
 	Embed Color Profile	Bädda in färgprofil
 	Assign Profile…	Tilldela profil…
 	Convert to Profile…	Konvertera till profil…
-	PhotoCraft Manages Colors	PhotoCraft hanterar färger
+	PIRA Manages Colors	PIRA hanterar färger
 	Printer Manages Colors	Skrivaren hanterar färger
 	(print to the printer)	(skriv ut på skrivaren)
 	Absolute Colorimetric	Absolut kolorimetrisk
@@ -1536,15 +1536,15 @@
 	Use File › Open, or paste a copied image with {paste}.	Använd Arkiv › Öppna, eller klistra in en kopierad bild med {paste}.
 	Native file drag-and-drop is unavailable	Inbyggt dra och släpp av filer är inte tillgängligt
 	Native file drag-and-drop is not supported on Wayland yet. Use File › Open, or copy the image in your file manager and paste it with {paste}.	Inbyggt dra och släpp av filer stöds inte på Wayland ännu. Använd Arkiv › Öppna, eller kopiera bilden i filhanteraren och klistra in den med {paste}.
-	To drop files, start PhotoCraft under XWayland: `{command}`	Starta PhotoCraft under XWayland för att kunna släppa filer: `{command}`
-	Or set Preferences › Performance › Linux display server to X11: PhotoCraft then always starts under XWayland.	Eller ställ in Inställningar › Prestanda › Linux-visningsserver på X11: då startar PhotoCraft alltid under XWayland.
+	To drop files, start PIRA under XWayland: `{command}`	Starta PIRA under XWayland för att kunna släppa filer: `{command}`
+	Or set Preferences › Performance › Linux display server to X11: PIRA then always starts under XWayland.	Eller ställ in Inställningar › Prestanda › Linux-visningsserver på X11: då startar PIRA alltid under XWayland.
 	Edit › Paste	Redigera › Klistra in
 	Photo	Foto
 	Print	Skriv ut
 	Art & Illustration	Konst och illustration
 	Mobile	Mobil
 	Film & Video	Film och video
-	Default PhotoCraft Size	Standardstorlek för PhotoCraft
+	Default PIRA Size	Standardstorlek för PIRA
 	Clipboard	Urklipp
 	Photo (2 × 3 in)	Foto (2 × 3 tum)
 	Photo (4 × 6 in)	Foto (4 × 6 tum)
@@ -1722,9 +1722,9 @@
 	Don't Save	Spara inte
 	No	Nej
 	Yes	Ja
-	These settings aren't available in PhotoCraft yet.	De här inställningarna finns inte i PhotoCraft ännu.
+	These settings aren't available in PIRA yet.	De här inställningarna finns inte i PIRA ännu.
 	Shortcut removed.	Kortkommandot har tagits bort.
-	All shortcuts reset to PhotoCraft defaults.	Alla kortkommandon har återställts till PhotoCrafts standardvärden.
+	All shortcuts reset to PIRA defaults.	Alla kortkommandon har återställts till PIRAs standardvärden.
 	Add Shortcut	Lägg till kortkommando
 	Delete Shortcut	Ta bort kortkommando
 	Press keys…	Tryck på tangenter…
@@ -2207,7 +2207,7 @@
 	Output:	Utdata:
 	Paint Overlay	Målningsöverlägg
 	Pattern Size	Mönsterstorlek
-	PhotoCraft	PhotoCraft
+	PIRA	PIRA
 	PhotoCraft — an open-source, native image editor written in Rust.	PhotoCraft — en inbyggd bildredigerare med öppen källkod, skriven i Rust.
 	Position and Size	Position och storlek
 	Preserve Details	Bevara detaljer
@@ -2793,7 +2793,7 @@ fontWeight	Italic	Kursiv
 	Color to Alpha…	Färg till alfa…
 	Transparency Threshold	Tröskelvärde för genomskinlighet
 	Opacity Threshold	Opacitetströskelvärde
-	PhotoCraft — Screen Color Picker	PhotoCraft — Skärmfärgväljare
+	PIRA — Screen Color Picker	PIRA — Skärmfärgväljare
 
 	Rasterize svg groups deeper than	Rasterisera SVG-grupper djupare än
 	0 turns this threshold off; SVG groups nested deeper than 100 levels are always rasterized.	0 stänger av tröskelvärdet; SVG-grupper som är nästlade djupare än 100 nivåer rasteriseras alltid.
@@ -3177,7 +3177,7 @@ curves	Smooth	Jämna ut
 	{name} (Photoshop)	{name} (Photoshop)
 	{message} ({note})	{message} ({note})
 @plural	Loaded {n} action from {file}|Loaded {n} actions from {file}	Läste in {n} åtgärd från {file}|Läste in {n} åtgärder från {file}
-@plural	{n} step has no PhotoCraft equivalent yet|{n} steps have no PhotoCraft equivalent yet	{n} steg saknar ännu motsvarighet i PhotoCraft|{n} steg saknar ännu motsvarighet i PhotoCraft
+@plural	{n} step has no PIRA equivalent yet|{n} steps have no PIRA equivalent yet	{n} steg saknar ännu motsvarighet i PIRA|{n} steg saknar ännu motsvarighet i PIRA
 @plural	Saved {n} action to {file}|Saved {n} actions to {file}	Sparade {n} åtgärd i {file}|Sparade {n} åtgärder i {file}
 @plural	{n} step with no Photoshop equivalent left out|{n} steps with no Photoshop equivalent left out	{n} steg utan motsvarighet i Photoshop utelämnades|{n} steg utan motsvarighet i Photoshop utelämnades
 
@@ -3312,12 +3312,12 @@ curves	Smooth	Jämna ut
 	Bicubic Smoother	Bikubisk mjukare
 	Bicubic Sharper	Bikubisk skarpare
 	Pasting from other apps is unavailable	Det går inte att klistra in från andra appar
-	PhotoCraft can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PhotoCraft kommer inte åt systemets urklipp i den här sessionen. Under Wayland döljer en Flatpak-sandlåda protokollet som bilder från andra appar läses via.
-	To paste from other apps, start PhotoCraft under XWayland: `{command}`	Starta PhotoCraft under XWayland för att klistra in från andra appar: `{command}`
-	Nothing to paste: PhotoCraft can't read the system clipboard here	Inget att klistra in: PhotoCraft kan inte läsa systemets urklipp här
+	PIRA can't reach the system clipboard in this session. On Wayland, a Flatpak sandbox hides the protocol that images from other apps are read through.	PIRA kommer inte åt systemets urklipp i den här sessionen. Under Wayland döljer en Flatpak-sandlåda protokollet som bilder från andra appar läses via.
+	To paste from other apps, start PIRA under XWayland: `{command}`	Starta PIRA under XWayland för att klistra in från andra appar: `{command}`
+	Nothing to paste: PIRA can't read the system clipboard here	Inget att klistra in: PIRA kan inte läsa systemets urklipp här
 	Delete this set	Ta bort den här uppsättningen
 	New Set…	Ny uppsättning…
-	PhotoCraft Defaults	PhotoCraft-standard
+	PIRA Defaults	PIRA-standard
 	Save a list of these shortcuts as a web page	Spara en lista över dessa kortkommandon som en webbsida
 	Save the changes to this set	Spara ändringarna i den här uppsättningen
 	Save these shortcuts as a .kys file	Spara dessa kortkommandon som en .kys-fil
@@ -4169,7 +4169,7 @@ curves	Smooth	Jämna ut
 	Pentagon	Pentagon
 	Percentage	Procent
 	Permission denied	Åtkomst nekad
-	PhotoCraft keeps retrying; until a save succeeds, preference changes are lost when it closes.	PhotoCraft fortsätter att försöka; tills en sparning lyckas går ändrade inställningar förlorade när programmet stängs.
+	PIRA keeps retrying; until a save succeeds, preference changes are lost when it closes.	PIRA fortsätter att försöka; tills en sparning lyckas går ändrade inställningar förlorade när programmet stängs.
 	Photomerge	Photomerge
 	Pick Color From Image	Hämta färg från bilden
 	Picture Frame	Bildram

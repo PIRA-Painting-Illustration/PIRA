@@ -226,8 +226,8 @@ gh release create android-v0.8.2-4 --prerelease --notes-file notes.md target/and
 
 The build number goes into the version code (0.8.2-4 → 80204), so each release installs over
 the last. Reset it to 1 when the workspace version changes. Android installs an update only when
-it is signed with the same key as the installed copy: build every release with the same
-keystore (here the build machine's debug key, `~/.android/debug.keystore`; keep a backup).
+it is signed with the same key as the installed copy: build every release with the release key
+(see Release signing below), with `PIRA_RELEASE=1` so a missing key stops the build.
 
 ## Build
 
@@ -246,8 +246,40 @@ adb install -r target/android/photocraft-<version>-arm64-v8a.apk
 then runs Gradle (`android/`, wrapper included). `PROFILE=dev` builds an unoptimised library
 faster; `FEATURES=heif` adds HEIC/HEIF decoding. Logs: `adb logcat -s PhotoCraft`.
 
-The release APK is signed with the Android debug key so it installs as is. To distribute it,
-add a `signingConfig` with your own keystore in `android/app/build.gradle`.
+## Release signing
+
+Published APKs are signed with PIRA's release key. The key and its password never go in the
+repository. Gradle reads them from `~/pira-signing/keystore.properties` (or the file named by
+`PIRA_SIGNING`); without that file the APK is signed with the debug key and the build says so.
+Debug-signed builds are for your own devices only.
+
+Make the key once (keytool asks for the password; use a long one and store it in a password
+manager):
+
+```bash
+mkdir -p ~/pira-signing
+keytool -genkeypair -v -keystore ~/pira-signing/pira-release.jks -alias pira \
+  -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=PIRA, O=PIRA-Painting-Illustration"
+```
+
+Then write `~/pira-signing/keystore.properties`:
+
+```properties
+storeFile=C:/Users/<you>/pira-signing/pira-release.jks
+keyAlias=pira
+password=<the keystore password>
+```
+
+Or leave `password` out and set `PIRA_KEY_PASSWORD` when building. Release builds:
+
+```bash
+PIRA_RELEASE=1 RELEASE_BUILD=1 apps/photocraft-android/build.sh
+```
+
+**Back up `pira-release.jks` and its password in two places** (for example an encrypted USB
+drive and a password manager). If the key is lost, installed copies can never be updated: every
+user would have to uninstall and reinstall. Copies installed with the debug key also have to be
+uninstalled once before a release-signed APK will install.
 
 On a Windows host with the `x86_64-pc-windows-gnu` Rust toolchain: build scripts need a
 `dlltool` that works without a GNU assembler (the NDK's `llvm-dlltool.exe`, copied to a folder on
