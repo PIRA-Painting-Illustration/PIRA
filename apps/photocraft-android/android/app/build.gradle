@@ -28,6 +28,20 @@ def releaseBuild = (System.getenv('RELEASE_BUILD') ?: '0').toInteger()
 def appVersionName = "${cargoVersion[1]}.${cargoVersion[2]}.${cargoVersion[3]}" + (releaseBuild > 0 ? "-${releaseBuild}" : '')
 def appVersionCode = (cargoVersion[1].toInteger() * 10000 + cargoVersion[2].toInteger() * 100 + cargoVersion[3].toInteger()) * 100 + Math.min(releaseBuild, 99)
 
+// Release signing. The key lives outside the repository: a properties file (PIRA_SIGNING, or
+// ~/pira-signing/keystore.properties by default) with storeFile and keyAlias, and the password
+// in it or in PIRA_KEY_PASSWORD. Without the file the APK is signed with the debug key, which is
+// fine on your own devices but must never be published: Android only installs an update signed
+// with the same key as the installed copy. PIRA_RELEASE=1 makes a missing key an error.
+def signingFile = file(System.getenv('PIRA_SIGNING') ?: "${System.getProperty('user.home')}/pira-signing/keystore.properties")
+def signingProps = new Properties()
+if (signingFile.exists()) {
+    signingFile.withInputStream { signingProps.load(it) }
+} else if (System.getenv('PIRA_RELEASE') == '1') {
+    throw new GradleException("PIRA_RELEASE=1 but there is no signing key at ${signingFile} (see apps/photocraft-android/README.md, Release signing)")
+}
+def signingPassword = System.getenv('PIRA_KEY_PASSWORD') ?: signingProps.getProperty('password')
+
 android {
     namespace 'ai.storyteller.photocraft'
     compileSdk 35
@@ -45,13 +59,22 @@ android {
         }
     }
 
+    signingConfigs {
+        release {
+            if (signingFile.exists()) {
+                storeFile file(signingProps.getProperty('storeFile'))
+                keyAlias signingProps.getProperty('keyAlias', 'pira')
+                storePassword signingPassword
+                keyPassword signingPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             // GameActivity calls into Java by name from native code: keep every class as is.
             minifyEnabled false
-            // A prototype: signed with the debug key so it installs as is. Sign with your own
-            // key for distribution (see README.md).
-            signingConfig signingConfigs.debug
+            signingConfig signingFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
 
@@ -75,6 +98,7 @@ android {
 }
 
 tasks.named('preBuild') { dependsOn copyIcon, copyIconForeground }
+logger.lifecycle(signingFile.exists() ? "Signing the release APK with the release key (${signingFile})" : 'Signing the release APK with the DEBUG key: for your own devices only, never publish it')
 
 dependencies {
     // AndroidX pulls kotlin-stdlib 1.8 next to the old split -jdk7/-jdk8 artifacts; align them.

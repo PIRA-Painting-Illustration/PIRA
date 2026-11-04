@@ -128,7 +128,7 @@ final class Updater {
                     }
                 } else if (found == null) {
                     if (manual) {
-                        toast("PhotoCraft is up to date (" + currentName() + ").");
+                        toast("PIRA is up to date (" + currentName() + ").");
                     }
                 } else if (manual || !found.tag.equals(prefs().getString("skipped", ""))) {
                     offer(found);
@@ -211,7 +211,7 @@ final class Updater {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(15000);
         c.setReadTimeout(30000);
-        c.setRequestProperty("User-Agent", "PhotoCraft-Android/" + currentName());
+        c.setRequestProperty("User-Agent", "PIRA-Android/" + currentName());
         c.setRequestProperty("Accept", url.startsWith("https://api.github.com/") ? "application/vnd.github+json" : "application/octet-stream");
         // GitHub sends release downloads to its file host: both HTTPS, so followed.
         c.setInstanceFollowRedirects(true);
@@ -257,8 +257,8 @@ final class Updater {
     private void offer(Release r) {
         String name = r.tag.replace("android-v", "");
         new AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle("PhotoCraft " + name + " is available")
-                .setMessage("You have " + currentName() + ".\n\n" + summary(r.notes) + "\n\nDownload and install it now? Save your work first: PhotoCraft closes to update.")
+                .setTitle("PIRA " + name + " is available")
+                .setMessage("You have " + currentName() + ".\n\n" + summary(r.notes) + "\n\nDownload and install it now? Save your work first: PIRA closes to update.")
                 .setPositiveButton("Install", (d, w) -> download(r))
                 .setNegativeButton("Later", null)
                 .setNeutralButton("Skip This Version", (d, w) -> prefs().edit().putString("skipped", r.tag).apply())
@@ -277,7 +277,7 @@ final class Updater {
         bar.setPadding(48, 24, 48, 0);
         final boolean[] cancelled = {false};
         AlertDialog dialog = new AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle("Downloading PhotoCraft " + r.tag.replace("android-v", ""))
+                .setTitle("Downloading PIRA " + r.tag.replace("android-v", ""))
                 .setView(bar)
                 .setCancelable(false)
                 .setNegativeButton("Cancel", (d, w) -> cancelled[0] = true)
@@ -345,7 +345,7 @@ final class Updater {
         if (!activity.getPackageManager().canRequestPackageInstalls()) {
             // Android asks once per app: send the user to the switch, and carry on when they're back.
             prefs().edit().putBoolean("awaiting-permission", true).apply();
-            toast("Allow PhotoCraft to install apps, then come back to finish the update.");
+            toast("Allow PIRA to install apps, then come back to finish the update.");
             activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                     Uri.parse("package:" + activity.getPackageName())));
             return;
@@ -396,7 +396,7 @@ final class Updater {
                     Log.w(TAG, "update install: " + status + " " + msg);
                     if (status != PackageInstaller.STATUS_FAILURE_ABORTED) {
                         Toast.makeText(context, status == PackageInstaller.STATUS_FAILURE_CONFLICT || status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE
-                                ? "The update is signed with a different key than this copy of PhotoCraft: uninstall it and install the update by hand."
+                                ? "The update is signed with a different key than this copy of PIRA: uninstall it and install the update by hand."
                                 : "The update couldn't be installed" + (msg == null ? "." : ": " + msg), Toast.LENGTH_LONG).show();
                     }
                 }

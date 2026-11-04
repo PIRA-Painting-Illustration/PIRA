@@ -18,7 +18,14 @@ use serde_json::{Value, json};
 use crate::prefs::{Preferences, alternate_keys, normalize_shortcut};
 
 /// The built-in set's name: the default bindings.
-pub const DEFAULTS_NAME: &str = "PhotoCraft Defaults";
+pub const DEFAULTS_NAME: &str = "PIRA Defaults";
+/// The built-in set's name before PIRA: still means the built-in set in saved preferences.
+pub const OLD_DEFAULTS_NAME: &str = "PhotoCraft Defaults";
+
+/// Whether `name` is the built-in set, under its current or old name.
+pub fn is_defaults(name: &str) -> bool {
+    name.eq_ignore_ascii_case(DEFAULTS_NAME) || name.eq_ignore_ascii_case(OLD_DEFAULTS_NAME)
+}
 /// Saved sets are small; the cap keeps a hostile settings file or call bounded.
 pub const MAX_SETS: usize = 64;
 /// Longest set name, in characters.
@@ -93,7 +100,7 @@ pub fn set_name(name: &str) -> Result<String, String> {
     if n.chars().any(char::is_control) {
         return Err("a set name can't contain control characters".into());
     }
-    if n.eq_ignore_ascii_case(DEFAULTS_NAME) {
+    if is_defaults(n) {
         return Err(format!("`{DEFAULTS_NAME}` is the built-in set"));
     }
     Ok(n.to_string())
@@ -125,7 +132,7 @@ pub fn modified(p: &Preferences) -> bool {
 pub fn load(next: &mut Preferences, p: &Value) -> Result<bool, String> {
     let Some(v) = p.get("useSet") else { return Ok(false) };
     let name = v.as_str().ok_or("`useSet` is a set name")?.trim();
-    if name.is_empty() || name.eq_ignore_ascii_case(DEFAULTS_NAME) {
+    if name.is_empty() || is_defaults(name) {
         ShortcutSet::default().load_into(next);
         next.shortcut_set = String::new();
     } else {
@@ -178,7 +185,7 @@ pub fn store(next: &mut Preferences, p: &Value) -> Result<bool, String> {
     }
     if let Some(v) = p.get("activeSet") {
         let name = v.as_str().ok_or("`activeSet` is a set name")?.trim();
-        if name.is_empty() || name.eq_ignore_ascii_case(DEFAULTS_NAME) {
+        if name.is_empty() || is_defaults(name) {
             next.shortcut_set = String::new();
         } else if next.shortcut_sets.contains_key(name) {
             next.shortcut_set = name.to_string();
