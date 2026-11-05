@@ -8,6 +8,10 @@
 //! coalesced, and once more with a smooth render on release.
 //!
 //! The 3D panel (beside Brushes) adds mannequins and applies poses from the pose library.
+//!
+//! After Match photo › Body, the photo's joints show as coral dots while the Match photo tab is
+//! open: dragging one moves that joint and refits the figure (`scene3d.refitPhoto`), and the tab
+//! sets each limb towards or away from the camera.
 
 use egui::{Color32, Pos2, Stroke, Vec2};
 use photocraft_doc::{Body3d, LayerContent, LayerId, Scene3d};
@@ -85,6 +89,8 @@ pub enum DragKind {
     Pan,
     Dolly,
     Light,
+    /// A photo-match joint (its landmark index) being dragged onto the photo's joint.
+    PhotoPoint(usize),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -152,7 +158,39 @@ fn step(d: &mut ObjectDrag, a: [f64; 2], b: [f64; 2]) -> bool {
             light::set_direction(&mut d.scene, dir);
             true
         }
+        // Sent as `scene3d.refitPhoto` instead ([`refit_drag`]).
+        DragKind::PhotoPoint(_) => false,
     }
+}
+
+/// The photo match of `layer`, while the Match photo tab shows it (its joints are draggable).
+fn shown_photo_match(app: &PhotocraftApp, layer: LayerId) -> Option<&photocraft_engine::scene3d_cmds::PhotoMatch> {
+    if app.ui.object_tool.tab != PanelTab::Photo {
+        return None;
+    }
+    app.session.photo_match.as_ref().filter(|m| m.layer == layer)
+}
+
+/// The photo-match joint within reach of canvas point `at`, nearest first.
+fn photo_handle_at(app: &PhotocraftApp, layer: LayerId, at: [f64; 2]) -> Option<usize> {
+    let m = shown_photo_match(app, layer)?;
+    let points = m.points();
+    // About a fingertip on screen, whatever the zoom.
+    let reach = 24.0 / app.current_zoom().max(0.01);
+    let at = s3d::glam::Vec2::new(at[0] as f32, at[1] as f32);
+    s3d::retarget::HANDLES
+        .iter()
+        .filter_map(|&i| points.get(i).map(|p| (i, p.distance(at))))
+        .filter(|(_, d)| *d <= reach)
+        .min_by(|a, b| a.1.total_cmp(&b.1))
+        .map(|(i, _)| i)
+}
+
+fn refit_drag(app: &mut PhotocraftApp, d: &ObjectDrag, point: usize, at: [f64; 2], draft: bool) {
+    let fig = app.session.photo_match.as_ref().map_or(0, |m| m.figure);
+    let p = json!({"layer": d.layer.0, "figure": fig, "move": {"point": point, "to": at}, "draft": draft, "coalesce": d.key});
+    let r = app.run("scene3d.refitPhoto", p);
+    status(app, r);
 }
 
 fn send(app: &mut PhotocraftApp, d: &ObjectDrag, draft: bool) {
@@ -172,6 +210,13 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
                 app.ui.status = tl!("Select a 3D layer to pose (Layer › New › 3D Figure…)").to_string();
                 return true;
             };
+            // A photo-match joint under the pen is dragged onto the photo.
+            if let Some(point) = photo_handle_at(app, layer, [x, y]) {
+                app.ui.object_tool.drags += 1;
+                let key = format!("object-tool-{}", app.ui.object_tool.drags);
+                app.ui.object_tool.drag = Some(ObjectDrag { layer, kind: DragKind::PhotoPoint(point), scene, size, last: [x, y], moved: false, key });
+                return true;
+            }
             let ui = &app.ui.object_tool;
             let camera_kind = if mods.shift {
                 Some(DragKind::Pan)
@@ -214,6 +259,13 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
         }
         ToolEvent::Move { x, y, .. } => {
             let Some(mut d) = app.ui.object_tool.drag.take() else { return true };
+            if let DragKind::PhotoPoint(point) = d.kind {
+                refit_drag(app, &d, point, [x, y], true);
+                d.moved = true;
+                d.last = [x, y];
+                app.ui.object_tool.drag = Some(d);
+                return true;
+            }
             let a = d.last;
             if step(&mut d, a, [x, y]) {
                 d.moved = true;
@@ -224,6 +276,13 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
         }
         ToolEvent::Up { x, y } => {
             let Some(mut d) = app.ui.object_tool.drag.take() else { return true };
+            if let DragKind::PhotoPoint(point) = d.kind {
+                // A tap without a move leaves the match as it is.
+                if d.moved || [x, y] != d.last {
+                    refit_drag(app, &d, point, [x, y], false);
+                }
+                return true;
+            }
             let a = d.last;
             d.moved |= step(&mut d, a, [x, y]);
             if d.moved {
@@ -240,9 +299,34 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
         return;
     }
     let Some((layer, scene, (w, h))) = active_scene(app) else { return };
-    let scene = app.ui.object_tool.drag.as_ref().filter(|d| d.layer == layer).map_or(scene, |d| d.scene.clone());
+    // A pose drag shows its own copy of the scene; a photo-joint drag refits through the engine.
+    let scene = app.ui.object_tool.drag.as_ref().filter(|d| d.layer == layer && !matches!(d.kind, DragKind::PhotoPoint(_))).map_or(scene, |d| d.scene.clone());
     let t = Tokens::get(painter.ctx());
     let to_screen = |p: [f32; 2]| -> Pos2 { xf.to_screen(p[0], p[1]) };
+    // The Match photo tab: the photo's joints as the match read them, to drag where they belong.
+    if let Some(m) = shown_photo_match(app, layer) {
+        let points = m.points();
+        let at = |i: usize| points.get(i).map(|p| to_screen([p.x, p.y]));
+        let coral = Color32::from_rgb(255, 122, 92);
+        for (a, b) in s3d::retarget::HANDLE_LINES {
+            if let (Some(a), Some(b)) = (at(a), at(b)) {
+                painter.line_segment([a, b], Stroke::new(3.0, Color32::from_black_alpha(90)));
+                painter.line_segment([a, b], Stroke::new(1.5, coral));
+            }
+        }
+        let held = app.ui.object_tool.drag.as_ref().and_then(|d| if let DragKind::PhotoPoint(i) = d.kind { Some(i) } else { None });
+        for i in s3d::retarget::HANDLES {
+            let Some(c) = at(i) else { continue };
+            let fixed = m.moved.contains_key(&i);
+            let r = if held == Some(i) { 9.0 } else { 6.5 };
+            painter.circle_filled(c, r + 1.5, Color32::from_black_alpha(120));
+            painter.circle_filled(c, r, if fixed { Color32::WHITE } else { coral });
+            if fixed {
+                painter.circle_stroke(c, r - 1.0, Stroke::new(2.0, coral));
+            }
+        }
+        return;
+    }
     if app.ui.object_tool.mode == DragMode::Light {
         draw_light(painter, &scene, (w, h), &to_screen);
         return;
@@ -690,6 +774,37 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 });
                 ui.add_space(6.0);
                 ui.weak(tl!("The first match takes a few seconds longer while the models load."));
+                // Fixing the match: drag joints on the canvas, set each limb's depth here.
+                let shown = app.session.photo_match.clone().filter(|m| m.layer == layer && m.figure == fig);
+                if let Some(m) = shown {
+                    ui.add_space(10.0);
+                    ui.separator();
+                    ui.label(egui::RichText::new(tl!("Fix the match")).strong());
+                    ui.weak(tl!("With the Object tool, drag the coral dots on the photo onto the person's joints. White dots are ones you've moved."));
+                    ui.weak(tl!("If a limb points the wrong way, say which end is nearer the camera:"));
+                    ui.add_space(4.0);
+                    for (k, (name, _, _)) in s3d::retarget::SEGMENTS.iter().enumerate() {
+                        let now = m.now.get(k).copied().unwrap_or(true);
+                        let set_by_user = m.toward.get(k).copied().flatten().is_some();
+                        ui.horizontal(|ui| {
+                            let label = tl!(name);
+                            ui.add_sized(
+                                [110.0, 18.0],
+                                egui::Label::new(if set_by_user { egui::RichText::new(label).strong() } else { egui::RichText::new(label) }),
+                            );
+                            for (toward, text) in [(true, "Toward me"), (false, "Away")] {
+                                if crate::widgets::pill_tab(ui, tl!(text), now == toward).clicked() && now != toward {
+                                    cmd = Some(("scene3d.refitPhoto", json!({"layer": layer.0, "figure": fig, "depth": {"segment": k, "toward": toward}})));
+                                }
+                            }
+                        });
+                    }
+                    ui.add_space(4.0);
+                    let fixes = !m.moved.is_empty() || m.toward.iter().any(Option::is_some);
+                    if ui.add_enabled(fixes, egui::Button::new(tl!("Undo all fixes"))).clicked() {
+                        cmd = Some(("scene3d.refitPhoto", json!({"layer": layer.0, "figure": fig, "reset": true})));
+                    }
+                }
             }
             None => no_layer(ui),
         },
@@ -837,6 +952,31 @@ mod tests {
         assert_ne!(after.figures[0].joints.get("forearm.L"), before.figures[0].joints.get("forearm.L"));
         app.run("edit.undo", json!({})).unwrap();
         assert_eq!(scene(&app).figures[0].joints, before.figures[0].joints);
+    }
+
+    #[test]
+    fn dragging_a_photo_joint_refits_the_match_in_one_undo_step() {
+        let mut app = app_with_figure();
+        app.run("layer.rasterize.scene3d", json!({})).unwrap();
+        app.run("layer.new.figure3d", json!({"pose": "Standing"})).unwrap();
+        app.session.execute("scene3d.matchPhoto", json!({})).unwrap();
+        let layer = app.session.active().unwrap().active_layer.unwrap();
+        // Hidden unless the Match photo tab is open.
+        app.ui.object_tool.tab = PanelTab::Poses;
+        let elbow = app.session.photo_match.as_ref().unwrap().points()[13];
+        assert!(photo_handle_at(&app, layer, [elbow.x as f64, elbow.y as f64]).is_none());
+        app.ui.object_tool.tab = PanelTab::Photo;
+        assert_eq!(photo_handle_at(&app, layer, [elbow.x as f64 + 3.0, elbow.y as f64]), Some(13));
+        let before = scene(&app);
+        let (x, y) = (elbow.x as f64, elbow.y as f64);
+        pointer(&mut app, ToolEvent::Down { x, y, pressure: 1.0 }, egui::Modifiers::NONE);
+        pointer(&mut app, ToolEvent::Move { x: x + 10.0, y: y + 60.0, pressure: 1.0 }, egui::Modifiers::NONE);
+        pointer(&mut app, ToolEvent::Up { x: x + 20.0, y: y + 120.0 }, egui::Modifiers::NONE);
+        let m = app.session.photo_match.as_ref().unwrap();
+        assert!((m.points()[13].y - (elbow.y + 120.0)).abs() < 0.5, "the dot is where it was dropped");
+        assert_ne!(scene(&app), before, "the figure was refitted");
+        app.session.execute("edit.undo", json!({})).unwrap();
+        assert_eq!(scene(&app).figures, before.figures, "one undo step");
     }
 
     #[test]
