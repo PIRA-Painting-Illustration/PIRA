@@ -42,7 +42,10 @@ impl Part {
 
 /// What the tracker found.
 enum Found {
-    Body { world: Vec<Vec3>, visible: Vec<f32> },
+    Body {
+        world: Vec<Vec3>,
+        visible: Vec<f32>,
+    },
     /// Each hand's landmarks and whether it is a right hand.
     Hands(Vec<(Vec<Vec3>, bool)>),
 }
@@ -65,7 +68,8 @@ fn photo(doc: &Document, source: Option<LayerId>) -> Result<(Vec<[f32; 3]>, usiz
         }
         None => {
             let mut clean = doc.clone();
-            let figures: Vec<LayerId> = doc.walk().into_iter().filter(|(_, _, l)| matches!(l.content, LayerContent::Scene3d(_))).map(|(_, _, l)| l.id).collect();
+            let figures: Vec<LayerId> =
+                doc.walk().into_iter().filter(|(_, _, l)| matches!(l.content, LayerContent::Scene3d(_))).map(|(_, _, l)| l.id).collect();
             for id in figures {
                 if let Some(l) = clean.layer_mut(id) {
                     l.visible = false;
@@ -100,11 +104,11 @@ fn photo(doc: &Document, source: Option<LayerId>) -> Result<(Vec<[f32; 3]>, usiz
     Ok((out, sw, sh))
 }
 
-fn track(part: Part, rgb: &[[f32; 3]], w: usize, h: usize) -> Result<Found> {
+fn track(part: Part, quality: posetrack::Quality, rgb: &[[f32; 3]], w: usize, h: usize) -> Result<Found> {
     let img = Image { width: w, height: h, rgb };
     match part {
         Part::Body => {
-            let b = posetrack::body(img).map_err(EngineError::Other)?.ok_or_else(|| EngineError::Other("No person found in the image".into()))?;
+            let b = posetrack::body_with(img, quality).map_err(EngineError::Other)?.ok_or_else(|| EngineError::Other("No person found in the image".into()))?;
             Ok(Found::Body { world: b.world, visible: b.visible })
         }
         Part::Hands | Part::Hand(_) => {
@@ -121,6 +125,11 @@ fn track(part: Part, rgb: &[[f32; 3]], w: usize, h: usize) -> Result<Found> {
 pub(super) fn match_photo(s: &mut Session, p: &Value) -> Result<Value> {
     let id = layer_id(s, p)?;
     let part = Part::of(p)?;
+    let quality = match p.get("model").and_then(Value::as_str).unwrap_or("quick") {
+        "quick" => posetrack::Quality::Quick,
+        "accurate" => posetrack::Quality::Accurate,
+        _ => return Err(bad(CMD, "`model` must be quick or accurate")),
+    };
     let wrist = match p.get("wrist") {
         None | Some(Value::Null) => true,
         Some(v) => v.as_bool().ok_or_else(|| bad(CMD, "`wrist` must be true or false"))?,
@@ -151,12 +160,21 @@ pub(super) fn match_photo(s: &mut Session, p: &Value) -> Result<Value> {
             let (rgb, w, h) = photo(&doc, source)?;
             ctx.check()?;
             ctx.progress(0.3, "Finding the pose");
-            let found = track(part, &rgb, w, h)?;
+            let started = std::time::Instant::now();
+            let found = track(part, quality, &rgb, w, h)?;
+            let seconds = started.elapsed().as_secs_f64();
             ctx.check()?;
             ctx.progress(1.0, "Posing the figure");
-            Ok(found)
+            Ok((found, seconds))
         },
-        move |s, found| apply(s, id, fi, part, wrist, found, label),
+        move |s, (found, seconds)| {
+            let mut out = apply(s, id, fi, part, wrist, found, label)?;
+            if let Some(o) = out.as_object_mut() {
+                o.insert("seconds".into(), json!((seconds * 100.0).round() / 100.0));
+                o.insert("model".into(), json!(if quality == posetrack::Quality::Accurate { "accurate" } else { "quick" }));
+            }
+            Ok(out)
+        },
     )
 }
 
@@ -245,6 +263,25 @@ mod tests {
         // One undo step.
         s.execute("edit.undo", json!({})).unwrap();
         assert!(arm_drop(&active_scene(&s)) > 0.8);
+    }
+
+    #[test]
+    fn the_accurate_model_matches_the_same_pose() {
+        let mut s = session();
+        s.execute("layer.new.figure3d", json!({"pose": "T-pose"})).unwrap();
+        s.execute("layer.rasterize.scene3d", json!({})).unwrap();
+        for model in ["quick", "accurate", "quick", "accurate"] {
+            s.execute("layer.new.figure3d", json!({"pose": "Standing"})).unwrap();
+            let r = s.execute(CMD, json!({"model": model})).unwrap();
+            assert_eq!(r["matched"], json!(["body"]));
+            assert_eq!(r["model"], json!(model));
+            let drop = arm_drop(&active_scene(&s));
+            assert!(drop.abs() < 0.45, "{model}: the arms came up to the photo's: {drop}");
+            // The first run of each also loads its model; the second is the steady time.
+            eprintln!("{model}: {} s", r["seconds"]);
+            s.execute("layer.delete", json!({})).unwrap();
+        }
+        assert!(s.execute(CMD, json!({"model": "huge"})).is_err());
     }
 
     #[test]

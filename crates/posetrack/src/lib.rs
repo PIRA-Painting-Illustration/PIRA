@@ -6,8 +6,13 @@
 //! The pre- and post-processing follows OpenCV's reference code, rewritten around one
 //! turned-crop sampler instead of crop, pad, rotate and resize steps. Ported from PIRA Pose.
 //!
-//! The models are built in (about 25 MB) and loaded once, on first use (a second or two). The
-//! browser build has no models: [`AVAILABLE`] is false and every call fails.
+//! The body has two landmark models: [`Quality::Quick`] (MediaPipe's Full model) and
+//! [`Quality::Accurate`] (its Heavy model: slower, steadier on hard poses). Google ships Heavy with
+//! float16 weights; the ONNX file keeps them so, with a cast to float32 that is folded when it loads.
+//!
+//! The models are built in (about 53 MB) and loaded once, on first use (a second or two; the Heavy
+//! model only when first asked for). The browser build has no models: [`AVAILABLE`] is false and
+//! every call fails.
 #![forbid(unsafe_code)]
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 
@@ -133,9 +138,24 @@ pub fn hands(img: Image<'_>) -> Result<Vec<Hand>, String> {
     imp::tracker()?.hands(img)
 }
 
-/// The most confident person in `img`, if any.
+/// Which body landmark model to use.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Quality {
+    /// MediaPipe's Full model: fast.
+    #[default]
+    Quick,
+    /// MediaPipe's Heavy model: about three times the work, more accurate on hard poses.
+    Accurate,
+}
+
+/// The most confident person in `img`, if any (the quick model).
 pub fn body(img: Image<'_>) -> Result<Option<Body>, String> {
-    imp::tracker()?.body(img)
+    body_with(img, Quality::Quick)
+}
+
+/// The most confident person in `img`, if any, with the chosen landmark model.
+pub fn body_with(img: Image<'_>, quality: Quality) -> Result<Option<Body>, String> {
+    imp::tracker()?.body(img, quality)
 }
 
 /// Loads the models now (the first call to [`hands`] or [`body`] otherwise does).
@@ -145,7 +165,7 @@ pub fn warm_up() -> Result<(), String> {
 
 #[cfg(target_arch = "wasm32")]
 mod imp {
-    use super::{Body, Hand, Image, UNAVAILABLE};
+    use super::{Body, Hand, Image, Quality, UNAVAILABLE};
 
     pub struct Tracker;
 
@@ -154,7 +174,7 @@ mod imp {
             Err(UNAVAILABLE.into())
         }
 
-        pub fn body(&self, _img: Image<'_>) -> Result<Option<Body>, String> {
+        pub fn body(&self, _img: Image<'_>, _quality: Quality) -> Result<Option<Body>, String> {
             Err(UNAVAILABLE.into())
         }
     }
@@ -166,7 +186,7 @@ mod imp {
 
 #[cfg(not(target_arch = "wasm32"))]
 mod imp {
-    use super::{Body, Hand, Image};
+    use super::{Body, Hand, Image, Quality};
     use glam::{Vec2, Vec3};
     use std::sync::{Arc, OnceLock};
     use tract_onnx::prelude::*;
@@ -177,6 +197,16 @@ mod imp {
     const HAND: &[u8] = include_bytes!("../../../assets/models/mediapipe/handpose_estimation_mediapipe_2023feb.onnx");
     const PERSON: &[u8] = include_bytes!("../../../assets/models/mediapipe/person_detection_mediapipe_2023mar.onnx");
     const POSE: &[u8] = include_bytes!("../../../assets/models/mediapipe/pose_estimation_mediapipe_2023mar.onnx");
+    const POSE_HEAVY: &[u8] = include_bytes!("../../../assets/models/mediapipe/pose_landmark_heavy_2022aug.onnx");
+
+    /// The Heavy landmark model, loaded the first time [`Quality::Accurate`] is asked for.
+    fn heavy() -> TractResult<&'static Model> {
+        static HEAVY: OnceLock<Result<Model, String>> = OnceLock::new();
+        HEAVY
+            .get_or_init(|| load(POSE_HEAVY, &[1, 256, 256, 3]).map_err(|e| e.to_string()))
+            .as_ref()
+            .map_err(|e| TractError::msg(format!("could not load the accurate pose model: {e}")))
+    }
 
     pub struct Tracker {
         palm: Model,
@@ -228,10 +258,8 @@ mod imp {
                     let mut acc = [0.0f32; 3];
                     for ty in 0..taps {
                         for tx in 0..taps {
-                            let n = Vec2::new(
-                                (u as f32 + (tx as f32 + 0.5) / taps as f32) / out as f32,
-                                (v as f32 + (ty as f32 + 0.5) / taps as f32) / out as f32,
-                            );
+                            let n =
+                                Vec2::new((u as f32 + (tx as f32 + 0.5) / taps as f32) / out as f32, (v as f32 + (ty as f32 + 0.5) / taps as f32) / out as f32);
                             let p = self.to_image(n) - Vec2::splat(0.5);
                             let (x0, y0) = (p.x.floor(), p.y.floor());
                             let (fx, fy) = (p.x - x0, p.y - y0);
@@ -370,9 +398,9 @@ mod imp {
             self.hands_in(img).map_err(|e| format!("hand tracking failed: {e}"))
         }
 
-        pub fn body(&self, img: Image<'_>) -> Result<Option<Body>, String> {
+        pub fn body(&self, img: Image<'_>, quality: Quality) -> Result<Option<Body>, String> {
             check(img)?;
-            self.body_in(img).map_err(|e| format!("pose tracking failed: {e}"))
+            self.body_in(img, quality).map_err(|e| format!("pose tracking failed: {e}"))
         }
 
         fn hands_in(&self, img: Image<'_>) -> TractResult<Vec<Hand>> {
@@ -426,7 +454,7 @@ mod imp {
             Ok(Some(Hand { image, world, right, score }))
         }
 
-        fn body_in(&self, img: Image<'_>) -> TractResult<Option<Body>> {
+        fn body_in(&self, img: Image<'_>, quality: Quality) -> TractResult<Option<Body>> {
             let frame = letterbox(img);
             let input = nchw(&frame.sample(img, 224, |v| v * 2.0 - 1.0), 224);
             let out = self.person.run(tvec!(input.into()))?;
@@ -438,7 +466,11 @@ mod imp {
             let reach = (full - hip).length();
             let crop = Crop { center: hip, side: reach * 2.0, down: (hip - full).normalize_or(Vec2::Y) };
             let input = nhwc(&crop.sample(img, 256, |v| v), 256);
-            let out = self.pose.run(tvec!(input.into()))?;
+            let model = match quality {
+                Quality::Quick => &self.pose,
+                Quality::Accurate => heavy()?,
+            };
+            let out = model.run(tvec!(input.into()))?;
             let marks = output(&out, &[1, 195])?;
             let world = output(&out, &[1, 117])?;
             let score = output(&out, &[1, 1])?.first().copied().unwrap_or(0.0);
@@ -485,5 +517,12 @@ mod tests {
         assert!(hands(img).unwrap().is_empty());
         let tiny = Image { width: 2, height: 2, rgb: &rgb };
         assert!(body(tiny).is_err());
+    }
+
+    #[test]
+    fn the_accurate_model_loads_and_reads_the_same_outputs() {
+        let rgb = vec![[0.5f32; 3]; 320 * 240];
+        let img = Image { width: 320, height: 240, rgb: &rgb };
+        assert!(body_with(img, Quality::Accurate).unwrap().is_none());
     }
 }

@@ -312,7 +312,9 @@ fn look(s: &mut Session, p: &Value) -> Result<Value> {
     let num = |k: &str, lo: f32, hi: f32| -> Result<Option<f32>> {
         match o.get(k) {
             None | Some(Value::Null) => Ok(None),
-            Some(v) => v.as_f64().map(|x| (x as f32).clamp(lo, hi)).filter(|x| x.is_finite()).map(Some).ok_or_else(|| bad(CMD, format!("`{k}` must be a number"))),
+            Some(v) => {
+                v.as_f64().map(|x| (x as f32).clamp(lo, hi)).filter(|x| x.is_finite()).map(Some).ok_or_else(|| bad(CMD, format!("`{k}` must be a number")))
+            }
         }
     };
     let rgb = |k: &str| -> Result<Option<[f32; 3]>> {
@@ -341,7 +343,12 @@ fn look(s: &mut Session, p: &Value) -> Result<Value> {
         None | Some(Value::Null) => None,
         Some(v) => {
             let names = s3d::light::PRESETS.map(|p| p.0).join(", ");
-            Some(v.as_str().filter(|id| s3d::light::PRESETS.iter().any(|p| p.0 == *id)).ok_or_else(|| bad(CMD, format!("`lightPreset` must be one of {names}")))?.to_string())
+            Some(
+                v.as_str()
+                    .filter(|id| s3d::light::PRESETS.iter().any(|p| p.0 == *id))
+                    .ok_or_else(|| bad(CMD, format!("`lightPreset` must be one of {names}")))?
+                    .to_string(),
+            )
         }
     };
     with_scene(s, p, CMD, "3D Look", |scene, _, _| {
@@ -486,19 +493,12 @@ pub fn specs() -> Vec<CommandSpec> {
             is_scene3d,
             look
         ),
-        spec!(
-            "layer.rasterize.scene3d",
-            "3D Layer",
-            ["Layer", "Rasterize"],
-            r##"{"layer":id?}"##,
-            is_scene3d,
-            rasterize
-        ),
+        spec!("layer.rasterize.scene3d", "3D Layer", ["Layer", "Rasterize"], r##"{"layer":id?}"##, is_scene3d, rasterize),
         spec!(
             "scene3d.matchPhoto",
             "Match Pose to Photo",
             [],
-            r##"{"layer":id?,"figure":index=0,"part":"body|hands|left|right"="body" (hands: each hand found onto the figure's hand of that side; left/right: the clearest hand onto that hand),"wrist":bool=true (hands also take the photo's wrist angle),"source":layer id? (track that layer's pixels; default: the canvas without its 3D layers)} → {layer, figure, matched}; a background job"##,
+            r##"{"layer":id?,"figure":index=0,"part":"body|hands|left|right"="body" (hands: each hand found onto the figure's hand of that side; left/right: the clearest hand onto that hand),"wrist":bool=true (hands also take the photo's wrist angle),"model":"quick|accurate"="quick" (the body's landmark model: accurate is MediaPipe's Heavy model, slower),"source":layer id? (track that layer's pixels; default: the canvas without its 3D layers)} → {layer, figure, matched, seconds, model}; a background job"##,
             is_scene3d,
             photo::match_photo
         ),

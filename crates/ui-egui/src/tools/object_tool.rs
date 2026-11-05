@@ -61,6 +61,8 @@ pub struct ObjectToolUi {
     pub hands: String,
     /// 3D panel: the tab shown.
     pub tab: PanelTab,
+    /// 3D panel › Photo: match bodies with the accurate (Heavy) model.
+    pub accurate: bool,
     #[serde(skip)]
     pub drag: Option<ObjectDrag>,
     #[serde(skip)]
@@ -249,8 +251,23 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
         if !fig.visible {
             continue;
         }
-        for name in ["hips", "chest", "head", "upper_arm.L", "upper_arm.R", "forearm.L", "forearm.R", "hand.L", "hand.R", "thigh.L", "thigh.R", "shin.L", "shin.R", "foot.L", "foot.R"]
-        {
+        for name in [
+            "hips",
+            "chest",
+            "head",
+            "upper_arm.L",
+            "upper_arm.R",
+            "forearm.L",
+            "forearm.R",
+            "hand.L",
+            "hand.R",
+            "thigh.L",
+            "thigh.R",
+            "shin.L",
+            "shin.R",
+            "foot.L",
+            "foot.R",
+        ] {
             let Some(j) = pose::joint_index(fig, name) else { continue };
             if let Some((pivot, _)) = pose::joint_px(&scene, w, h, fi, j) {
                 let c = to_screen(pivot);
@@ -407,11 +424,7 @@ fn light_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: LayerId, scene:
     }
     ui.separator();
     let fixed = look.light_fixed;
-    if ui
-        .selectable_label(!fixed, tl!("Light turns with the camera"))
-        .on_hover_text(tl!("Off: the light stays put in the scene while you orbit"))
-        .clicked()
-    {
+    if ui.selectable_label(!fixed, tl!("Light turns with the camera")).on_hover_text(tl!("Off: the light stays put in the scene while you orbit")).clicked() {
         *cmd = set(json!({"lightFixed": !fixed}));
     }
     let shadow = look.floor_shadow;
@@ -651,10 +664,27 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 ui.label(tl!("Pose this figure like the person or hands in a photo."));
                 ui.weak(tl!("Put the photo on a layer under the 3D layer, then pick what to match."));
                 ui.add_space(6.0);
+                ui.horizontal(|ui| {
+                    ui.label(tl!("Body model"));
+                    let accurate = &mut app.ui.object_tool.accurate;
+                    if crate::widgets::pill_tab(ui, tl!("Quick"), !*accurate).clicked() {
+                        *accurate = false;
+                    }
+                    if crate::widgets::pill_tab(ui, tl!("Accurate"), *accurate).clicked() {
+                        *accurate = true;
+                    }
+                });
+                ui.weak(if app.ui.object_tool.accurate {
+                    tl!("Accurate: a larger model, steadier on hard poses, about three times slower.")
+                } else {
+                    tl!("Quick: fast. Try Accurate if the pose comes out wrong.")
+                });
+                ui.add_space(6.0);
+                let model = if app.ui.object_tool.accurate { "accurate" } else { "quick" };
                 ui.horizontal_wrapped(|ui| {
                     for (part, label) in [("body", "Body"), ("hands", "Both hands"), ("left", "Left hand"), ("right", "Right hand")] {
                         if ui.button(tl!(label)).clicked() {
-                            photo_cmd = Some(json!({"layer": layer.0, "figure": fig, "part": part}));
+                            photo_cmd = Some(json!({"layer": layer.0, "figure": fig, "part": part, "model": model}));
                         }
                     }
                 });
