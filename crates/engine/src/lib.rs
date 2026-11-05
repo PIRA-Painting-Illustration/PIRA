@@ -105,7 +105,6 @@ pub use cmd::history_source_cmds;
 pub use cmd::image_cmds;
 pub use cmd::layer_copy_cmds;
 pub use cmd::layer_label_cmds;
-pub use cmd::scene3d_cmds;
 pub use cmd::layer_list_cmds;
 pub use cmd::layer_mask_props_cmds;
 pub use cmd::layer_menu_cmds;
@@ -136,6 +135,7 @@ pub use cmd::render_cmds;
 pub use cmd::retouch_cmds;
 pub use cmd::sample_cmds;
 pub use cmd::sampler_cmds;
+pub use cmd::scene3d_cmds;
 pub use cmd::select_extra_cmds;
 pub use cmd::selection_cmds;
 pub use cmd::slice_cmds;
@@ -271,6 +271,8 @@ pub struct Session {
     /// Object Selection's Object Finder results (#4087), shared by the hover preview and the
     /// click that commits it; valid while the pixels are unchanged.
     pub object_finder: smartselect_cmds::ObjectFinderCache,
+    /// The last body matched to a photo, with the user's corrections (`scene3d.refitPhoto`).
+    pub photo_match: Option<scene3d_cmds::PhotoMatch>,
     /// A finished live stroke offered to the `paint.stroke` / `paint.pencil` that commits it
     /// ([`Session::offer_live_stroke`]).
     pub(crate) live_commit: Option<brush_cmds::LiveCommit>,

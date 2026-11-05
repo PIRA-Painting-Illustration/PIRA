@@ -12,7 +12,7 @@
 
 use crate::skeleton::{Pose, Skeleton, mirror_quat};
 use crate::{finite_or, model};
-use glam::{Mat3, Quat, Vec3};
+use glam::{Mat3, Quat, Vec2, Vec3};
 use photocraft_doc::{Camera3d, Figure3d};
 
 /// The rotation whose X and Y axes point along `x` and (as near as possible) `y`.
@@ -182,6 +182,93 @@ fn rest_hand_frame(skel: &Skeleton) -> Quat {
     frame(fwd, side.cross(fwd)).unwrap_or(Quat::IDENTITY)
 }
 
+/// The limb segments a photo match can be told about, parent landmark then child, in the order
+/// [`fit_body`]'s depth hints and its answer use: the person's left then right arm, then legs.
+pub const SEGMENTS: [(&str, usize, usize); 8] = [
+    ("Left upper arm", SHOULDER[0], ELBOW[0]),
+    ("Left forearm", ELBOW[0], WRIST[0]),
+    ("Right upper arm", SHOULDER[1], ELBOW[1]),
+    ("Right forearm", ELBOW[1], WRIST[1]),
+    ("Left thigh", HIP[0], KNEE[0]),
+    ("Left shin", KNEE[0], ANKLE[0]),
+    ("Right thigh", HIP[1], KNEE[1]),
+    ("Right shin", KNEE[1], ANKLE[1]),
+];
+
+/// The landmarks a user can drag on the photo: the nose, then shoulders, elbows, wrists, hips,
+/// knees and ankles.
+pub const HANDLES: [usize; 13] = [NOSE, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
+
+/// Lines between [`HANDLES`], to draw the match over the photo.
+pub const HANDLE_LINES: [(usize, usize); 12] =
+    [(11, 12), (11, 13), (13, 15), (12, 14), (14, 16), (11, 23), (12, 24), (23, 24), (23, 25), (25, 27), (24, 26), (26, 28)];
+
+/// Landmarks that move with a wrist or ankle (fingers, heel, toes), keeping their 3D offset.
+const FOLLOWERS: [(usize, &[usize]); 4] = [(15, &[17, 19, 21]), (16, &[18, 20, 22]), (27, &[29, 31]), (28, &[30, 32])];
+
+/// Rebuilds the 3D landmarks from where they are in the photo, for a match the user has
+/// corrected: `image` is where each landmark is in the photo (pixels, y down, with the user's
+/// moves), `tracked` where the tracker put them, and `world` the tracker's 3D landmarks.
+///
+/// The photo fixes each joint's left/right and up/down; the depth comes from keeping each limb
+/// bone as long as the tracker measured it (the classic way to lift a figure from one picture).
+/// That leaves one choice per bone: is its far end nearer the camera than its near end, or
+/// further? `toward` sets it per [`SEGMENTS`] entry; `None` keeps the tracker's answer. Returns
+/// the landmarks and the choice each segment ended up with (true: towards the camera).
+pub fn fit_body(image: &[Vec2], tracked: &[Vec2], world: &[Vec3], visible: &[f32], toward: &[Option<bool>; 8]) -> Option<(Vec<Vec3>, [bool; 8])> {
+    if image.len() < BODY_POINTS || tracked.len() < BODY_POINTS || world.len() < BODY_POINTS {
+        return None;
+    }
+    let seen = |i: usize| visible.get(i).copied().unwrap_or(0.0) > 0.5;
+    let img = |i: usize| image.get(i).copied().unwrap_or(Vec2::ZERO);
+    let w = |i: usize| world.get(i).copied().unwrap_or(Vec3::ZERO);
+    // The photo → metres map (scale and shift, y flipped), from the tracker's own 2D and 3D.
+    let pairs: Vec<(Vec2, Vec2)> =
+        HANDLES.iter().filter(|&&i| seen(i)).filter_map(|&i| tracked.get(i).map(|t| (Vec2::new(t.x, -t.y), w(i).truncate()))).collect();
+    if pairs.len() < 4 {
+        return None;
+    }
+    let n = pairs.len() as f32;
+    let (ma, mb) = pairs.iter().fold((Vec2::ZERO, Vec2::ZERO), |(a, b), (p, q)| (a + *p, b + *q));
+    let (ma, mb) = (ma / n, mb / n);
+    let (num, den) = pairs.iter().fold((0.0, 0.0), |(num, den), (p, q)| (num + (*p - ma).dot(*q - mb), den + (*p - ma).length_squared()));
+    if den <= f32::EPSILON || num <= 0.0 {
+        return None;
+    }
+    let scale = num / den;
+    let to_world = |p: Vec2| (Vec2::new(p.x, -p.y) - ma) * scale + mb;
+
+    // Torso and head: placed from the photo, depth from the tracker.
+    let mut out: Vec<Vec3> = (0..BODY_POINTS).map(|i| to_world(img(i)).extend(w(i).z)).collect();
+    out.extend(world.iter().skip(BODY_POINTS).copied());
+    // Bone lengths: each side's pair averaged, so the two arms (and legs) match.
+    let length = |a: usize, b: usize| (w(b) - w(a)).length();
+    let mut chosen = [false; 8];
+    for (k, &(_, a, b)) in SEGMENTS.iter().enumerate() {
+        let (_, ta, tb) = SEGMENTS.get(k ^ 2).copied().unwrap_or(("", a, b));
+        let len = (length(a, b) + length(ta, tb)) * 0.5;
+        let parent = out.get(a).copied().unwrap_or(Vec3::ZERO);
+        let flat = to_world(img(b)) - parent.truncate();
+        let dz = (len * len - flat.length_squared()).max(0.0).sqrt();
+        let near = toward.get(k).copied().flatten().unwrap_or(w(b).z - w(a).z >= 0.0);
+        if let Some(c) = chosen.get_mut(k) {
+            *c = near;
+        }
+        if let Some(slot) = out.get_mut(b) {
+            *slot = (parent.truncate() + flat).extend(parent.z + if near { dz } else { -dz });
+        }
+    }
+    for (anchor, followers) in FOLLOWERS {
+        let shift = out.get(anchor).copied().unwrap_or(Vec3::ZERO) - w(anchor);
+        for &f in followers {
+            if let Some(slot) = out.get_mut(f) {
+                *slot = w(f) + shift;
+            }
+        }
+    }
+    Some((out, chosen))
+}
+
 /// The turn from the photo camera's axes (x right, y up, z towards the camera) into `fig`'s own,
 /// so a pose seen from the front in the photo is seen from the front by `camera`. Only the
 /// camera's turn about the vertical is used, so the figure stays upright.
@@ -291,6 +378,47 @@ mod tests {
         assert!(hand(&skel, &mut out, &h, false, true, None));
         let r = skel.find("index2.R").unwrap();
         assert!(out.local[r].angle_between(Quat::from_rotation_z(1.2)) < 0.1);
+    }
+
+    /// The skeleton seen by a front camera: its landmarks' x and y as pixels (y down).
+    fn photo_of(world: &[Vec3]) -> Vec<Vec2> {
+        world.iter().map(|p| Vec2::new(500.0 + p.x * 400.0, 500.0 - p.y * 400.0)).collect()
+    }
+
+    #[test]
+    fn a_lift_from_the_photo_keeps_a_pose_and_takes_hints() {
+        let skel = Skeleton::new(Body3d::Female);
+        let mut posed = Pose::rest(&skel);
+        let set = |p: &mut Pose, n: &str, q: Quat| p.local[skel.find(n).unwrap()] = q;
+        set(&mut posed, "upper_arm.L", Quat::from_rotation_z(-1.2));
+        set(&mut posed, "forearm.L", Quat::from_rotation_y(-1.0));
+        set(&mut posed, "thigh.R", Quat::from_rotation_x(-0.8));
+        set(&mut posed, "shin.R", Quat::from_rotation_x(1.1));
+        let world = fake_body(&skel, &posed);
+        let image = photo_of(&world);
+        let vis = [1.0; BODY_POINTS];
+        let (lifted, chosen) = fit_body(&image, &image, &world, &vis, &[None; 8]).unwrap();
+        for i in HANDLES {
+            assert!((lifted[i] - world[i]).length() < 0.03, "landmark {i}: {} vs {}", lifted[i], world[i]);
+        }
+        // Flip the left forearm's depth: the wrist goes to the other side of the elbow, in z only.
+        let mut hints = [None; 8];
+        hints[1] = Some(!chosen[1]);
+        let (flipped, now) = fit_body(&image, &image, &world, &vis, &hints).unwrap();
+        assert_eq!(now[1], !chosen[1]);
+        let (e, wr) = (flipped[ELBOW[0]], flipped[WRIST[0]]);
+        assert!((wr.truncate() - lifted[WRIST[0]].truncate()).length() < 1e-4);
+        assert!(((wr.z - e.z) + (lifted[WRIST[0]].z - lifted[ELBOW[0]].z)).abs() < 1e-3, "mirrored depth");
+        // Dragging the wrist on the photo moves it there, with the fingers following.
+        let mut moved = image.clone();
+        moved[WRIST[0]] += Vec2::new(-40.0, 30.0);
+        let (dragged, _) = fit_body(&moved, &image, &world, &vis, &[None; 8]).unwrap();
+        let want = Vec2::new(lifted[WRIST[0]].x - 0.1, lifted[WRIST[0]].y - 0.075);
+        assert!((dragged[WRIST[0]].truncate() - want).length() < 0.01, "{} vs {want}", dragged[WRIST[0]]);
+        let follow = dragged[INDEX[0]] - dragged[WRIST[0]];
+        assert!((follow - (world[INDEX[0]] - world[WRIST[0]])).length() < 1e-4);
+        // Too few landmarks seen: nothing to fit.
+        assert!(fit_body(&image, &image, &world, &[0.0; BODY_POINTS], &[None; 8]).is_none());
     }
 
     #[test]

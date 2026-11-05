@@ -14,6 +14,7 @@ use crate::commands::CommandSpec;
 use crate::{EngineError, Result, Session};
 
 mod photo;
+pub use photo::PhotoMatch;
 
 /// Whether `scene3d.matchPhoto` can track in this build (not in the browser).
 pub const PHOTO_TRACKING: bool = photocraft_posetrack::AVAILABLE;
@@ -501,6 +502,14 @@ pub fn specs() -> Vec<CommandSpec> {
             r##"{"layer":id?,"figure":index=0,"part":"body|hands|left|right"="body" (hands: each hand found onto the figure's hand of that side; left/right: the clearest hand onto that hand),"wrist":bool=true (hands also take the photo's wrist angle),"model":"quick|accurate"="quick" (the body's landmark model: accurate is MediaPipe's Heavy model, slower),"source":layer id? (track that layer's pixels; default: the canvas without its 3D layers)} → {layer, figure, matched, seconds, model}; a background job"##,
             is_scene3d,
             photo::match_photo
+        ),
+        spec!(
+            "scene3d.refitPhoto",
+            "Fix Pose Match",
+            [],
+            r##"{"layer":id?,"figure":index=0,"move":{"point":landmark index,"to":[x,y] canvas px}?,"depth":{"segment":0-7,"toward":bool|null}? (null: the tracker's guess),"reset":bool=false (drop every fix)} → {layer, figure, points, toward}; refits the last scene3d.matchPhoto body from the photo's joints"##,
+            is_scene3d,
+            photo::refit_photo
         ),
     ];
     v.push(CommandSpec {
