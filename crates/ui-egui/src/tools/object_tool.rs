@@ -4,8 +4,10 @@
 //! Twist on, or ⌥, it turns about its own bone instead); a drag on the hips slides the figure
 //! across its floor (with Twist, turns it). A drag on empty canvas orbits the camera; ⇧ pans and
 //! ⌘/Ctrl dollies, and the options bar can make a plain drag do either. Each drag is one undo
-//! step: the scene goes to the engine as `scene3d.set` on every move with a quick draft render,
-//! coalesced, and once more with a smooth render on release.
+//! step. While dragging, the figures are drawn as a quick low-resolution preview over the canvas
+//! (`s3d::preview`) and the layer keeps no image (`scene3d.set` with `hide`); the release sends
+//! the scene once more with a full render, coalesced into the same undo step. (Rendering the
+//! layer on every move took a third of a second a step on a tablet with a photo-sized canvas.)
 //!
 //! The 3D panel (beside Brushes) adds mannequins and applies poses from the pose library.
 //!
@@ -114,6 +116,24 @@ pub struct ObjectDrag {
     last: [f64; 2],
     moved: bool,
     key: String,
+    /// The layer's own image is hidden while the drag shows `preview`.
+    hidden: bool,
+    preview: Option<std::sync::Arc<s3d::Preview>>,
+}
+
+/// Most pixels a drag preview renders for the whole canvas.
+const PREVIEW_PIXELS: u64 = 1_000_000;
+
+/// Hides the layer's image (once per drag) and renders the drag's preview of `d.scene`.
+fn show_preview(app: &mut PhotocraftApp, d: &mut ObjectDrag) {
+    if !d.hidden {
+        let p = json!({"layer": d.layer.0, "scene": d.scene, "hide": true, "coalesce": d.key});
+        let r = app.run("scene3d.set", p);
+        status(app, r);
+        d.hidden = true;
+    }
+    let (w, h) = d.size;
+    d.preview = Some(std::sync::Arc::new(s3d::preview(&d.scene, w, h, PREVIEW_PIXELS)));
 }
 
 /// The active layer's id and scene, when it is a 3D layer, with the canvas size.
@@ -248,7 +268,8 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
             if let Some(point) = photo_handle_at(app, layer, [x, y]) {
                 app.ui.object_tool.drags += 1;
                 let key = format!("object-tool-{}", app.ui.object_tool.drags);
-                app.ui.object_tool.drag = Some(ObjectDrag { layer, kind: DragKind::PhotoPoint(point), scene, size, last: [x, y], moved: false, key });
+                app.ui.object_tool.drag =
+                    Some(ObjectDrag { layer, kind: DragKind::PhotoPoint(point), scene, size, last: [x, y], moved: false, key, hidden: false, preview: None });
                 return true;
             }
             // A joint dot (Joints) is dragged to where the joint should be.
@@ -256,7 +277,17 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
                 app.ui.object_tool.selected = Some((layer.0, figure, joint));
                 app.ui.object_tool.drags += 1;
                 let key = format!("object-tool-{}", app.ui.object_tool.drags);
-                app.ui.object_tool.drag = Some(ObjectDrag { layer, kind: DragKind::Reach(figure, joint), scene, size, last: [x, y], moved: false, key });
+                app.ui.object_tool.drag = Some(ObjectDrag {
+                    layer,
+                    kind: DragKind::Reach(figure, joint),
+                    scene,
+                    size,
+                    last: [x, y],
+                    moved: false,
+                    key,
+                    hidden: false,
+                    preview: None,
+                });
                 return true;
             }
             let ui = &app.ui.object_tool;
@@ -291,11 +322,11 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
             };
             app.ui.object_tool.drags += 1;
             let key = format!("object-tool-{}", app.ui.object_tool.drags);
-            let mut d = ObjectDrag { layer, kind, scene, size, last: [x, y], moved: false, key };
+            let mut d = ObjectDrag { layer, kind, scene, size, last: [x, y], moved: false, key, hidden: false, preview: None };
             // The light jumps to the pen straight away.
             if d.kind == DragKind::Light && step(&mut d, [x, y], [x, y]) {
                 d.moved = true;
-                send(app, &d, true);
+                show_preview(app, &mut d);
             }
             app.ui.object_tool.drag = Some(d);
         }
@@ -311,7 +342,7 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
             let a = d.last;
             if step(&mut d, a, [x, y]) {
                 d.moved = true;
-                send(app, &d, true);
+                show_preview(app, &mut d);
             }
             d.last = [x, y];
             app.ui.object_tool.drag = Some(d);
@@ -345,6 +376,12 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
     let scene = app.ui.object_tool.drag.as_ref().filter(|d| d.layer == layer && !matches!(d.kind, DragKind::PhotoPoint(_))).map_or(scene, |d| d.scene.clone());
     let t = Tokens::get(painter.ctx());
     let to_screen = |p: [f32; 2]| -> Pos2 { xf.to_screen(p[0], p[1]) };
+    // A drag's quick preview of the figures, in place of the layer's image.
+    if let Some(d) = app.ui.object_tool.drag.as_ref().filter(|d| d.layer == layer)
+        && let Some(p) = d.preview.as_ref().filter(|p| !p.rgba.is_empty())
+    {
+        draw_preview(painter, &to_screen, p);
+    }
     // The Match photo tab: the photo's joints as the match read them, to drag where they belong.
     if let Some(m) = shown_photo_match(app, layer) {
         let mut points = m.points();
@@ -441,6 +478,26 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
         painter.text(a + egui::vec2(10.0, -10.0), egui::Align2::LEFT_BOTTOM, label, egui::FontId::proportional(13.0), t.text);
     }
     let _ = l;
+}
+
+/// Draws a drag preview where it belongs on the canvas (uploaded once per new preview).
+fn draw_preview(painter: &egui::Painter, to_screen: &dyn Fn([f32; 2]) -> Pos2, p: &std::sync::Arc<s3d::Preview>) {
+    let id = egui::Id::unique("object-tool-preview");
+    let key = std::sync::Arc::as_ptr(p) as usize;
+    let ctx = painter.ctx();
+    let cached: Option<(usize, egui::TextureHandle)> = ctx.data(|d| d.get_temp(id));
+    let tex = match cached {
+        Some((k, tex)) if k == key => tex,
+        _ => {
+            let img = egui::ColorImage::from_rgba_unmultiplied(p.size, &p.rgba);
+            let tex = ctx.load_texture("object-tool-preview", img, egui::TextureOptions::LINEAR);
+            ctx.data_mut(|d| d.insert_temp(id, (key, tex.clone())));
+            tex
+        }
+    };
+    let r = p.rect;
+    let rect = egui::Rect::from_two_pos(to_screen([r.x0 as f32, r.y0 as f32]), to_screen([r.x1 as f32, r.y1 as f32]));
+    painter.image(tex.id(), rect, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), Color32::WHITE);
 }
 
 /// The light disc (front within the inner ring, behind out to the outer one) and the sun on it.

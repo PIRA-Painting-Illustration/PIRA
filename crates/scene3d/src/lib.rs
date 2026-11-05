@@ -25,7 +25,7 @@ use skeleton::{Pose, Skeleton};
 use std::sync::OnceLock;
 
 pub use glam;
-pub use render::{Quality, Rendered, render_surface};
+pub use render::{Preview, Quality, Rendered, preview, render_surface};
 
 /// `v`, or `fallback` when it is NaN or infinite.
 pub(crate) fn finite_or(v: f32, fallback: f32) -> f32 {
