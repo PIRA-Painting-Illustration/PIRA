@@ -745,66 +745,69 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
         },
         PanelTab::Photo => match target {
             Some((layer, fig)) => {
-                ui.label(tl!("Pose this figure like the person or hands in a photo."));
-                ui.weak(tl!("Put the photo on a layer under the 3D layer, then pick what to match."));
-                ui.add_space(6.0);
-                ui.horizontal(|ui| {
-                    ui.label(tl!("Body model"));
-                    let accurate = &mut app.ui.object_tool.accurate;
-                    if crate::widgets::pill_tab(ui, tl!("Quick"), !*accurate).clicked() {
-                        *accurate = false;
-                    }
-                    if crate::widgets::pill_tab(ui, tl!("Accurate"), *accurate).clicked() {
-                        *accurate = true;
-                    }
-                });
-                ui.weak(if app.ui.object_tool.accurate {
-                    tl!("Accurate: a larger model, steadier on hard poses, about three times slower.")
-                } else {
-                    tl!("Quick: fast. Try Accurate if the pose comes out wrong.")
-                });
-                ui.add_space(6.0);
-                let model = if app.ui.object_tool.accurate { "accurate" } else { "quick" };
-                ui.horizontal_wrapped(|ui| {
-                    for (part, label) in [("body", "Body"), ("hands", "Both hands"), ("left", "Left hand"), ("right", "Right hand")] {
-                        if ui.button(tl!(label)).clicked() {
-                            photo_cmd = Some(json!({"layer": layer.0, "figure": fig, "part": part, "model": model}));
+                // Scrolls: the fixes below the buttons run past a short floating panel.
+                egui::ScrollArea::vertical().id_salt("match-photo").auto_shrink([false, true]).show(ui, |ui| {
+                    ui.label(tl!("Pose this figure like the person or hands in a photo."));
+                    ui.weak(tl!("Put the photo on a layer under the 3D layer, then pick what to match."));
+                    ui.add_space(6.0);
+                    ui.horizontal(|ui| {
+                        ui.label(tl!("Body model"));
+                        let accurate = &mut app.ui.object_tool.accurate;
+                        if crate::widgets::pill_tab(ui, tl!("Quick"), !*accurate).clicked() {
+                            *accurate = false;
+                        }
+                        if crate::widgets::pill_tab(ui, tl!("Accurate"), *accurate).clicked() {
+                            *accurate = true;
+                        }
+                    });
+                    ui.weak(if app.ui.object_tool.accurate {
+                        tl!("Accurate: a larger model, steadier on hard poses, about three times slower.")
+                    } else {
+                        tl!("Quick: fast. Try Accurate if the pose comes out wrong.")
+                    });
+                    ui.add_space(6.0);
+                    let model = if app.ui.object_tool.accurate { "accurate" } else { "quick" };
+                    ui.horizontal_wrapped(|ui| {
+                        for (part, label) in [("body", "Body"), ("hands", "Both hands"), ("left", "Left hand"), ("right", "Right hand")] {
+                            if ui.button(tl!(label)).clicked() {
+                                photo_cmd = Some(json!({"layer": layer.0, "figure": fig, "part": part, "model": model}));
+                            }
+                        }
+                    });
+                    ui.add_space(6.0);
+                    ui.weak(tl!("The first match takes a few seconds longer while the models load."));
+                    // Fixing the match: drag joints on the canvas, set each limb's depth here.
+                    let shown = app.session.photo_match.clone().filter(|m| m.layer == layer && m.figure == fig);
+                    if let Some(m) = shown {
+                        ui.add_space(10.0);
+                        ui.separator();
+                        ui.label(egui::RichText::new(tl!("Fix the match")).strong());
+                        ui.weak(tl!("With the Object tool, drag the coral dots on the photo onto the person's joints. White dots are ones you've moved."));
+                        ui.weak(tl!("If a limb points the wrong way, say which end is nearer the camera:"));
+                        ui.add_space(4.0);
+                        for (k, (name, _, _)) in s3d::retarget::SEGMENTS.iter().enumerate() {
+                            let now = m.now.get(k).copied().unwrap_or(true);
+                            let set_by_user = m.toward.get(k).copied().flatten().is_some();
+                            ui.horizontal(|ui| {
+                                let label = tl!(name);
+                                ui.add_sized(
+                                    [110.0, 18.0],
+                                    egui::Label::new(if set_by_user { egui::RichText::new(label).strong() } else { egui::RichText::new(label) }),
+                                );
+                                for (toward, text) in [(true, "Toward me"), (false, "Away")] {
+                                    if crate::widgets::pill_tab(ui, tl!(text), now == toward).clicked() && now != toward {
+                                        cmd = Some(("scene3d.refitPhoto", json!({"layer": layer.0, "figure": fig, "depth": {"segment": k, "toward": toward}})));
+                                    }
+                                }
+                            });
+                        }
+                        ui.add_space(4.0);
+                        let fixes = !m.moved.is_empty() || m.toward.iter().any(Option::is_some);
+                        if ui.add_enabled(fixes, egui::Button::new(tl!("Undo all fixes"))).clicked() {
+                            cmd = Some(("scene3d.refitPhoto", json!({"layer": layer.0, "figure": fig, "reset": true})));
                         }
                     }
                 });
-                ui.add_space(6.0);
-                ui.weak(tl!("The first match takes a few seconds longer while the models load."));
-                // Fixing the match: drag joints on the canvas, set each limb's depth here.
-                let shown = app.session.photo_match.clone().filter(|m| m.layer == layer && m.figure == fig);
-                if let Some(m) = shown {
-                    ui.add_space(10.0);
-                    ui.separator();
-                    ui.label(egui::RichText::new(tl!("Fix the match")).strong());
-                    ui.weak(tl!("With the Object tool, drag the coral dots on the photo onto the person's joints. White dots are ones you've moved."));
-                    ui.weak(tl!("If a limb points the wrong way, say which end is nearer the camera:"));
-                    ui.add_space(4.0);
-                    for (k, (name, _, _)) in s3d::retarget::SEGMENTS.iter().enumerate() {
-                        let now = m.now.get(k).copied().unwrap_or(true);
-                        let set_by_user = m.toward.get(k).copied().flatten().is_some();
-                        ui.horizontal(|ui| {
-                            let label = tl!(name);
-                            ui.add_sized(
-                                [110.0, 18.0],
-                                egui::Label::new(if set_by_user { egui::RichText::new(label).strong() } else { egui::RichText::new(label) }),
-                            );
-                            for (toward, text) in [(true, "Toward me"), (false, "Away")] {
-                                if crate::widgets::pill_tab(ui, tl!(text), now == toward).clicked() && now != toward {
-                                    cmd = Some(("scene3d.refitPhoto", json!({"layer": layer.0, "figure": fig, "depth": {"segment": k, "toward": toward}})));
-                                }
-                            }
-                        });
-                    }
-                    ui.add_space(4.0);
-                    let fixes = !m.moved.is_empty() || m.toward.iter().any(Option::is_some);
-                    if ui.add_enabled(fixes, egui::Button::new(tl!("Undo all fixes"))).clicked() {
-                        cmd = Some(("scene3d.refitPhoto", json!({"layer": layer.0, "figure": fig, "reset": true})));
-                    }
-                }
             }
             None => no_layer(ui),
         },
