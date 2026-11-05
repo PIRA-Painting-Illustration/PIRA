@@ -1,8 +1,7 @@
 ---
 title: Export an image
-description: Export a PNG, JPG, WebP, TIFF or TGA from PhotoCraft with a preview, a size estimate and a scale.
+description: Export a PNG, JPG, WebP, TIFF or TGA from PIRA with a preview, a size estimate and a scale.
 order: 50
-verified: 0.8.2
 ---
 
 Choose **File › Export › Export As…**, set the format, and click **Export**. The dialog shows a preview and an estimate of the file size before you save. Your layered document is not changed.
@@ -21,7 +20,7 @@ Choose **File › Export › Export As…**, set the format, and click **Export*
 5. Check the preview on the right. The line under it shows the format and the estimated file size.
 6. Click **Export**, then choose a name and a place for the file.
 
-PhotoCraft shows "Exported" with the file path and size in the status bar when it is done.
+PIRA shows "Exported" with the file path and size in the status bar when it is done.
 
 ## Export in one step
 
@@ -35,4 +34,4 @@ With several layers or artboards selected in the **Layers** panel, both commands
 
 ## Keep your layers
 
-Exporting makes a flat copy. To keep the layers, use **File › Save As…** with **PSD Document** or **PhotoCraft**; see [Open and save files](open-and-save-files.md).
+Exporting makes a flat copy. To keep the layers, use **File › Save As…** with **PSD Document** or **PIRA**; see [Open and save files](open-and-save-files.md).

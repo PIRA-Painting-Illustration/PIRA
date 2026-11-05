@@ -4583,3 +4583,6 @@ shape	Appearance	Izgled
 	Select and Mask was closed: another layer was selected	Izaberi i maskiraj je zatvoren: izabran je drugi sloj
 	Select Layer Under Cursor	Izaberi sloj ispod kursora
 	Drag to move the selected path	Prevucite da pomerite izabranu putanju
+	Credits	Zasluge
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA je napravljena na osnovu ovih projekata. Hvala svima koji su ih napravili.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Potpun spisak, datoteku po datoteku, nalazi se u ATTRIBUTION.md, a tekstovi licenci u NOTICE.

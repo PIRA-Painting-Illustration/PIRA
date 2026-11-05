@@ -4425,3 +4425,6 @@ navigator	Zoom	Zoom
 	Select and Mask was closed: another layer was selected	Se cerró Seleccionar y aplicar máscara: se seleccionó otra capa
 	Select Layer Under Cursor	Seleccionar capa bajo el cursor
 	Drag to move the selected path	Arrastre para mover el trazado seleccionado
+	Credits	Créditos
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA se basa en estos proyectos. Gracias a todas las personas que los crearon.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	La lista completa, archivo por archivo, está en ATTRIBUTION.md, y los textos de las licencias en NOTICE.

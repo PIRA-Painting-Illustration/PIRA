@@ -7,7 +7,7 @@
 //! Invert Selection; then Brush Settings. Pen, Pencil and Brush head the tool columns
 //! (`toolbar::kit_buttons`).
 
-use super::*;
+use super::{Color32, PhotocraftApp, Sense, Tokens, Tool, icons, json};
 
 /// Height of the menu row (points).
 pub(crate) const MENU_HEIGHT: f32 = 36.0;
@@ -35,7 +35,12 @@ fn run(app: &mut PhotocraftApp, ctx: &egui::Context, id: &str) {
 const COMMANDS: [&[(&str, &str, &str)]; 3] = [
     &[("file-plus", "New", "file.new"), ("folder-open", "Open", "file.open"), ("save", "Save", "file.save")],
     &[("undo-2", "Undo", "edit.undo"), ("redo-2", "Redo", "edit.redo")],
-    &[("trash", "Clear", "edit.clear"), ("scaling", "Free Transform", "edit.freeTransform"), ("square-dashed", "Deselect", "select.deselect"), ("squares-subtract", "Invert Selection", "select.inverse")],
+    &[
+        ("trash", "Clear", "edit.clear"),
+        ("scaling", "Free Transform", "edit.freeTransform"),
+        ("square-dashed", "Deselect", "select.deselect"),
+        ("squares-subtract", "Invert Selection", "select.inverse"),
+    ],
 ];
 
 /// A thin divider between the command bar's groups.
@@ -68,10 +73,9 @@ pub fn pira_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 crate::menus::menu_bar(app, ui);
             });
         });
-    egui::Panel::top("pira_commands")
-        .exact_size(BAR_HEIGHT)
-        .frame(egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin::symmetric(8, 0)))
-        .show(ui, |ui| {
+    egui::Panel::top("pira_commands").exact_size(BAR_HEIGHT).frame(egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin::symmetric(8, 0))).show(
+        ui,
+        |ui| {
             let full = ui.max_rect();
             ui.painter().hline(full.x_range(), full.top(), egui::Stroke::new(1.0, t.card_border));
             ui.horizontal_centered(|ui| {
@@ -91,7 +95,8 @@ pub fn pira_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                     app.ui.panels.brush_settings = !app.ui.panels.brush_settings;
                 }
             });
-        });
+        },
+    );
 }
 
 /// The size as the slider's bubble shows it: one decimal below 10 px.

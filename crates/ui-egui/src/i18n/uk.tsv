@@ -4223,3 +4223,6 @@ curves	Smooth	Згладити
 	Refine Hair needs hair detection, which isn't available yet	Для уточнення волосся потрібне розпізнавання волосся, яке ще недоступне
 	Select and Mask was closed: its document is no longer the active one	Вікно «Виділити та маскувати» закрито: його документ більше не активний
 	Select and Mask was closed: another layer was selected	Вікно «Виділити та маскувати» закрито: вибрано інший шар
+	Credits	Подяки
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA побудована на цих проєктах. Дякуємо всім, хто їх створив.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Повний список за файлами — у ATTRIBUTION.md, тексти ліцензій — у NOTICE.

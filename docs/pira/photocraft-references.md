@@ -23,10 +23,31 @@ translation keys renamed in all catalogs:
   means it (`shortcut_sets::OLD_DEFAULTS_NAME`). The default action set is "PIRA Actions".
 - Android update messages.
 
-**Still open:** section 5 (names written into files, which needs profile aliases), section 6
-installers (.wxs, Info.plist, .desktop, Flatpak) and the desktop `APP_ID`, the web build's
-loading text, the CLI, the MCP description, the portable-mode folder names, and the user guide
-in `docs/user/` (it points at PhotoCraft's issue tracker and Discord).
+**Done 2026-11-04 (second pass):**
+- Section 5: built-in colour profiles say "(PIRA)" and the CMYK profile is "PIRA Coated CMYK"
+  (the shipped `.icc` regenerated). The old "(PhotoCraft)" names still resolve
+  (`Builtin::legacy_description`). XMP sidecars, .cube LUTs, EPS and DPX name PIRA; sidecars
+  written as PhotoCraft are still recognised as ours.
+- Web loading text and errors, the CLI's help and messages, the MCP description.
+- The user guide in `docs/user/` is PIRA's: Android install, PIRA's issue tracker, no Discord or
+  ArtCraft Launcher. The pages about old PhotoCraft versions (taskbar, text moving, does not
+  start on desktop) were removed.
+- Help › About has a **Credits** tab (`dialogs/credits.rs`, `CREDITS`).
+
+**Still open, all desktop-only (do together before any desktop release):** PIRA desktop still has
+PhotoCraft's machine identity, so on a PC it would replace or share a PhotoCraft install:
+- Windows installer: same `UpgradeCode` (installing PIRA would upgrade PhotoCraft away), the
+  `photocraft.exe` App Paths and Applications keys, `Software\PhotoCraft`, the
+  `ArtCraft\PhotoCraft` install folder, "PhotoCraft Document". Needs new GUIDs and most likely a
+  `pira.exe` binary name.
+- macOS bundle id and Info.plist, Linux `.desktop`, metainfo, MIME and Flatpak id, and the
+  desktop `APP_ID` (must match the `.desktop` file name, so change them together; Android's id
+  `art.pira` is the natural choice).
+- The settings folder (`%APPDATA%\Photocraft`, `~/.config/photocraft`), portable-mode names
+  (`PhotoCraft.portable`, `PhotoCraftData`) and the log file name.
+- The desktop and installer icon is still PhotoCraft's kitsune (`assets/app-icon/photocraft.*`).
+- `.github/workflows/release.yml` calls PhotoCraft's shared release workflow
+  (`storytold/craft-common-actions`). PIRA needs its own before it publishes anything.
 
 ## 1. Links (switch to the website when it's up)
 

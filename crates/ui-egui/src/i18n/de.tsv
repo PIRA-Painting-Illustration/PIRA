@@ -3532,3 +3532,6 @@ curves	Smooth	Glätten
 	Refine Hair needs hair detection, which isn't available yet	Haare verbessern benötigt eine Haarerkennung, die noch nicht verfügbar ist
 	Select and Mask was closed: its document is no longer the active one	Auswählen und maskieren wurde geschlossen: Das zugehörige Dokument ist nicht mehr aktiv
 	Select and Mask was closed: another layer was selected	Auswählen und maskieren wurde geschlossen: Es wurde eine andere Ebene ausgewählt
+	Credits	Danksagung
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA baut auf diesen Projekten auf. Danke an alle, die sie geschaffen haben.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Die vollständige Liste, Datei für Datei, steht in ATTRIBUTION.md, die Lizenztexte in NOTICE.

@@ -83,15 +83,15 @@ impl Builtin {
         match self {
             Builtin::Srgb => "sRGB IEC61966-2.1",
             Builtin::DisplayP3 => "Display P3",
-            Builtin::AdobeRgbCompat => "Adobe RGB (1998)-compatible (PhotoCraft)",
-            Builtin::ProPhotoCompat => "ProPhoto RGB-compatible (ROMM primaries, PhotoCraft)",
-            Builtin::LinearSrgb => "Linear sRGB (PhotoCraft)",
-            Builtin::AcesCg => "ACEScg (AP1, linear, PhotoCraft)",
-            Builtin::Rec2020 => "Rec. ITU-R BT.2020 (PhotoCraft)",
-            Builtin::GrayGamma22 => "Gray Gamma 2.2 (PhotoCraft)",
-            Builtin::SGray => "sGray (sRGB tone curve, PhotoCraft)",
-            Builtin::DotGain20Compat => "Dot Gain 20%-compatible (gamma 1.732, PhotoCraft)",
-            Builtin::LabD50 => "Lab D50 identity (PhotoCraft)",
+            Builtin::AdobeRgbCompat => "Adobe RGB (1998)-compatible (PIRA)",
+            Builtin::ProPhotoCompat => "ProPhoto RGB-compatible (ROMM primaries, PIRA)",
+            Builtin::LinearSrgb => "Linear sRGB (PIRA)",
+            Builtin::AcesCg => "ACEScg (AP1, linear, PIRA)",
+            Builtin::Rec2020 => "Rec. ITU-R BT.2020 (PIRA)",
+            Builtin::GrayGamma22 => "Gray Gamma 2.2 (PIRA)",
+            Builtin::SGray => "sGray (sRGB tone curve, PIRA)",
+            Builtin::DotGain20Compat => "Dot Gain 20%-compatible (gamma 1.732, PIRA)",
+            Builtin::LabD50 => "Lab D50 identity (PIRA)",
             Builtin::CoatedCmyk => crate::synth::DESCRIPTION,
         }
     }
@@ -111,10 +111,17 @@ impl Builtin {
             "dotgain20" | "dotgain20compat" | "dotgain" => Some(Builtin::DotGain20Compat),
             "aces-cg" | "acescg" => Some(Builtin::AcesCg),
             "lab" | "labd50" | "cielab" => Some(Builtin::LabD50),
-            "cmyk" | "coatedcmyk" | "defaultcmyk" | "photocraftcoatedcmyk" => Some(Builtin::CoatedCmyk),
+            "cmyk" | "coatedcmyk" | "defaultcmyk" | "photocraftcoatedcmyk" | "piracoatedcmyk" => Some(Builtin::CoatedCmyk),
             _ => None,
         };
-        alias.or_else(|| Builtin::ALL.into_iter().find(|b| b.description().eq_ignore_ascii_case(s)))
+        alias.or_else(|| Builtin::ALL.into_iter().find(|b| b.description().eq_ignore_ascii_case(s) || b.legacy_description().eq_ignore_ascii_case(s)))
+    }
+
+    /// The description builds before the PIRA rename wrote ("… (PhotoCraft)"). Saved settings,
+    /// scripts and files from those builds name profiles this way, so [`Builtin::from_id`]
+    /// still accepts it.
+    pub fn legacy_description(self) -> String {
+        self.description().replace("PIRA", "PhotoCraft")
     }
 
     /// The profile (built once per process).
@@ -146,7 +153,7 @@ pub fn srgb() -> &'static Profile {
 /// only assigned to such files, never offered as a working space.
 pub fn linear_gray() -> &'static Profile {
     static PROFILE: OnceLock<Profile> = OnceLock::new();
-    PROFILE.get_or_init(|| gray("Linear Gray (PhotoCraft)", Curve::Gamma(1.0)))
+    PROFILE.get_or_init(|| gray("Linear Gray (PIRA)", Curve::Gamma(1.0)))
 }
 
 /// The ICC D65 used for the RGB spaces (chromaticity 0.3127, 0.3290).
@@ -305,7 +312,7 @@ pub fn cicp_rgb(primaries: u16, transfer: u16, linear: bool) -> Option<Profile> 
         5 => (Curve::Gamma(2.8), "gamma 2.8"),
         _ => return None,
     };
-    Some(rgb(&format!("{name} {curve} (PhotoCraft)"), prim, d65(), trc))
+    Some(rgb(&format!("{name} {curve} (PIRA)"), prim, d65(), trc))
 }
 
 fn build(b: Builtin) -> Profile {

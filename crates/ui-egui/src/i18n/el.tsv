@@ -4213,3 +4213,6 @@ curves	Smooth	Εξομάλυνση
 	Select and Mask was closed: its document is no longer the active one	Η Επιλογή και μάσκα έκλεισε: το έγγραφό της δεν είναι πλέον το ενεργό
 	Select and Mask was closed: another layer was selected	Η Επιλογή και μάσκα έκλεισε: επιλέχθηκε άλλο επίπεδο
 	Select Layer Under Cursor	Επιλογή επιπέδου κάτω από τον δρομέα
+	Credits	Ευχαριστίες
+	PIRA is built on these projects. Thank you to everyone who made them.	Το PIRA βασίζεται σε αυτά τα έργα. Ευχαριστούμε όλους όσοι τα δημιούργησαν.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Η πλήρης λίστα, αρχείο προς αρχείο, βρίσκεται στο ATTRIBUTION.md και τα κείμενα των αδειών στο NOTICE.
