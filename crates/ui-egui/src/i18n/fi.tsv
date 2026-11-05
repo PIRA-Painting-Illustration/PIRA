@@ -4780,3 +4780,6 @@ cameraRaw	White Balance: As Shot	Valkotasapaino: kuvauksen mukainen
 	Path operations	Polkutoiminnot
 	The path was discarded	Polku hylättiin
 	The path was kept as the Work Path	Polku säilytettiin työpolkuna
+	Credits	Tekijät
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA perustuu näihin projekteihin. Kiitos kaikille niiden tekijöille.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Koko luettelo tiedosto tiedostolta on ATTRIBUTION.md-tiedostossa ja lisenssitekstit NOTICE-tiedostossa.

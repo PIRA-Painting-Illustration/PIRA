@@ -484,6 +484,111 @@ fn header_cell(ui: &mut egui::Ui, t: &crate::theme::Tokens, label: &str, numeric
     resp
 }
 
+/// One About ▸ Credits entry: what PIRA uses, who made it, its licence and where it lives.
+pub struct Credit {
+    pub name: &'static str,
+    pub what: &'static str,
+    pub by: &'static str,
+    pub license: &'static str,
+    pub url: &'static str,
+}
+
+/// What PIRA is built on and the third-party material it bundles. The per-file list is
+/// `ATTRIBUTION.md`; the licence texts ship in `NOTICE` and next to each asset.
+pub const CREDITS: &[Credit] = &[
+    Credit {
+        name: "PhotoCraft",
+        what: "The image editor PIRA is built on",
+        by: "ArtCraft contributors",
+        license: "MIT OR Apache-2.0",
+        url: "https://github.com/storytold/photocraft",
+    },
+    Credit {
+        name: "egui and wgpu",
+        what: "User interface and GPU drawing",
+        by: "The egui and wgpu authors",
+        license: "MIT OR Apache-2.0",
+        url: "https://github.com/emilk/egui",
+    },
+    Credit {
+        name: "CMU Graphics Lab Motion Capture Database",
+        what: "The 3D layer's pose library",
+        by: "Carnegie Mellon University",
+        license: "Free to use; the data was obtained from mocap.cs.cmu.edu",
+        url: "http://mocap.cs.cmu.edu/",
+    },
+    Credit {
+        name: "MediaPipe pose and hand models",
+        what: "Match Pose to Photo and Match Hands to Photo",
+        by: "Google; ONNX conversion by the OpenCV Zoo contributors",
+        license: "Apache-2.0",
+        url: "https://github.com/opencv/opencv_zoo",
+    },
+    Credit { name: "libfacedetection", what: "Face detection", by: "Shiqi Yu", license: "BSD-3-Clause", url: "https://github.com/ShiqiYu/libfacedetection" },
+    Credit { name: "Inter", what: "Interface font", by: "Rasmus Andersson", license: "SIL OFL 1.1", url: "https://github.com/rsms/inter" },
+    Credit {
+        name: "Philosopher",
+        what: "PIRA's display font",
+        by: "The Philosopher Project Authors",
+        license: "SIL OFL 1.1",
+        url: "https://github.com/alexeiva/philosopher",
+    },
+    Credit {
+        name: "JetBrains Mono",
+        what: "Numbers font",
+        by: "The JetBrains Mono Project Authors",
+        license: "SIL OFL 1.1",
+        url: "https://github.com/JetBrains/JetBrainsMono",
+    },
+    Credit {
+        name: "Lucide",
+        what: "Most of the icons",
+        by: "Lucide Icons and Contributors",
+        license: "ISC (icons from Feather also MIT)",
+        url: "https://github.com/lucide-icons/lucide",
+    },
+    Credit { name: "emoji-icon-font", what: "A few interface glyphs", by: "John Slegers", license: "MIT", url: "https://github.com/jslegers/emoji-icon-font" },
+    Credit {
+        name: "SCOWL",
+        what: "English word list for Check Spelling",
+        by: "Kevin Atkinson and the SCOWL contributors",
+        license: "SCOWL license",
+        url: "http://wordlist.aspell.net/",
+    },
+    Credit {
+        name: "Solarized",
+        what: "The Solarized Dark theme's colours",
+        by: "Ethan Schoonover",
+        license: "MIT",
+        url: "https://ethanschoonover.com/solarized/",
+    },
+    Credit {
+        name: "X11 colour names",
+        what: "Colour names in XPM images",
+        by: "X.Org Foundation and X11 contributors",
+        license: "MIT",
+        url: "https://gitlab.freedesktop.org/xorg/app/rgb",
+    },
+];
+
+/// About ▸ Credits: what PIRA is built on and the third-party material it bundles.
+pub fn credits_ui(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+    ui.label(tl!("PIRA is built on these projects. Thank you to everyone who made them."));
+    ui.weak(tl!("The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE."));
+    ui.add_space(8.0);
+    egui::ScrollArea::vertical().id_salt("credits_list").max_height(LIST_HEIGHT).auto_shrink([false, true]).show(ui, |ui| {
+        for c in CREDITS {
+            let r = ui.add(egui::Link::new(egui::RichText::new(c.name).strong())).on_hover_text(c.url);
+            if r.clicked() {
+                crate::links::open(app, ui.ctx(), c.url);
+            }
+            ui.label(format!("{} · {}", c.what, c.by));
+            ui.weak(c.license);
+            ui.add_space(6.0);
+        }
+    });
+}
+
 /// About ▸ Models: AI models credited in Co-Authored-By trailers.
 pub fn models_ui(ui: &mut egui::Ui) {
     models_in(ui, MODELS, TOTAL_COMMITS);

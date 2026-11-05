@@ -4549,3 +4549,6 @@ shape	Appearance	Apparence
 	Refine Hair needs hair detection, which isn't available yet	Améliorer les cheveux nécessite une détection des cheveux, pas encore disponible
 	Select and Mask was closed: its document is no longer the active one	Sélectionner et masquer a été fermé : son document n’est plus le document actif
 	Select and Mask was closed: another layer was selected	Sélectionner et masquer a été fermé : un autre calque a été sélectionné
+	Credits	Crédits
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA repose sur ces projets. Merci à toutes les personnes qui les ont créés.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	La liste complète, fichier par fichier, se trouve dans ATTRIBUTION.md, et les textes des licences dans NOTICE.

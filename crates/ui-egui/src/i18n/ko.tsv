@@ -3732,3 +3732,6 @@ curves	Smooth	매끄럽게
 	Select and Mask was closed: another layer was selected	선택 및 마스크가 닫혔습니다: 다른 레이어가 선택되었습니다
 	Select Layer Under Cursor	커서 아래 레이어 선택
 	Drag to move the selected path	드래그하여 선택한 패스 이동
+	Credits	크레딧
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA는 다음 프로젝트를 바탕으로 만들어졌습니다. 만들어 주신 모든 분께 감사드립니다.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	파일별 전체 목록은 ATTRIBUTION.md에, 라이선스 전문은 NOTICE에 있습니다.

@@ -4131,3 +4131,6 @@ curves	Smooth	Wygładź
 	Select and Mask was closed: its document is no longer the active one	Zamknięto Zaznacz i maskuj: jego dokument nie jest już aktywny
 	Select and Mask was closed: another layer was selected	Zamknięto Zaznacz i maskuj: wybrano inną warstwę
 	Select Layer Under Cursor	Zaznacz warstwę pod kursorem
+	Credits	Podziękowania
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA powstała na bazie tych projektów. Dziękujemy wszystkim, którzy je stworzyli.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Pełna lista, plik po pliku, jest w ATTRIBUTION.md, a teksty licencji w NOTICE.

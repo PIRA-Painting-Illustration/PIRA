@@ -381,12 +381,12 @@ fn dialog_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, d: &Dialog, fields: &
             }
         }
         DialogKind::About => {
-            // Tabs About · Contributors · Models (craftrules standards/contributors.md). The
+            // Tabs About · Credits · Contributors · Models (craftrules standards/contributors.md). The
             // tab is a dialog field, so automation can switch it with `ui.dialog.set`.
             let tab = about_tab(fields);
             let mut chosen = tab;
             ui.horizontal(|ui| {
-                for (key, label) in [("about", tl!("About")), ("contributors", tl!("Contributors")), ("models", tl!("Models"))] {
+                for (key, label) in [("about", tl!("About")), ("credits", tl!("Credits")), ("contributors", tl!("Contributors")), ("models", tl!("Models"))] {
                     if crate::widgets::pill_tab(ui, label, tab == key).clicked() {
                         chosen = key;
                     }
@@ -705,11 +705,13 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
             // The body of a bottom dialog (phone layout) scrolls between its title and buttons.
             let body_room = phone_height.filter(|_| on_canvas).map(|h| (h - 110.0).max(80.0));
             let done = match body_room {
-                Some(h) => egui::ScrollArea::vertical()
-                    .id_salt(id.with("phone-body"))
-                    .max_height(h)
-                    .show(ui, |ui| dialog_body(app, ui, &d, &mut fields, id, interactive))
-                    .inner,
+                Some(h) => {
+                    egui::ScrollArea::vertical()
+                        .id_salt(id.with("phone-body"))
+                        .max_height(h)
+                        .show(ui, |ui| dialog_body(app, ui, &d, &mut fields, id, interactive))
+                        .inner
+                }
                 None => dialog_body(app, ui, &d, &mut fields, id, interactive),
             };
             if let Some(done) = done {
@@ -816,7 +818,7 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
 }
 
 /// The About window's tabs, as stored in its `tab` field.
-pub const ABOUT_TABS: [&str; 3] = ["about", "contributors", "models"];
+pub const ABOUT_TABS: [&str; 4] = ["about", "credits", "contributors", "models"];
 
 /// The About tab to show: the `tab` field when it names one, otherwise "about".
 fn about_tab(fields: &serde_json::Map<String, Value>) -> &'static str {
@@ -827,6 +829,7 @@ fn about_tab(fields: &serde_json::Map<String, Value>) -> &'static str {
 /// One About tab's contents: the credits lists, or the product blurb and links.
 fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
     match tab {
+        "credits" => crate::credits::credits_ui(app, ui),
         "contributors" => crate::credits::contributors_ui(app, ui),
         "models" => crate::credits::models_ui(ui),
         _ => {

@@ -4710,3 +4710,6 @@ shape	Appearance	Оформление
 	Refine Hair needs hair detection, which isn't available yet	Для уточнения волос нужно распознавание волос, которое пока недоступно
 	Select and Mask was closed: its document is no longer the active one	Окно «Выделение и маска» закрыто: его документ больше не активен
 	Select and Mask was closed: another layer was selected	Окно «Выделение и маска» закрыто: выбран другой слой
+	Credits	Благодарности
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA построена на этих проектах. Спасибо всем, кто их создал.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Полный список по файлам — в ATTRIBUTION.md, тексты лицензий — в NOTICE.

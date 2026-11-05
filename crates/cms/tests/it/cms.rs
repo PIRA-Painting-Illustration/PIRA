@@ -45,6 +45,10 @@ fn builtins_encode_and_reparse() {
         Transform::new(lab(), p, Intent::RelativeColorimetric, false).unwrap();
     }
     assert_eq!(Builtin::from_id("Adobe RGB (1998)"), Some(Builtin::AdobeRgbCompat));
+    // Names written before the PIRA rename still resolve.
+    assert_eq!(Builtin::from_id("Linear sRGB (PhotoCraft)"), Some(Builtin::LinearSrgb));
+    assert_eq!(Builtin::from_id("PhotoCraft Coated CMYK (synthetic, 300% TAC, medium GCR)"), Some(Builtin::CoatedCmyk));
+    assert_eq!(Builtin::from_id("Linear sRGB (PIRA)"), Some(Builtin::LinearSrgb));
 }
 
 #[test]

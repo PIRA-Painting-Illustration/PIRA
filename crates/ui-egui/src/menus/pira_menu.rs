@@ -6,7 +6,7 @@
 use super::invoke::invoke;
 use super::items::{MenuItem, menu_items};
 use super::render::render_level;
-use super::*;
+use super::{PhotocraftApp, json};
 
 /// The tiles, in sheet order: the menu (as in [`TOP_MENUS`]) and a hint of what is in it.
 const TILES: [(&str, &str); 10] = [
@@ -89,6 +89,7 @@ pub fn app_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::menus::TOP_MENUS;
 
     /// Every top-level menu has a tile, so the sheet reaches everything the menu bar did.
     #[test]

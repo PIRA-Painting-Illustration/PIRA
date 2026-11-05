@@ -4010,3 +4010,6 @@ curves	Smooth	Làm mượt
 	Select and Mask was closed: its document is no longer the active one	Đã đóng Chọn và Mặt nạ: tài liệu của nó không còn là tài liệu đang hoạt động
 	Select and Mask was closed: another layer was selected	Đã đóng Chọn và Mặt nạ: một lớp khác đã được chọn
 	Select Layer Under Cursor	Chọn lớp dưới con trỏ
+	Credits	Ghi công
+	PIRA is built on these projects. Thank you to everyone who made them.	PIRA được xây dựng dựa trên các dự án này. Cảm ơn tất cả những người đã tạo ra chúng.
+	The full list, file by file, is in ATTRIBUTION.md, and the licence texts are in NOTICE.	Danh sách đầy đủ theo từng tệp có trong ATTRIBUTION.md, và văn bản giấy phép có trong NOTICE.

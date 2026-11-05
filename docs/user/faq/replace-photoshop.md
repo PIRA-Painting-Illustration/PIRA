@@ -1,12 +1,11 @@
 ---
-title: Can PhotoCraft replace Photoshop?
-description: Not yet. PhotoCraft is in early alpha and is not ready for daily professional work, but it follows Photoshop's menus and shortcuts.
+title: Can PIRA replace Photoshop?
+description: Not yet. PIRA is an early release made for painting and illustration, with Photoshop-style layers, menus and PSD files.
 order: 30
-verified: 0.9.0
 ---
 
-Not yet. PhotoCraft is in early alpha. Much of Photoshop's feature surface exists in some form, but the project says plainly that it is not yet a Photoshop replacement for daily professional work.
+Not yet, and that isn't its main aim. PIRA is a painting and illustration app, and it's an early release. It isn't ready to replace Photoshop for daily professional photo work.
 
-The biggest gaps the project lists are AI and generative features, tools Photoshop has that PhotoCraft does not yet, depth in typography and professional workflows, and plug-in compatibility. Every Photoshop menu item is connected to a command, but that only shows the menu is wired up. Having a tool or command is not the same as matching Photoshop's behaviour.
+It does share a lot with Photoshop: layers, masks, adjustment layers, layer styles, type, vector shapes and live-preview filters, menus and shortcuts that follow Photoshop's layout, and layered PSD files that open in both. The biggest gaps are AI and generative features, depth in typography and professional workflows, and plug-ins.
 
-What PhotoCraft does well already: layers, masks, adjustment layers, layer styles, type, vector shapes, brushes and live-preview filters, in a menu and shortcut layout that follows Photoshop. See [PhotoCraft](../index.md) for an overview, and the [project roadmap](https://github.com/storytold/photocraft/blob/main/ROADMAP.md) for what comes next.
+See [PIRA](../index.md) for an overview.
