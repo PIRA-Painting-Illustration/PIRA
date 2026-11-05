@@ -521,6 +521,17 @@ fn on_event(app: &mut PhotocraftApp, ctx: &egui::Context, e: JobEvent) {
             app.ui.panels.brush_settings = true;
             app.ui.brush_tab = 1;
         }
+        // How long the tracking took, so Quick and Accurate can be compared.
+        JobOutcome::Done(ref result) if e.command == "scene3d.matchPhoto" => {
+            app.sync_views();
+            let seconds = result.get("seconds").and_then(Value::as_f64).unwrap_or(0.0);
+            let model = if result.get("model").and_then(Value::as_str) == Some("accurate") { tl!("Accurate") } else { tl!("Quick") };
+            app.ui.status = crate::i18n::fmt(
+                tl!("{label}: done in {seconds} s ({model})"),
+                &[("label", &e.label), ("seconds", &format!("{seconds:.1}")), ("model", model)],
+            );
+            app.ui.status_error = false;
+        }
         JobOutcome::Done(ref result) if matches!(e.command.as_str(), "file.print" | "file.printOneCopy") => {
             app.sync_views();
             crate::file_ui::print_status(app, result);
