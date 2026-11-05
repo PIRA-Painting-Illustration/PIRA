@@ -32,6 +32,9 @@ pub struct Rendered {
 
 /// Most samples one render allocates (8 bytes each, plus 1–3 for shadows and outlines).
 const MAX_SAMPLES: u64 = 16_000_000;
+/// Most pixels a draft (a live preview while dragging) renders: a bigger figure is rendered at a
+/// lower resolution and scaled up, so a drag stays quick on a large canvas and a tablet.
+const DRAFT_PIXELS: u64 = 600_000;
 const BAND: usize = 32;
 const SHADOW_ALPHA: f32 = 0.28;
 
@@ -54,6 +57,34 @@ struct Tri {
     id: u8,
     y0: usize,
     y1: usize,
+}
+
+/// A quick look at the figures for a live drag, at most about `max_pixels` for the whole canvas:
+/// the scene rendered into a smaller canvas (the camera's pan and the outline scaled to match).
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Preview {
+    /// Where the image goes on the canvas (canvas pixels).
+    pub rect: Rect,
+    /// The image's size in pixels, and its pixels: straight-alpha sRGB, 8 bits per channel.
+    pub size: [usize; 2],
+    pub rgba: Vec<u8>,
+}
+
+/// Renders a [`Preview`] of `scene` on a `width` × `height` canvas.
+pub fn preview(scene: &Scene3d, width: u32, height: u32, max_pixels: u64) -> Preview {
+    let canvas = u64::from(width.max(1)) * u64::from(height.max(1));
+    let k = ((canvas as f64 / max_pixels.max(1) as f64).sqrt().ceil() as u32).max(1);
+    let mut small = scene.clone();
+    small.camera.offset_px = small.camera.offset_px.map(|o| o / k as f32);
+    small.look.outline_px /= k as f32;
+    let r = render(&small, width.div_ceil(k), height.div_ceil(k), Quality::Draft);
+    if r.rgba.is_empty() {
+        return Preview::default();
+    }
+    let k = k as i32;
+    let rect = Rect::new(r.rect.x0 * k, r.rect.y0 * k, r.rect.x1 * k, r.rect.y1 * k);
+    let rgba = r.rgba.iter().flat_map(|p| p.map(|c| (c.clamp(0.0, 1.0) * 255.0 + 0.5) as u8)).collect();
+    Preview { rect, size: [r.rect.width() as usize, r.rect.height() as usize], rgba }
 }
 
 /// Sample grid over the rendered box: sample (sx, sy) sits at canvas pixel
@@ -163,8 +194,9 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
     if pixels * (ss * ss) as u64 > MAX_SAMPLES {
         ss = 1;
     }
+    let budget = if quality == Quality::Draft { DRAFT_PIXELS } else { MAX_SAMPLES };
     let mut div = 1usize;
-    while pixels / (div * div) as u64 > MAX_SAMPLES {
+    while pixels / (div * div) as u64 > budget {
         div += 1;
     }
     let w = (bbox.width() as usize * ss).div_ceil(div);
@@ -229,12 +261,17 @@ pub fn render_surface(scene: &Scene3d, canvas: Rect, format: PixelFormat, qualit
     }
     let ch = format.channels();
     let mut vals = vec![0.0f32; r.rgba.len() * ch];
-    for (p, o) in r.rgba.iter().zip(vals.chunks_exact_mut(ch)) {
-        if p[3] > 0.0 {
-            photocraft_raster::from_rgba_into(&format, *p, o);
+    // Converted and written on all cores (the box can be millions of pixels).
+    let row = r.rect.width().max(1) as usize;
+    for_each_band(&mut vals, row * ch, |y, out| {
+        let src = r.rgba.get(y * row..(y + 1) * row).unwrap_or_default();
+        for (p, o) in src.iter().zip(out.chunks_exact_mut(ch)) {
+            if p[3] > 0.0 {
+                photocraft_raster::from_rgba_into(&format, *p, o);
+            }
         }
-    }
-    s.write_region(r.rect, &vals);
+    });
+    s.write_region_par(r.rect, &vals);
     s.prune();
     s
 }
@@ -448,7 +485,8 @@ fn resolve(bbox: Rect, g: &Grid, s: &[Sample], shadow: &[u8], ring: &[u8], look:
         }
     };
     let mut rgba = vec![[0.0f32; 4]; pw * ph];
-    for (y, row) in rgba.chunks_exact_mut(pw.max(1)).enumerate() {
+    // Row by row on all cores: the box can be millions of pixels on a large canvas.
+    for_each_band(&mut rgba, pw.max(1), |y, row| {
         for (x, out) in row.iter_mut().enumerate() {
             let mut acc = [0.0f32; 4];
             let n = if g.div > 1 {
@@ -474,7 +512,7 @@ fn resolve(bbox: Rect, g: &Grid, s: &[Sample], shadow: &[u8], ring: &[u8], look:
                 *out = [acc[0] / acc[3], acc[1] / acc[3], acc[2] / acc[3], a];
             }
         }
-    }
+    });
     let _ = g.h;
     Rendered { rect: bbox, rgba }
 }
@@ -531,6 +569,37 @@ mod tests {
         s.camera.distance = 1.0;
         let r = render(&s, 30_000, 30_000, Quality::Final);
         assert!(!r.rgba.is_empty());
+    }
+
+    #[test]
+    fn a_preview_covers_the_figure_at_a_fraction_of_the_pixels() {
+        let mut s = scene();
+        crate::frame(&mut s, 2500, 3750, 0.8);
+        let full = render(&s, 2500, 3750, Quality::Draft);
+        let p = preview(&s, 2500, 3750, 1_000_000);
+        assert!(p.size[0] * p.size[1] < 400_000, "{:?}", p.size);
+        assert_eq!(p.rgba.len(), p.size[0] * p.size[1] * 4);
+        // The same place on the canvas, give or take the coarser pixels.
+        for (a, b) in [(p.rect.x0, full.rect.x0), (p.rect.y0, full.rect.y0), (p.rect.x1, full.rect.x1), (p.rect.y1, full.rect.y1)] {
+            assert!((a - b).abs() <= 12, "{:?} vs {:?}", p.rect, full.rect);
+        }
+        assert!(preview(&Scene3d::default(), 300, 300, 1000).rgba.is_empty());
+    }
+
+    #[test]
+    #[ignore]
+    fn draft_and_final_timings_on_a_photo_sized_canvas() {
+        // `cargo test --release -p photocraft-scene3d draft_and_final -- --ignored --nocapture`
+        let mut s = scene();
+        crate::frame(&mut s, 2500, 3750, 0.8);
+        for q in [Quality::Draft, Quality::Final, Quality::Draft] {
+            let t = std::time::Instant::now();
+            let r = render(&s, 2500, 3750, q);
+            eprintln!("  render() {:.1} ms, {} px", t.elapsed().as_secs_f64() * 1000.0, r.rgba.len());
+            let t = std::time::Instant::now();
+            let surf = render_surface(&s, Rect::new(0, 0, 2500, 3750), PixelFormat::RGBA8, q);
+            eprintln!("{q:?}: {:.1} ms ({} px box)", t.elapsed().as_secs_f64() * 1000.0, surf.content_bounds().width() * surf.content_bounds().height());
+        }
     }
 
     #[test]

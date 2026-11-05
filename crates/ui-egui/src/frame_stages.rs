@@ -143,11 +143,83 @@ pub struct SlowFrames {
     /// When the last log line went out, and the slow frames since that weren't logged.
     logged_at: Option<f64>,
     unlogged: usize,
+    /// Every frame since the last summary line (see [`Summary`]).
+    summary: Summary,
+}
+
+/// How long between summary lines in the log.
+const SUMMARY_EVERY_MS: f64 = 2000.0;
+
+/// Every frame over a couple of seconds, logged as one line while the app is drawing: how many
+/// frames, how long they took and where, so a steady slowdown that never crosses
+/// [`SLOW_FRAME_MS`] still shows in the log.
+#[derive(Debug, Default)]
+struct Summary {
+    since: Option<f64>,
+    frames: u32,
+    frame_ms: f64,
+    max_ms: f64,
+    ui_ms: f64,
+    composite_ms: f64,
+    upload_ms: f64,
+    gpu_ms: f64,
+    gpu_frames: u32,
+    refresh_px: u64,
+    refreshes: u32,
+}
+
+impl Summary {
+    fn add(&mut self, s: &FrameStages) -> Option<String> {
+        let since = *self.since.get_or_insert(s.t);
+        self.frames += 1;
+        self.frame_ms += s.frame_ms;
+        self.max_ms = self.max_ms.max(s.frame_ms);
+        self.ui_ms += s.ui_ms;
+        self.composite_ms += s.composite_ms;
+        self.upload_ms += s.upload_ms;
+        if let Some(g) = s.gpu_ms {
+            self.gpu_ms += g;
+            self.gpu_frames += 1;
+        }
+        if s.refresh_px > 0 {
+            self.refreshes += 1;
+            self.refresh_px += s.refresh_px;
+        }
+        let span = s.t - since;
+        if span < SUMMARY_EVERY_MS {
+            return None;
+        }
+        let n = f64::from(self.frames.max(1));
+        let line = format!(
+            "frames: {} in {:.1} s ({:.0} fps), avg {:.1} ms, max {:.1} ms; ui {:.1}, composite {:.1}, upload {:.1}, gpu {}; {} refreshes, {:.1} Mpx; path {}",
+            self.frames,
+            span / 1000.0,
+            f64::from(self.frames) * 1000.0 / span.max(1.0),
+            self.frame_ms / n,
+            self.max_ms,
+            self.ui_ms / n,
+            self.composite_ms / n,
+            self.upload_ms / n,
+            if self.gpu_frames > 0 { format!("{:.1}", self.gpu_ms / f64::from(self.gpu_frames)) } else { "-".into() },
+            self.refreshes,
+            self.refresh_px as f64 / 1e6,
+            s.path,
+        );
+        *self = Summary::default();
+        Some(line)
+    }
 }
 
 impl Default for SlowFrames {
     fn default() -> Self {
-        Self { frames: VecDeque::with_capacity(SLOW_FRAMES), threshold_ms: SLOW_FRAME_MS, prev_ui_ms: None, logged_at: None, unlogged: 0 }
+        Self {
+            frames: VecDeque::with_capacity(SLOW_FRAMES),
+            threshold_ms: SLOW_FRAME_MS,
+            prev_ui_ms: None,
+            logged_at: None,
+            unlogged: 0,
+            summary: Summary::default(),
+        }
     }
 }
 
@@ -173,6 +245,13 @@ impl SlowFrames {
         s.present_ms = s.cpu_prev_ms.zip(self.prev_ui_ms).map(|(cpu, ui)| (cpu - ui).max(0.0));
         self.prev_ui_ms = Some(s.ui_ms);
         if let Some(line) = self.push(&s) {
+            log::info!("{line}");
+        }
+        // A frame after a long pause starts a new summary (an idle app draws nothing).
+        if self.summary.since.is_some_and(|t| s.t - t > 3.0 * SUMMARY_EVERY_MS) {
+            self.summary = Summary::default();
+        }
+        if let Some(line) = self.summary.add(&s) {
             log::info!("{line}");
         }
         s

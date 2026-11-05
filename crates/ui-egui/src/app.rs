@@ -281,3 +281,5 @@ impl eframe::App for PhotocraftApp {
 mod clipboard_tests;
 #[cfg(test)]
 mod edge_strip_tests;
+#[cfg(test)]
+mod frame_timing_tests;

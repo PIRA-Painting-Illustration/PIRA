@@ -173,6 +173,20 @@ fn set_scene(s: &mut Session, p: &Value) -> Result<Value> {
     if next.figures.len() > 64 {
         return Err(bad(CMD, "a 3D layer holds at most 64 figures"));
     }
+    // A drag in progress: the Object tool draws a quick preview over the canvas, so the layer
+    // keeps no image until the drag's last step renders it (same undo step, by `coalesce`).
+    if p.get("hide").and_then(Value::as_bool).unwrap_or(false) {
+        let id = layer_id(s, p)?;
+        s.edit("Edit 3D Layer", |doc, _| {
+            let format = doc.pixel_format();
+            let l = doc.layer_mut(id).ok_or(EngineError::NoLayer(id))?;
+            let LayerContent::Scene3d(sc) = &mut l.content else { return Err(bad(CMD, format!("layer {} is not a 3D layer", id.0))) };
+            sc.scene = next;
+            sc.cache = Some(photocraft_raster::Surface::new(format));
+            Ok(())
+        })?;
+        return Ok(json!({ "layer": id.0 }));
+    }
     with_scene(s, p, CMD, "Edit 3D Layer", |scene, _, _| {
         *scene = next;
         Ok(())
@@ -455,7 +469,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "scene3d.set",
             "Edit 3D Layer",
             [],
-            r##"{"layer":id?,"scene":Scene3d (as scene3d.get returns it),"draft":bool=false} (draft: quick render while dragging)"##,
+            r##"{"layer":id?,"scene":Scene3d (as scene3d.get returns it),"draft":bool=false,"hide":bool=false} (draft: quick render while dragging; hide: no image at all while a drag shows its own preview)"##,
             is_scene3d,
             set_scene
         ),
