@@ -148,6 +148,94 @@ pub fn swing(scene: &mut Scene3d, width: u32, height: u32, figure: usize, joint:
     rotate_world(skel, fig, joint, Quat::from_axis_angle(fwd, angle))
 }
 
+/// The joints whose pivots can be dragged to a spot ([`reach`]): the head, elbows, wrists, knees
+/// and ankles, each with the bones that move to get it there (nearest the body first).
+pub const REACH_HANDLES: [(&str, &[&str]); 9] = [
+    ("head", &["neck"]),
+    ("forearm.L", &["upper_arm.L"]),
+    ("hand.L", &["upper_arm.L", "forearm.L"]),
+    ("forearm.R", &["upper_arm.R"]),
+    ("hand.R", &["upper_arm.R", "forearm.R"]),
+    ("shin.L", &["thigh.L"]),
+    ("foot.L", &["thigh.L", "shin.L"]),
+    ("shin.R", &["thigh.R"]),
+    ("foot.R", &["thigh.R", "shin.R"]),
+];
+
+/// Lines of the skeleton drawn with [`REACH_HANDLES`]: from each moving bone's pivot to the next.
+pub const REACH_LINES: [(&str, &str); 9] = [
+    ("neck", "head"),
+    ("upper_arm.L", "forearm.L"),
+    ("forearm.L", "hand.L"),
+    ("upper_arm.R", "forearm.R"),
+    ("forearm.R", "hand.R"),
+    ("thigh.L", "shin.L"),
+    ("shin.L", "foot.L"),
+    ("thigh.R", "shin.R"),
+    ("shin.R", "foot.R"),
+];
+
+/// Where joint `j`'s pivot is in the scene.
+fn pivot(skel: &Skeleton, fig: &Figure3d, j: usize) -> Option<Vec3> {
+    figure_joints(skel, fig).get(j).map(|m| m.w_axis.truncate())
+}
+
+/// Turns `bone` so that the point `from` (in the scene) swings to lie along `to`, about the bone's
+/// pivot, by the smallest turn.
+fn aim_bone(skel: &Skeleton, fig: &mut Figure3d, bone: usize, from: Vec3, to: Vec3) -> bool {
+    let Some(p) = pivot(skel, fig, bone) else { return false };
+    let (Some(a), Some(b)) = ((from - p).try_normalize(), (to - p).try_normalize()) else { return false };
+    if a.dot(b) > 1.0 - 1e-7 {
+        return false;
+    }
+    rotate_world(skel, fig, bone, Quat::from_rotation_arc(a, b))
+}
+
+/// Drags joint `handle`'s pivot (one of [`REACH_HANDLES`]) to canvas point `to`, keeping its
+/// distance from the camera: an elbow, knee or the head swings its one bone there; a wrist or
+/// ankle bends the arm or leg (two bones, keeping the way the elbow or knee points) as far as it
+/// reaches. Returns false when nothing changed.
+pub fn reach(scene: &mut Scene3d, width: u32, height: u32, figure: usize, handle: usize, to: [f32; 2]) -> bool {
+    let view = View::new(&scene.camera, width, height);
+    let (_, _, fwd) = view.axes();
+    let Some(fig) = scene.figures.get_mut(figure) else { return false };
+    let (skel, _) = model(fig.body);
+    let Some(name) = skel.joints.get(handle).map(|j| j.name.as_str()) else { return false };
+    let Some((_, bones)) = REACH_HANDLES.iter().find(|(h, _)| *h == name) else { return false };
+    let bones: Vec<usize> = bones.iter().filter_map(|b| skel.find(b)).collect();
+    let Some(end) = pivot(skel, fig, handle) else { return false };
+    // The target: under the pen, as far from the camera as the joint is now.
+    let (o, d) = view.ray(Vec2::from_array(to));
+    let along = d.dot(fwd);
+    if along.abs() < 1e-6 {
+        return false;
+    }
+    let target = o + d * ((end - o).dot(fwd) / along);
+    if !target.is_finite() {
+        return false;
+    }
+    match bones.as_slice() {
+        [one] => aim_bone(skel, fig, *one, end, target),
+        [upper, lower] => {
+            let (Some(root), Some(mid)) = (pivot(skel, fig, *upper), pivot(skel, fig, *lower)) else { return false };
+            let (a, b) = ((mid - root).length(), (end - mid).length());
+            let v = target - root;
+            let Some(dir) = v.try_normalize() else { return false };
+            // As far as the limb reaches (and never folded flat).
+            let dist = v.length().clamp((a - b).abs() + 1e-4, (a + b) * 0.999);
+            // Bend the way the elbow or knee points now.
+            let bend = (mid - root) - dir * (mid - root).dot(dir);
+            let perp = bend.try_normalize().unwrap_or_else(|| dir.any_orthonormal_vector());
+            let cos = ((a * a + dist * dist - b * b) / (2.0 * a * dist)).clamp(-1.0, 1.0);
+            let new_mid = root + (dir * cos + perp * (1.0 - cos * cos).sqrt()) * a;
+            let moved = aim_bone(skel, fig, *upper, mid, new_mid);
+            let Some(end) = pivot(skel, fig, handle) else { return moved };
+            aim_bone(skel, fig, *lower, end, root + dir * dist) || moved
+        }
+        _ => false,
+    }
+}
+
 /// Twists `joint` about its own bone by `angle` radians.
 pub fn twist(fig: &mut Figure3d, joint: usize, angle: f32) -> bool {
     let (skel, _) = model(fig.body);
@@ -258,6 +346,40 @@ mod tests {
         s.camera.pitch = 0.0;
         crate::frame(&mut s, 800, 1000, 0.8);
         s
+    }
+
+    #[test]
+    fn a_dragged_wrist_lands_under_the_pen_and_an_elbow_swings_its_arm() {
+        let mut s = scene();
+        let hand = joint_index(&s.figures[0], "hand.L").unwrap();
+        let (wrist, _) = joint_px(&s, 800, 1000, 0, hand).unwrap();
+        // Bring the outstretched wrist in and down, well within reach.
+        let to = [wrist[0] - 60.0, wrist[1] + 90.0];
+        assert!(reach(&mut s, 800, 1000, 0, hand, to));
+        let (now, _) = joint_px(&s, 800, 1000, 0, hand).unwrap();
+        assert!((Vec2::from_array(now) - Vec2::from_array(to)).length() < 1.5, "{now:?} vs {to:?}");
+        // The upper arm keeps its length: the elbow is still as far from the shoulder.
+        let (skel, _) = model(s.figures[0].body);
+        let len = |f: &Figure3d| {
+            let w = figure_joints(skel, f);
+            (w[skel.find("forearm.L").unwrap()].w_axis - w[skel.find("upper_arm.L").unwrap()].w_axis).length()
+        };
+        let fresh = scene();
+        assert!((len(&s.figures[0]) - len(&fresh.figures[0])).abs() < 1e-4);
+        // An elbow swings the upper arm (it keeps its length): the elbow points at the pen.
+        let elbow = joint_index(&s.figures[0], "forearm.R").unwrap();
+        let shoulder = joint_index(&s.figures[0], "upper_arm.R").unwrap();
+        let (e, _) = joint_px(&s, 800, 1000, 0, elbow).unwrap();
+        let to = [e[0], e[1] + 40.0];
+        assert!(reach(&mut s, 800, 1000, 0, elbow, to));
+        let (sh, _) = joint_px(&s, 800, 1000, 0, shoulder).unwrap();
+        let (now, _) = joint_px(&s, 800, 1000, 0, elbow).unwrap();
+        let (sh, now, to) = (Vec2::from_array(sh), Vec2::from_array(now), Vec2::from_array(to));
+        assert!((now - sh).angle_to(to - sh).abs() < 0.03, "{now} points away from {to}");
+        // Out of reach: as far as the arm goes, towards the pen; a hip isn't a handle.
+        assert!(reach(&mut s, 800, 1000, 0, hand, [0.0, 0.0]));
+        let hips = joint_index(&s.figures[0], "hips").unwrap();
+        assert!(!reach(&mut s, 800, 1000, 0, hips, to.to_array()));
     }
 
     #[test]

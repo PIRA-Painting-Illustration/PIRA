@@ -13,6 +13,10 @@
 //! open, until Done: dragging one moves that joint (the dot follows the pen; the figure refits
 //! once, on release, with `scene3d.refitPhoto`), and the tab sets each limb towards or away from
 //! the camera.
+//!
+//! Joints (options bar) shows the same kind of dots on every figure's head, elbows, wrists, knees
+//! and ankles: dragging one puts that joint under the pen (`pose::reach`: a wrist or ankle bends
+//! its arm or leg to get there).
 
 use egui::{Color32, Pos2, Stroke, Vec2};
 use photocraft_doc::{Body3d, LayerContent, LayerId, Scene3d};
@@ -71,6 +75,8 @@ pub struct ObjectToolUi {
     /// 3D panel › Photo: the last body match is being fixed (its joints show on the canvas).
     #[serde(skip)]
     pub fixing: bool,
+    /// Joints: the figures' main joints show as dots to drag into place.
+    pub joints: bool,
     #[serde(skip)]
     pub drag: Option<ObjectDrag>,
     #[serde(skip)]
@@ -95,6 +101,8 @@ pub enum DragKind {
     Light,
     /// A photo-match joint (its landmark index) being dragged onto the photo's joint.
     PhotoPoint(usize),
+    /// A figure's joint (figure, joint) being dragged to a spot (Joints).
+    Reach(usize, usize),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -164,6 +172,7 @@ fn step(d: &mut ObjectDrag, a: [f64; 2], b: [f64; 2]) -> bool {
         }
         // Sent as `scene3d.refitPhoto` instead ([`refit_drag`]).
         DragKind::PhotoPoint(_) => false,
+        DragKind::Reach(f, j) => pose::reach(&mut d.scene, w, h, f, j, f32p(b)),
     }
 }
 
@@ -188,6 +197,27 @@ fn photo_handle_at(app: &PhotocraftApp, layer: LayerId, at: [f64; 2]) -> Option<
         .filter(|(_, d)| *d <= reach)
         .min_by(|a, b| a.1.total_cmp(&b.1))
         .map(|(i, _)| i)
+}
+
+/// The figure joint (Joints) within reach of canvas point `at`, nearest first.
+fn joint_handle_at(app: &PhotocraftApp, scene: &Scene3d, (w, h): (u32, u32), at: [f64; 2]) -> Option<(usize, usize)> {
+    if !app.ui.object_tool.joints {
+        return None;
+    }
+    let reach = 24.0 / app.current_zoom().max(0.01);
+    let at = Pos2::new(at[0] as f32, at[1] as f32);
+    let mut best: Option<((usize, usize), f32)> = None;
+    for (fi, fig) in scene.figures.iter().enumerate().filter(|(_, f)| f.visible) {
+        for (name, _) in pose::REACH_HANDLES {
+            let Some(j) = pose::joint_index(fig, name) else { continue };
+            let Some((p, _)) = pose::joint_px(scene, w, h, fi, j) else { continue };
+            let d = Pos2::new(p[0], p[1]).distance(at);
+            if d <= reach && best.is_none_or(|(_, b)| d < b) {
+                best = Some(((fi, j), d));
+            }
+        }
+    }
+    best.map(|(hit, _)| hit)
 }
 
 fn refit_drag(app: &mut PhotocraftApp, d: &ObjectDrag, point: usize, at: [f64; 2], draft: bool) {
@@ -219,6 +249,14 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
                 app.ui.object_tool.drags += 1;
                 let key = format!("object-tool-{}", app.ui.object_tool.drags);
                 app.ui.object_tool.drag = Some(ObjectDrag { layer, kind: DragKind::PhotoPoint(point), scene, size, last: [x, y], moved: false, key });
+                return true;
+            }
+            // A joint dot (Joints) is dragged to where the joint should be.
+            if let Some((figure, joint)) = joint_handle_at(app, &scene, size, [x, y]) {
+                app.ui.object_tool.selected = Some((layer.0, figure, joint));
+                app.ui.object_tool.drags += 1;
+                let key = format!("object-tool-{}", app.ui.object_tool.drags);
+                app.ui.object_tool.drag = Some(ObjectDrag { layer, kind: DragKind::Reach(figure, joint), scene, size, last: [x, y], moved: false, key });
                 return true;
             }
             let ui = &app.ui.object_tool;
@@ -368,6 +406,26 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
                 let c = to_screen(pivot);
                 painter.circle_filled(c, 3.5, Color32::from_black_alpha(110));
                 painter.circle_filled(c, 2.5, Color32::from_white_alpha(200));
+            }
+        }
+    }
+    // Joints: the main joints as coral dots on a thin skeleton, to drag into place.
+    if app.ui.object_tool.joints {
+        let coral = Color32::from_rgb(255, 122, 92);
+        let held = app.ui.object_tool.drag.as_ref().and_then(|d| if let DragKind::Reach(f, j) = d.kind { Some((f, j)) } else { None });
+        for (fi, fig) in scene.figures.iter().enumerate().filter(|(_, f)| f.visible) {
+            let at = |name: &str| pose::joint_index(fig, name).and_then(|j| pose::joint_px(&scene, w, h, fi, j)).map(|(p, _)| to_screen(p));
+            for (a, b) in pose::REACH_LINES {
+                if let (Some(a), Some(b)) = (at(a), at(b)) {
+                    painter.line_segment([a, b], Stroke::new(3.0, Color32::from_black_alpha(90)));
+                    painter.line_segment([a, b], Stroke::new(1.5, coral));
+                }
+            }
+            for (name, _) in pose::REACH_HANDLES {
+                let Some(c) = at(name) else { continue };
+                let r = if held == pose::joint_index(fig, name).map(|j| (fi, j)) { 9.0 } else { 6.5 };
+                painter.circle_filled(c, r + 1.5, Color32::from_black_alpha(120));
+                painter.circle_filled(c, r, coral);
             }
         }
     }
@@ -552,6 +610,10 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: Tool) -> bo
     let twist = app.ui.object_tool.twist;
     if crate::icons::button(ui, "rotate-ccw", 26.0, twist, tl!("Twist: turn parts about their own bone (⌥)")).clicked() {
         app.ui.object_tool.twist = !twist;
+    }
+    let joints = app.ui.object_tool.joints;
+    if crate::icons::button(ui, "spline", 26.0, joints, tl!("Joints: drag the head, elbows, wrists, knees and ankles to where they should be")).clicked() {
+        app.ui.object_tool.joints = !joints;
     }
     crate::widgets::vline(ui, 22.0);
     let Some((layer, scene, _)) = active_scene(app) else {
@@ -1014,6 +1076,26 @@ mod tests {
         // Done hides the joints.
         app.ui.object_tool.fixing = false;
         assert!(photo_handle_at(&app, layer, [elbow.x as f64, elbow.y as f64]).is_none());
+    }
+
+    #[test]
+    fn with_joints_on_dragging_a_wrist_puts_it_under_the_pen() {
+        let mut app = app_with_figure();
+        let (_, sc, (w, h)) = active_scene(&app).unwrap();
+        let hand = pose::joint_index(&sc.figures[0], "hand.L").unwrap();
+        let (wrist, _) = pose::joint_px(&sc, w, h, 0, hand).unwrap();
+        let (x, y) = (wrist[0] as f64, wrist[1] as f64);
+        assert!(joint_handle_at(&app, &sc, (w, h), [x, y]).is_none(), "off until Joints is on");
+        app.ui.object_tool.joints = true;
+        assert_eq!(joint_handle_at(&app, &sc, (w, h), [x + 4.0, y]), Some((0, hand)));
+        pointer(&mut app, ToolEvent::Down { x, y, pressure: 1.0 }, egui::Modifiers::NONE);
+        pointer(&mut app, ToolEvent::Move { x: x - 30.0, y: y + 40.0, pressure: 1.0 }, egui::Modifiers::NONE);
+        pointer(&mut app, ToolEvent::Up { x: x - 60.0, y: y + 80.0 }, egui::Modifiers::NONE);
+        let sc2 = scene(&app);
+        let (now, _) = pose::joint_px(&sc2, w, h, 0, hand).unwrap();
+        assert!((now[0] - (wrist[0] - 60.0)).abs() < 2.0 && (now[1] - (wrist[1] + 80.0)).abs() < 2.0, "{now:?}");
+        app.session.execute("edit.undo", json!({})).unwrap();
+        assert_eq!(scene(&app).figures, sc.figures, "one undo step");
     }
 
     #[test]
