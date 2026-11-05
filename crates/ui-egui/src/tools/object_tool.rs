@@ -122,7 +122,7 @@ pub struct ObjectDrag {
 }
 
 /// Most pixels a drag preview renders for the whole canvas.
-const PREVIEW_PIXELS: u64 = 1_000_000;
+const PREVIEW_PIXELS: u64 = 350_000;
 
 /// Hides the layer's image (once per drag) and renders the drag's preview of `d.scene`.
 fn show_preview(app: &mut PhotocraftApp, d: &mut ObjectDrag) {
