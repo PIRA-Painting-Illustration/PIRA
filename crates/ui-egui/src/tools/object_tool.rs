@@ -10,8 +10,9 @@
 //! The 3D panel (beside Brushes) adds mannequins and applies poses from the pose library.
 //!
 //! After Match photo › Body, the photo's joints show as coral dots while the Match photo tab is
-//! open: dragging one moves that joint and refits the figure (`scene3d.refitPhoto`), and the tab
-//! sets each limb towards or away from the camera.
+//! open, until Done: dragging one moves that joint (the dot follows the pen; the figure refits
+//! once, on release, with `scene3d.refitPhoto`), and the tab sets each limb towards or away from
+//! the camera.
 
 use egui::{Color32, Pos2, Stroke, Vec2};
 use photocraft_doc::{Body3d, LayerContent, LayerId, Scene3d};
@@ -67,6 +68,9 @@ pub struct ObjectToolUi {
     pub tab: PanelTab,
     /// 3D panel › Photo: match bodies with the accurate (Heavy) model.
     pub accurate: bool,
+    /// 3D panel › Photo: the last body match is being fixed (its joints show on the canvas).
+    #[serde(skip)]
+    pub fixing: bool,
     #[serde(skip)]
     pub drag: Option<ObjectDrag>,
     #[serde(skip)]
@@ -165,7 +169,7 @@ fn step(d: &mut ObjectDrag, a: [f64; 2], b: [f64; 2]) -> bool {
 
 /// The photo match of `layer`, while the Match photo tab shows it (its joints are draggable).
 fn shown_photo_match(app: &PhotocraftApp, layer: LayerId) -> Option<&photocraft_engine::scene3d_cmds::PhotoMatch> {
-    if app.ui.object_tool.tab != PanelTab::Photo {
+    if app.ui.object_tool.tab != PanelTab::Photo || !app.ui.object_tool.fixing {
         return None;
     }
     app.session.photo_match.as_ref().filter(|m| m.layer == layer)
@@ -259,9 +263,9 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
         }
         ToolEvent::Move { x, y, .. } => {
             let Some(mut d) = app.ui.object_tool.drag.take() else { return true };
-            if let DragKind::PhotoPoint(point) = d.kind {
-                refit_drag(app, &d, point, [x, y], true);
-                d.moved = true;
+            // The dot follows the pen; refitting and re-rendering the figure waits for the release.
+            if let DragKind::PhotoPoint(_) = d.kind {
+                d.moved |= [x, y] != d.last;
                 d.last = [x, y];
                 app.ui.object_tool.drag = Some(d);
                 return true;
@@ -305,7 +309,14 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
     let to_screen = |p: [f32; 2]| -> Pos2 { xf.to_screen(p[0], p[1]) };
     // The Match photo tab: the photo's joints as the match read them, to drag where they belong.
     if let Some(m) = shown_photo_match(app, layer) {
-        let points = m.points();
+        let mut points = m.points();
+        // The joint being dragged is drawn under the pen.
+        if let Some(d) = app.ui.object_tool.drag.as_ref().filter(|d| d.layer == layer)
+            && let DragKind::PhotoPoint(i) = d.kind
+            && let Some(p) = points.get_mut(i)
+        {
+            *p = s3d::glam::Vec2::new(d.last[0] as f32, d.last[1] as f32);
+        }
         let at = |i: usize| points.get(i).map(|p| to_screen([p.x, p.y]));
         let coral = Color32::from_rgb(255, 122, 92);
         for (a, b) in s3d::retarget::HANDLE_LINES {
@@ -771,6 +782,9 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                         for (part, label) in [("body", "Body"), ("hands", "Both hands"), ("left", "Left hand"), ("right", "Right hand")] {
                             if ui.button(tl!(label)).clicked() {
                                 photo_cmd = Some(json!({"layer": layer.0, "figure": fig, "part": part, "model": model}));
+                                if part == "body" {
+                                    app.ui.object_tool.fixing = true;
+                                }
                             }
                         }
                     });
@@ -778,10 +792,24 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                     ui.weak(tl!("The first match takes a few seconds longer while the models load."));
                     // Fixing the match: drag joints on the canvas, set each limb's depth here.
                     let shown = app.session.photo_match.clone().filter(|m| m.layer == layer && m.figure == fig);
-                    if let Some(m) = shown {
+                    if let Some(m) = shown.as_ref().filter(|_| !app.ui.object_tool.fixing) {
                         ui.add_space(10.0);
                         ui.separator();
-                        ui.label(egui::RichText::new(tl!("Fix the match")).strong());
+                        let _ = m;
+                        if ui.button(tl!("Fix the match")).clicked() {
+                            app.ui.object_tool.fixing = true;
+                        }
+                    }
+                    if let Some(m) = shown.filter(|_| app.ui.object_tool.fixing) {
+                        ui.add_space(10.0);
+                        ui.separator();
+                        ui.horizontal(|ui| {
+                            ui.label(egui::RichText::new(tl!("Fix the match")).strong());
+                            // Done: the pose stays as it is and the joints leave the canvas.
+                            if crate::widgets::primary_button(ui, tl!("Done"), 64.0).clicked() {
+                                app.ui.object_tool.fixing = false;
+                            }
+                        });
                         ui.weak(tl!("With the Object tool, drag the coral dots on the photo onto the person's joints. White dots are ones you've moved."));
                         ui.weak(tl!("If a limb points the wrong way, say which end is nearer the camera:"));
                         ui.add_space(4.0);
@@ -969,17 +997,23 @@ mod tests {
         let elbow = app.session.photo_match.as_ref().unwrap().points()[13];
         assert!(photo_handle_at(&app, layer, [elbow.x as f64, elbow.y as f64]).is_none());
         app.ui.object_tool.tab = PanelTab::Photo;
+        assert!(photo_handle_at(&app, layer, [elbow.x as f64, elbow.y as f64]).is_none(), "not fixing");
+        app.ui.object_tool.fixing = true;
         assert_eq!(photo_handle_at(&app, layer, [elbow.x as f64 + 3.0, elbow.y as f64]), Some(13));
         let before = scene(&app);
         let (x, y) = (elbow.x as f64, elbow.y as f64);
         pointer(&mut app, ToolEvent::Down { x, y, pressure: 1.0 }, egui::Modifiers::NONE);
         pointer(&mut app, ToolEvent::Move { x: x + 10.0, y: y + 60.0, pressure: 1.0 }, egui::Modifiers::NONE);
+        assert_eq!(scene(&app), before, "moves only move the dot");
         pointer(&mut app, ToolEvent::Up { x: x + 20.0, y: y + 120.0 }, egui::Modifiers::NONE);
         let m = app.session.photo_match.as_ref().unwrap();
         assert!((m.points()[13].y - (elbow.y + 120.0)).abs() < 0.5, "the dot is where it was dropped");
         assert_ne!(scene(&app), before, "the figure was refitted");
         app.session.execute("edit.undo", json!({})).unwrap();
         assert_eq!(scene(&app).figures, before.figures, "one undo step");
+        // Done hides the joints.
+        app.ui.object_tool.fixing = false;
+        assert!(photo_handle_at(&app, layer, [elbow.x as f64, elbow.y as f64]).is_none());
     }
 
     #[test]
