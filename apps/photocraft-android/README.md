@@ -219,7 +219,7 @@ the install carries on when you come back.
 
 PIRA's repository is private, so the updater needs a token to see its releases. Dev builds
 carry one: a fine-grained GitHub token limited to the PIRA repository with **Contents:
-read-only**, saved in `~/pira-signing/update-token` (or `PIRA_UPDATE_TOKEN`). The build bakes it
+read-only**, saved in `~/pira-signing/update-token/token.txt` (or `PIRA_UPDATE_TOKEN`). The build bakes it
 in (`BuildConfig.UPDATE_TOKEN`), and the updater sends it only to api.github.com. A build
 without it has no update channel. **Before going live, delete every dev release and revoke the
 token**: anyone with one of those APKs can read the repository until then.

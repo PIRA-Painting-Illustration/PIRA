@@ -15,7 +15,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 REPO="PIRA-Painting-Illustration/PIRA"
 
-TOKEN_FILE="$HOME/pira-signing/update-token"
+TOKEN_FILE="$HOME/pira-signing/update-token/token.txt"
 if [[ -z "${PIRA_UPDATE_TOKEN:-}" && ! -s "$TOKEN_FILE" ]]; then
     echo "error: no update token ($TOKEN_FILE): builds without it can't see the releases" >&2
     exit 1
