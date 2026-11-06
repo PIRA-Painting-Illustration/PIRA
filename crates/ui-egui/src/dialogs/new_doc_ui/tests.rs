@@ -328,7 +328,9 @@ mod dialog {
             ..Default::default()
         };
         let app = PhotocraftApp::new(photocraft_engine::Session::new(), services);
-        let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_ui_state(
+        // Tall enough for the whole dialog with the Save Preset form open, which would scroll on a
+        // shorter screen.
+        let mut h = Harness::builder().with_size(egui::vec2(1400.0, 1200.0)).build_ui_state(
             |ui, app| {
                 crate::prefs_ui::tick(app, ui.ctx());
                 crate::dialogs::show(app, ui.ctx());
@@ -459,7 +461,8 @@ mod dialog {
 
     #[test]
     fn enter_saves_the_preset_and_bad_names_leave_the_form_open() {
-        let mut h = harness();
+        // Room for the Save Preset form and its error message without scrolling.
+        let mut h = harness_sized(1200.0);
         name_preset(&mut h, "Enter test");
         enter(&mut h);
         assert_eq!(h.state().session.presets.documents.len(), 1);
@@ -484,9 +487,16 @@ mod dialog {
     }
 
     fn harness() -> Harness<'static, PhotocraftApp> {
+        harness_sized(900.0)
+    }
+
+    /// The dialog on a `height`-point-tall screen (shorter than the dialog, its body scrolls).
+    fn harness_sized(height: f32) -> Harness<'static, PhotocraftApp> {
         let app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
-        let mut h =
-            Harness::builder().with_size(egui::vec2(1400.0, 900.0)).with_step_dt(1.0 / 60.0).build_ui_state(|ui, app| crate::dialogs::show(app, ui.ctx()), app);
+        let mut h = Harness::builder()
+            .with_size(egui::vec2(1400.0, height))
+            .with_step_dt(1.0 / 60.0)
+            .build_ui_state(|ui, app| crate::dialogs::show(app, ui.ctx()), app);
         PhotocraftApp::setup_context(&h.ctx, crate::theme::ThemeKind::ALL[0]);
         h.state_mut().ui.open_dialog(DialogKind::NewDocument, UiState::new_document_fields());
         h.run_steps(3);
@@ -766,6 +776,32 @@ mod dialog {
         let create = h.get_by_label("Create").rect();
         click_at(&mut h, create.center());
         assert_eq!(created(&h), (512, 300, 72.0));
+    }
+
+    /// A tablet in landscape is shorter than the dialog: the details scroll and Create and Close
+    /// stay on screen, and Create still creates.
+    #[test]
+    fn on_a_short_screen_the_buttons_stay_on_it() {
+        let app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
+        let height = 640.0;
+        let mut h = Harness::builder()
+            .with_size(egui::vec2(1300.0, height))
+            .with_step_dt(1.0 / 60.0)
+            .build_ui_state(|ui, app| crate::dialogs::show(app, ui.ctx()), app);
+        PhotocraftApp::setup_context(&h.ctx, crate::theme::ThemeKind::ALL[0]);
+        h.state_mut().ui.open_dialog(DialogKind::NewDocument, UiState::new_document_fields());
+        // The first frames measure the body; then it scrolls and the window settles.
+        h.run_steps(10);
+        // "Close" is both the title bar's × and the button row's Close.
+        for label in ["Create", "Close"] {
+            for node in h.query_all_by_label(label) {
+                let r = node.rect();
+                assert!(r.top() >= 0.0 && r.bottom() <= height, "{label} at {r:?} on a {height}-point-tall screen");
+            }
+        }
+        let create = h.get_by_label("Create").rect();
+        click_at(&mut h, create.center());
+        assert_eq!(h.state().session.documents().len(), 1, "Create made the document");
     }
 
     #[test]
