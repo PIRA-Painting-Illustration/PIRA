@@ -95,6 +95,9 @@ pub struct DocM {
     /// reads as no ruler rather than failing the whole manifest ([`ruler_or_none`]).
     #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "ruler_or_none")]
     pub perspective_ruler: Option<Vec<[f64; 2]>>,
+    /// PIRA's own document settings (missing in older files = none set).
+    #[serde(default, skip_serializing_if = "photocraft_doc::PiraDoc::is_default")]
+    pub pira: photocraft_doc::PiraDoc,
 }
 
 /// Reads [`DocM::perspective_ruler`]: any point that isn't `[x, y]` (or a list that isn't one of

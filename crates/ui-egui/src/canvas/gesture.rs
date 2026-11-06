@@ -150,6 +150,18 @@ pub(crate) fn finish_gesture(app: &mut PhotocraftApp, d: Drag) {
             crate::move_ui::finish(app, dx, dy);
         }
         Tool::PaintBucket => bucket_release(app, &d),
+        // Panel Cut: a drag long enough to be a line cuts the panel it crosses.
+        Tool::PanelCut if (end[0] - d.start[0]).hypot(end[1] - d.start[1]) * f64::from(app.point_zoom()) >= 12.0 => {
+            let gutter = app.ui.tool_options.panel_gutter;
+            let mut p = json!({"from": [d.start[0], d.start[1]], "to": [end[0], end[1]]});
+            if gutter > 0.0 {
+                p["gutter"] = json!(gutter.round());
+            }
+            if let Err(e) = app.run("comic.cutPanel", p) {
+                app.ui.status = e;
+                app.ui.status_error = true;
+            }
+        }
         _ => {}
     }
 }

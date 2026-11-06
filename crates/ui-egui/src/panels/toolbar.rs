@@ -13,7 +13,7 @@ pub(super) const TOOL_SECTIONS: &[&[&[Tool]]] = &[
         &[Tool::Lasso, Tool::PolygonLasso, Tool::MagneticLasso],
         &[Tool::ObjectSelection, Tool::QuickSelection, Tool::MagicWand],
         &[Tool::Crop, Tool::PerspectiveCrop, Tool::Slice, Tool::SliceSelect],
-        &[Tool::Frame],
+        &[Tool::Frame, Tool::PanelCut],
         &[Tool::Eyedropper, Tool::ColorSampler, Tool::Ruler, Tool::Note, Tool::Count],
     ],
     &[

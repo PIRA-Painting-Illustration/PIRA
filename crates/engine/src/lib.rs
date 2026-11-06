@@ -112,6 +112,7 @@ pub use cmd::image_cmds;
 pub use cmd::layer_copy_cmds;
 pub use cmd::layer_label_cmds;
 pub use cmd::line_art_cmds;
+pub use cmd::comic_cmds;
 pub use cmd::layer_list_cmds;
 pub use cmd::layer_mask_props_cmds;
 pub use cmd::layer_menu_cmds;

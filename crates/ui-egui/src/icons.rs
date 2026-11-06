@@ -148,6 +148,7 @@ pub fn tool_icon(t: Tool) -> &'static str {
         Tool::SliceSelect => "slice-select",
         Tool::Frame => "frame-placeholder",
         Tool::Object => "figure-3d",
+        Tool::PanelCut => "scissors",
         Tool::Gradient => "gradient",
         Tool::PaintBucket => "paint-bucket",
         Tool::Type | Tool::VerticalType => "type",

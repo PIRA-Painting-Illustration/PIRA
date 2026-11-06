@@ -46,6 +46,17 @@ pub const CATEGORIES: &[(&str, &[Preset])] = &[
         "Art & Illustration",
         &[("Poster", 5400, 7200, 300.0), ("Postcard", 1800, 1200, 300.0), ("Comic Book", 1988, 3075, 300.0), ("Square, 12 x 12", 3600, 3600, 300.0)],
     ),
+    // Comic pages: the canvas is the finished page plus its bleed (see `COMIC_PAGES`).
+    (
+        "Comic",
+        &[
+            ("Manga Page (B5)", 2590, 3623, 350.0),
+            ("US Comic Book Page", 2064, 3132, 300.0),
+            ("A4 Comic Page", 2976, 4175, 350.0),
+            ("Square Comic", 2160, 2160, 300.0),
+            ("Webtoon Episode", 800, 6400, 72.0),
+        ],
+    ),
     (
         "Web",
         &[
@@ -218,6 +229,12 @@ pub fn at_pref_resolutions(p: &Preset, units: &UnitsAndRulers) -> Preset {
     (p.0, px(p.1), px(p.2), ppi)
 }
 
+/// The Comic presets' print geometry at their own resolution: (name, bleed px, safe margin px).
+/// Manga B5: 182 × 257 mm trim, 3 mm bleed, 16 mm safe margin at 350 ppi. US comic: 6.625 ×
+/// 10.1875 in trim, 0.125 in bleed, 0.25 in safe at 300 ppi. A4: 3 mm bleed, 15 mm safe.
+pub const COMIC_PAGES: &[(&str, u32, u32)] =
+    &[("Manga Page (B5)", 41, 220), ("US Comic Book Page", 38, 75), ("A4 Comic Page", 41, 207), ("Square Comic", 0, 108), ("Webtoon Episode", 0, 40)];
+
 /// Apply a built-in preset (at the preference resolutions, see [`at_pref_resolutions`]) to the
 /// dialog fields.
 pub fn apply_preset(f: &mut Map<String, Value>, p: &Preset, units: &UnitsAndRulers) {
@@ -229,6 +246,17 @@ pub fn apply_preset(f: &mut Map<String, Value>, p: &Preset, units: &UnitsAndRule
     f.insert("resolution".into(), json!(ppi));
     f.insert("__preset".into(), json!(name));
     f.insert("__unit".into(), json!(unit));
+    // A comic page brings its bleed and safe area, scaled with the page.
+    match COMIC_PAGES.iter().find(|c| c.0 == p.0) {
+        Some(&(_, bleed, safe)) => {
+            // By area, so a page turned to landscape scales the same.
+            let k = (f64::from(w) * f64::from(h) / (f64::from(p.1.max(1)) * f64::from(p.2.max(1)))).sqrt();
+            f.insert("comicPage".into(), json!({"bleed": (f64::from(bleed) * k).round(), "safe": (f64::from(safe) * k).round()}));
+        }
+        None => {
+            f.remove("comicPage");
+        }
+    }
 }
 
 /// The colour mode of the dialog's `mode` value.

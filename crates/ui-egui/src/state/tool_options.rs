@@ -24,6 +24,11 @@ pub struct ToolOptions {
     /// Brush, Pencil and Eraser: hold the pen still at the end of a stroke to snap it to a line,
     /// ellipse or rectangle (`smart_shape`).
     pub smart_shape: bool,
+    /// Panel Cut: the gap left between two panels, in pixels (0 = the page's default), and the
+    /// New Panels grid.
+    pub panel_gutter: f32,
+    pub panel_rows: f32,
+    pub panel_columns: f32,
     /// Object Selection › Object Finder: hovering highlights the object a click selects (#4087).
     pub object_finder: bool,
     /// Remove tool: the fill goes to a new layer above the target (Photoshop's Create a new layer).
@@ -407,6 +412,9 @@ impl Default for ToolOptions {
             fill_expand: 0.0,
             lasso_fill_kind: "shape".into(),
             smart_shape: true,
+            panel_gutter: 0.0,
+            panel_rows: 1.0,
+            panel_columns: 1.0,
             object_finder: true,
             remove_new_layer: false,
             remove_after_each_stroke: true,

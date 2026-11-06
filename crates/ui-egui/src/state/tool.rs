@@ -76,12 +76,14 @@ pub enum Tool {
     Slice,
     SliceSelect,
     Frame,
+    /// Cuts comic panels in two along a dragged line (PIRA, `comic.cutPanel`).
+    PanelCut,
     /// Poses the figures of a 3D layer and turns its camera (PIRA).
     Object,
 }
 
 impl Tool {
-    pub const ALL: [Tool; 69] = [
+    pub const ALL: [Tool; 70] = [
         Tool::Move,
         Tool::Artboard,
         Tool::RectMarquee,
@@ -150,6 +152,7 @@ impl Tool {
         Tool::Slice,
         Tool::SliceSelect,
         Tool::Frame,
+        Tool::PanelCut,
         Tool::Object,
     ];
 
@@ -182,6 +185,7 @@ impl Tool {
             Tool::Slice => "Slice Tool",
             Tool::SliceSelect => "Slice Select Tool",
             Tool::Frame => "Frame Tool",
+            Tool::PanelCut => "Panel Cut Tool",
             Tool::Object => "Object Tool",
             Tool::Gradient => "Gradient Tool",
             Tool::PaintBucket => "Paint Bucket Tool",
@@ -274,7 +278,7 @@ impl Tool {
             Tool::Lasso | Tool::PolygonLasso | Tool::MagneticLasso => 'L',
             Tool::MagicWand => 'W',
             Tool::Crop | Tool::PerspectiveCrop | Tool::Slice | Tool::SliceSelect => 'C',
-            Tool::Frame => 'K',
+            Tool::Frame | Tool::PanelCut => 'K',
             // O is the Dodge group's.
             Tool::Object => ' ',
             Tool::Gradient | Tool::PaintBucket => 'G',
