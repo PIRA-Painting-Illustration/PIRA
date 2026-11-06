@@ -43,11 +43,11 @@ if (signingFile.exists()) {
 def signingPassword = System.getenv('PIRA_KEY_PASSWORD') ?: signingProps.getProperty('password')
 
 // Dev update channel. PIRA's repository is private, so the updater needs a read-only GitHub
-// token to see its releases: PIRA_UPDATE_TOKEN, or the file ~/pira-signing/update-token (kept
+// token to see its releases: PIRA_UPDATE_TOKEN, or the file ~/pira-signing/update-token/token.txt (kept
 // with the signing key, outside the repository). Use a fine-grained token limited to the PIRA
 // repository with Contents: read-only. Without one the APK builds with no update channel.
 // Dev builds only: before going live, delete the releases that carry it and revoke the token.
-def updateTokenFile = file("${System.getProperty('user.home')}/pira-signing/update-token")
+def updateTokenFile = file("${System.getProperty('user.home')}/pira-signing/update-token/token.txt")
 def updateToken = (System.getenv('PIRA_UPDATE_TOKEN') ?: (updateTokenFile.exists() ? updateTokenFile.text : '')).trim()
 if (!(updateToken ==~ /[A-Za-z0-9_]*/)) {
     throw new GradleException("The update token (${updateTokenFile}) has unexpected characters")
