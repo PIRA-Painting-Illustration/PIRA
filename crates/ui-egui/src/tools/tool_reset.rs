@@ -189,6 +189,7 @@ pub fn option_keys(tool: Tool) -> &'static [&'static str] {
         Tool::PerspectiveCrop => reset!(crop_width, crop_height, crop_resolution, crop_resolution_unit, perspective_crop_grid),
         Tool::Eyedropper => reset!(eyedropper_size, eyedropper_sample, eyedropper_ring),
         Tool::Brush => reset!(brush_clear, smart_shape),
+        Tool::PanelCut => reset!(panel_gutter, panel_rows, panel_columns),
         Tool::Pencil => reset!(pencil_auto_erase, pencil_clear, smart_shape),
         Tool::Eraser => reset!(eraser_mode, smart_shape),
         Tool::Remove => reset!(remove_new_layer, remove_after_each_stroke),

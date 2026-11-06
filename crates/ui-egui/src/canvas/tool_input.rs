@@ -472,6 +472,11 @@ pub fn tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers)
                     crate::eraser_ui::click(app, tool, x, y);
                     return;
                 }
+                Tool::PanelCut => {
+                    // The cut is the line dragged; it's made on release (`gesture`).
+                    app.drag = Some(Drag::new(Tool::PanelCut, [x, y], vec![[x, y, pressure as f64]], mods, false));
+                    return;
+                }
                 Tool::PaintBucket => {
                     // A tap fills on release; a drag draws a Lasso Fill (`gesture::bucket_release`).
                     app.drag = Some(Drag::new(Tool::PaintBucket, [x, y], vec![[x, y, pressure as f64]], mods, false));

@@ -98,6 +98,7 @@ pub mod image_cmds;
 pub mod layer_copy_cmds;
 pub mod layer_label_cmds;
 pub mod line_art_cmds;
+pub mod comic_cmds;
 pub mod layer_list_cmds;
 pub mod layer_mask_props_cmds;
 pub mod layer_menu_cmds;
@@ -254,7 +255,7 @@ fn build() -> Vec<CommandSpec> {
             "New…",
             ["File"],
             Some("Cmd+N"),
-            r##"{"width":1..300000=1920,"height":1..300000=1080 (pixel counts are rounded),"mode":"rgb|gray|grayscale|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|backgroundColor|transparent|#rrggbb"="white","backgroundColor":[r,g,b]? (0..1; defaults to toolbox colour),"resolution":1..30000=72 (ppi),"name":str,"artboard":bool=false (one artboard over the canvas, its background the chosen one, holding an empty Layer 1; no Background layer),"profile":"working"|built-in id|path to an .icc file="working" (the colour profile it is tagged with; it must suit the mode)}"##,
+            r##"{"width":1..300000=1920,"height":1..300000=1080 (pixel counts are rounded),"mode":"rgb|gray|grayscale|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|backgroundColor|transparent|#rrggbb"="white","backgroundColor":[r,g,b]? (0..1; defaults to toolbox colour),"resolution":1..30000=72 (ppi),"name":str,"artboard":bool=false (one artboard over the canvas, its background the chosen one, holding an empty Layer 1; no Background layer),"profile":"working"|built-in id|path to an .icc file="working" (the colour profile it is tagged with; it must suit the mode),"comicPage":{"bleed":px,"safe":px}? (a comic page: the canvas is the trim size plus the bleed; guides mark the trim and the safe area inside it)}"##,
             always,
             |s, p| {
                 use crate::document_preset_cmds::{MAX_DIMENSION, MAX_RESOLUTION, background_color, color_mode, sample_type};
@@ -296,6 +297,14 @@ fn build() -> Vec<CommandSpec> {
                     d
                 };
                 doc.resolution_dpi = res;
+                // A comic page: remember its trim and safe area, and mark both with guides.
+                if let Some(page) = crate::document_preset_cmds::comic_page(p) {
+                    doc.pira.page = Some(page);
+                    for r in [page.trim(w, h), page.safe_area(w, h)] {
+                        doc.guides.vertical.extend([r[0], r[2]]);
+                        doc.guides.horizontal.extend([r[1], r[3]]);
+                    }
+                }
                 // Photoshop's New Document › Color Profile: tag the document with another profile
                 // than the working space (#321). Checked before the document opens.
                 if let Some(spec) = p.get("profile").and_then(Value::as_str).filter(|spec| !matches!(*spec, "working" | "none")) {
@@ -1372,6 +1381,7 @@ fn build() -> Vec<CommandSpec> {
     v.extend(crate::layer_menu_cmds::specs());
     v.extend(crate::layer_label_cmds::specs());
     v.extend(crate::line_art_cmds::specs());
+    v.extend(crate::comic_cmds::specs());
     v.extend(crate::scene3d_cmds::specs());
     v.extend(crate::layer_xmp_cmds::specs());
     v.extend(crate::mode_cmds::specs());

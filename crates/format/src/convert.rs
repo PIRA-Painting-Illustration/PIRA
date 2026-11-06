@@ -285,6 +285,7 @@ pub(crate) fn doc_m(d: &Document, sink: &mut dyn Sink) -> DocM {
         text_styles: d.text_styles.clone(),
         slices: d.slices.clone(),
         perspective_ruler: d.perspective_ruler.clone(),
+        pira: d.pira,
     }
 }
 
@@ -721,6 +722,7 @@ impl Loader<'_> {
                 .perspective_ruler
                 .clone()
                 .filter(|p| photocraft_doc::perspective_ruler_ok(p, f64::from(m.size.width), f64::from(m.size.height))),
+            pira: m.pira,
         })
     }
 

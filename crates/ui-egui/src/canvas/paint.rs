@@ -590,6 +590,15 @@ pub(super) fn draw_drag_preview(app: &mut PhotocraftApp, painter: &egui::Painter
             }
             painter.add(egui::Shape::line(pts, Stroke::new(1.5, crate::theme::Tokens::get(painter.ctx()).accent)));
         }
+        // Panel Cut: the cut line, across the whole canvas, as it will cut.
+        Tool::PanelCut => {
+            let (a, b) = (xf.to_screen(d.start[0] as f32, d.start[1] as f32), xf.to_screen(last[0] as f32, last[1] as f32));
+            if (b - a).length() > 1.0 {
+                let dir = (b - a).normalized() * 4000.0;
+                painter.line_segment([a - dir, b + dir], Stroke::new(1.0, crate::theme::Tokens::get(painter.ctx()).accent.gamma_multiply(0.5)));
+                painter.line_segment([a, b], Stroke::new(2.0, crate::theme::Tokens::get(painter.ctx()).accent));
+            }
+        }
         // A Paint Bucket drag is a Lasso Fill: the same solid outline while it's drawn.
         Tool::PaintBucket => {
             let pts: Vec<Pos2> = d.points.iter().map(|p| xf.to_screen(p[0] as f32, p[1] as f32).round() + vec2(0.5, 0.5)).collect();

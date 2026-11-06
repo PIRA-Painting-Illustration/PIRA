@@ -172,6 +172,7 @@ pub const TOOLS: &[(&str, &str, Option<&str>)] = &[
     ("tools.select.slice", "Slice Tool", Some("C")),
     ("tools.select.sliceSelect", "Slice Select Tool", Some("C")),
     ("tools.select.frame", "Frame Tool", Some("K")),
+    ("tools.select.panelCut", "Panel Cut Tool", Some("K")),
     ("tools.select.object", "Object Tool", None),
 ];
 

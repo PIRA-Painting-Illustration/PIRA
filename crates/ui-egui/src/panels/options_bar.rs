@@ -427,6 +427,7 @@ fn selection_specific_options(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: 
             }
             select_and_mask_button(app, ui);
         }
+        Tool::PanelCut => panel_cut_options(app, ui),
         Tool::PaintBucket => {
             opt_label(ui, tl!("Fill"));
             let mut src = u8::from(app.ui.tool_options.bucket_fill_pattern);
@@ -890,6 +891,44 @@ pub(crate) fn set_opacity_pressure(b: &mut photocraft_paint::BrushSettings, on: 
         b.pressure_opacity = false;
         if tr.opacity.control == photocraft_paint::Control::PenPressure {
             tr.opacity.control = photocraft_paint::Control::Off;
+        }
+    }
+}
+
+/// The Panel Cut tool's options: the gutter, New Panels with its grid, and the rest of the comic kit.
+fn panel_cut_options(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+    opt_label(ui, tl!("Gutter"));
+    widgets::value_field(ui, &mut app.ui.tool_options.panel_gutter, 0.0..=500.0, "px", 58.0)
+        .on_hover_text(tl!("The gap between the two panels a cut leaves (0: the page's default)"));
+    widgets::vline(ui, 22.0);
+    opt_label(ui, tl!("Rows"));
+    widgets::value_field(ui, &mut app.ui.tool_options.panel_rows, 1.0..=8.0, "", 40.0);
+    opt_label(ui, tl!("Columns"));
+    widgets::value_field(ui, &mut app.ui.tool_options.panel_columns, 1.0..=8.0, "", 40.0);
+    if widgets::secondary_button(ui, tl!("New Panels"), 0.0).clicked() {
+        let o = &app.ui.tool_options;
+        let mut p = json!({"rows": o.panel_rows.round(), "columns": o.panel_columns.round()});
+        if o.panel_gutter > 0.0 {
+            p["gutter"] = json!(o.panel_gutter.round());
+        }
+        if let Err(e) = app.run("comic.newPanels", p) {
+            app.ui.status = e;
+            app.ui.status_error = true;
+        }
+    }
+    // The rest of the comic kit: balloons, effect lines (over the selection, if any) and tones.
+    widgets::vline(ui, 22.0);
+    for (label, cmd, p) in [
+        (tl!("Balloon"), "comic.newBalloon", json!({})),
+        (tl!("Focus Lines"), "comic.effectLines", json!({"kind": "focus"})),
+        (tl!("Speed Lines"), "comic.effectLines", json!({"kind": "speed"})),
+        (tl!("Tone"), "comic.newTone", json!({})),
+    ] {
+        if widgets::secondary_button(ui, label, 0.0).clicked()
+            && let Err(e) = app.run(cmd, p)
+        {
+            app.ui.status = e;
+            app.ui.status_error = true;
         }
     }
 }

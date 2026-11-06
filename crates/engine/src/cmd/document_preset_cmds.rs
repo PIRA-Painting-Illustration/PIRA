@@ -50,6 +50,17 @@ pub(crate) fn background_color(p: &Value, fallback: [f32; 4], cmd: &str) -> Resu
     Ok([c[0], c[1], c[2], 1.0])
 }
 
+/// `file.new`'s `comicPage`: the bleed and safe margins, in whole pixels, that fit the canvas
+/// (both sides together under a quarter of its smaller side).
+pub(crate) fn comic_page(p: &Value) -> Option<photocraft_doc::ComicPage> {
+    let c = p.get("comicPage")?.as_object()?;
+    let px = |k: &str| c.get(k).and_then(Value::as_f64).filter(|v| v.is_finite() && *v >= 0.0).map(|v| v.round() as u32);
+    let (bleed, safe) = (px("bleed")?, px("safe")?);
+    let side = |k: &str| p.get(k).and_then(Value::as_f64).unwrap_or(if k == "width" { 1920.0 } else { 1080.0 });
+    let smaller = side("width").min(side("height"));
+    (f64::from(bleed + safe) < smaller / 4.0).then_some(photocraft_doc::ComicPage { bleed, safe })
+}
+
 /// Validate creation before dispatch can commit a floating selection or add a document.
 /// Missing fields (including a null params object) keep the command's documented defaults.
 pub(crate) fn validate_new_params(s: &Session, p: &Value) -> Result<()> {
@@ -80,6 +91,7 @@ pub(crate) fn validate_new_params(s: &Session, p: &Value) -> Result<()> {
             "name" => (value.is_string(), "a string".into()),
             "artboard" => (value.is_boolean(), "true or false".into()),
             "profile" => (value.as_str().is_some_and(|v| !v.is_empty()), "working, a built-in profile id or an .icc path".into()),
+            "comicPage" => (comic_page(p).is_some(), "{\"bleed\": px, \"safe\": px}, together under a quarter of the smaller side".into()),
             _ => return Err(bad(cmd, format!("unknown parameter `{key}`"))),
         };
         if !valid {

@@ -44,7 +44,7 @@ pub use pattern::Pattern;
 pub use photocraft_color::{BlendMode, Color, ColorMode, PixelFormat, SampleType};
 pub use photocraft_geom::{Affine, Rect, Size};
 pub use photocraft_raster::Surface;
-pub use pira_layer::{Border, PiraLayer};
+pub use pira_layer::{Border, ComicPage, PiraDoc, PiraLayer};
 pub use scene3d::{Body3d, Camera3d, Figure3d, Look3d, Scene3d, Scene3dLayer, Shading3d};
 use serde::{Deserialize, Serialize};
 pub use slices::{Slice, SliceKind, SliceOrigin, Slices};
@@ -958,6 +958,8 @@ pub struct Document {
     /// How the document's lossy file was encoded (its JPEG quality, WebP lossy or lossless,
     /// PNG stereo pairing), so a save writes it back the same way rather than at fixed defaults.
     pub file_encoding: FileEncoding,
+    /// PIRA's own settings (a comic page's trim and safe area, …).
+    pub pira: PiraDoc,
 }
 
 /// The encoder settings a document's file was opened or saved with: what File › Save and the
@@ -1039,6 +1041,7 @@ impl Document {
             variables: Variables::default(),
             timeline: None,
             file_encoding: FileEncoding::default(),
+            pira: PiraDoc::default(),
         }
     }
 
