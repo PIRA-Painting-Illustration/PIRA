@@ -150,6 +150,10 @@ pub fn free_press(ctx: &egui::Context, canvas: egui::Rect) -> Option<egui::Pos2>
 /// scrolls.
 const DIALOG_CHROME: f32 = 150.0;
 
+/// The New Document dialog's title, rule, button row, frame margins and the gap the window keeps
+/// from the screen's edges (points), around its scrolling body.
+const NEW_DOCUMENT_CHROME: f32 = 220.0;
+
 /// Draw a dialog body that opens on its first number, selected, as Photoshop's value dialogs do:
 /// typing replaces it and Enter applies it (#1757). Once per dialog `id`, on the first laid-out
 /// frame.
@@ -372,7 +376,23 @@ fn dialog_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, d: &Dialog, fields: &
     let mut outcome: Option<bool> = None;
     match d.kind {
         DialogKind::NewDocument => {
-            if crate::new_doc_ui::body(app, ui, fields) {
+            // On a short screen (a tablet in landscape) the body scrolls, so Create stays on it.
+            // From the screen's height, not the window's place: the window centres on its size.
+            // Only once the body is known to be taller: a scroll area grows over a few frames, and
+            // a dialog that fits would open clipped and then expand.
+            let room = (ui.ctx().content_rect().height() - NEW_DOCUMENT_CHROME).max(120.0);
+            let natural_id = id.with("new-document-height");
+            let natural: Option<f32> = ui.ctx().data(|m| m.get_temp(natural_id));
+            let (created, height) = if natural.is_some_and(|h| h > room) {
+                let out =
+                    egui::ScrollArea::vertical().id_salt(id.with("new-document-body")).max_height(room).show(ui, |ui| crate::new_doc_ui::body(app, ui, fields));
+                (out.inner, out.content_size.y)
+            } else {
+                let out = ui.scope(|ui| crate::new_doc_ui::body(app, ui, fields));
+                (out.inner, out.response.rect.height())
+            };
+            ui.ctx().data_mut(|m| m.insert_temp(natural_id, height));
+            if created {
                 outcome = Some(true);
             }
         }
