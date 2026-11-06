@@ -42,6 +42,17 @@ if (signingFile.exists()) {
 }
 def signingPassword = System.getenv('PIRA_KEY_PASSWORD') ?: signingProps.getProperty('password')
 
+// Dev update channel. PIRA's repository is private, so the updater needs a read-only GitHub
+// token to see its releases: PIRA_UPDATE_TOKEN, or the file ~/pira-signing/update-token (kept
+// with the signing key, outside the repository). Use a fine-grained token limited to the PIRA
+// repository with Contents: read-only. Without one the APK builds with no update channel.
+// Dev builds only: before going live, delete the releases that carry it and revoke the token.
+def updateTokenFile = file("${System.getProperty('user.home')}/pira-signing/update-token")
+def updateToken = (System.getenv('PIRA_UPDATE_TOKEN') ?: (updateTokenFile.exists() ? updateTokenFile.text : '')).trim()
+if (!(updateToken ==~ /[A-Za-z0-9_]*/)) {
+    throw new GradleException("The update token (${updateTokenFile}) has unexpected characters")
+}
+
 android {
     namespace 'ai.storyteller.photocraft'
     compileSdk 35
@@ -57,6 +68,11 @@ android {
         ndk {
             abiFilters 'arm64-v8a'
         }
+        buildConfigField 'String', 'UPDATE_TOKEN', "\"${updateToken}\""
+    }
+
+    buildFeatures {
+        buildConfig true
     }
 
     signingConfigs {
@@ -98,6 +114,7 @@ android {
 }
 
 tasks.named('preBuild') { dependsOn copyIcon, copyIconForeground }
+logger.lifecycle(updateToken.isEmpty() ? 'No update token: this APK has no update channel' : 'Update channel: on (token found)')
 logger.lifecycle(signingFile.exists() ? "Signing the release APK with the release key (${signingFile})" : 'Signing the release APK with the DEBUG key: for your own devices only, never publish it')
 
 dependencies {
