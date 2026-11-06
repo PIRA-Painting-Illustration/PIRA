@@ -1102,6 +1102,11 @@ fn handle_canvas_tool_stroke(
         app.defer_live_stroke = false;
         // One live-stroke update for the whole frame, not one per recovered sample.
         feed_live_stroke(app);
+        // Smart Shape: keep frames coming while the pen is held, to notice it stay still.
+        if app.ui.tool_options.smart_shape && app.drag.as_ref().is_some_and(|d| crate::smart_shape::applies(d.tool)) {
+            ctx.request_repaint_after(std::time::Duration::from_millis(60));
+            crate::smart_shape::check(app, now_ms);
+        }
         crate::magnetic_lasso_ui::flush(app);
     }
     if buttons.stopped {
@@ -2950,4 +2955,12 @@ fn polygon_edge_scroll(app: &PhotocraftApp, ctx: &egui::Context, idx: usize, rec
     let delta = xf.unmap_vec(velocity) * dt.min(0.05) / zoom;
     view.center[0] += delta.x;
     view.center[1] += delta.y;
+}
+
+/// Smart Shape replaced the drag's points: draw the stroke again from them.
+pub(crate) fn restart_live_stroke(app: &mut PhotocraftApp) {
+    if app.live_stroke.is_some() {
+        app.live_stroke = strokes::begin_live_stroke(app);
+        feed_live_stroke(app);
+    }
 }

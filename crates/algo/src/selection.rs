@@ -12,6 +12,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::photo_util::{par_map, par_rows};
 
+mod gap;
+pub use gap::{GapOptions, MAX_EXPAND, MAX_GAP, expand_marks};
+
 /// How a new selection combines with the current one.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -270,6 +273,11 @@ impl Region {
 /// byte mark per pixel, then anti-aliases just the edges inside the touched bounding box.
 /// Matches [`magic_wand`] for 8-bit sources. `None` if the seed is outside `area`.
 pub fn wand_region(img: &[[u8; 4]], area: Rect, seed: (i32, i32), tolerance: f32, contiguous: bool, anti_alias: bool) -> Option<Region> {
+    wand_region_gap(img, area, seed, tolerance, contiguous, anti_alias, GapOptions::default())
+}
+
+/// [`wand_region`] with Close Gap and Expand ([`GapOptions`]), for colouring line art.
+pub fn wand_region_gap(img: &[[u8; 4]], area: Rect, seed: (i32, i32), tolerance: f32, contiguous: bool, anti_alias: bool, gap: GapOptions) -> Option<Region> {
     if !area.contains(seed.0, seed.1) {
         return None;
     }
@@ -339,6 +347,12 @@ pub fn wand_region(img: &[[u8; 4]], area: Rect, seed: (i32, i32), tolerance: f32
                 (bx0, bx1, by0, by1) = (bx0.min(*a), bx1.max(*b), by0.min(y), by1.max(y));
             }
         }
+    }
+    if gap != GapOptions::default() && bx0 != usize::MAX {
+        let seed_i = (seed.1 - area.y0) as usize * w + (seed.0 - area.x0) as usize;
+        let like = |i: usize| similar(img[i]);
+        let m = gap::Marks { marks: &mut marks, w, h, bbox: (bx0, by0, bx1, by1) };
+        (bx0, by0, bx1, by1) = gap::apply(m, seed_i, contiguous, gap, &like);
     }
     if bx0 == usize::MAX {
         return None;

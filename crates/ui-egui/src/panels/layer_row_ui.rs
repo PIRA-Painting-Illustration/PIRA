@@ -36,6 +36,10 @@ pub enum Indicator {
     FxTriangle,
     Fx,
     SmartFilters,
+    /// Layer › Reference Layer: fills and the Magic Wand can find their area on it.
+    Reference,
+    /// Layer › Draft Layer: left out of exports.
+    Draft,
     Link,
     Blend,
 }
@@ -175,6 +179,12 @@ pub fn indicators(
     if let Some(g) = &fx_galley {
         items.push((Indicator::Fx, g.size().x));
     }
+    if l.pira.reference {
+        items.push((Indicator::Reference, ICON_W));
+    }
+    if l.pira.draft {
+        items.push((Indicator::Draft, ICON_W));
+    }
     if l.link_group.is_some() {
         items.push((Indicator::Link, ICON_W));
     }
@@ -194,6 +204,14 @@ pub fn indicators(
             }
             Indicator::Lock => icons::paint(ui, Rect::from_center_size(r.center(), vec2(ICON_W, ICON_W)), "lock", 12.0, t.text_faint),
             Indicator::Link => icons::paint(ui, Rect::from_center_size(r.center(), vec2(ICON_W, ICON_W)), "link-2", 12.0, t.text_faint),
+            Indicator::Draft => {
+                icons::paint(ui, Rect::from_center_size(r.center(), vec2(ICON_W, ICON_W)), "pencil", 12.0, t.text_faint);
+                ui.interact(r, ui.scope_id().with(("row-draft", l.id.0)), Sense::hover()).on_hover_text(tl!("Draft layer: left out of exports"));
+            }
+            Indicator::Reference => {
+                icons::paint(ui, Rect::from_center_size(r.center(), vec2(ICON_W, ICON_W)), "scan", 12.0, t.icon);
+                ui.interact(r, ui.scope_id().with(("row-reference", l.id.0)), Sense::hover()).on_hover_text(tl!("Reference layer"));
+            }
             Indicator::Fx => {
                 if let Some(g) = fx_galley.clone() {
                     painter.galley(pos2(r.left(), cy - g.size().y / 2.0), g, t.text_dim);

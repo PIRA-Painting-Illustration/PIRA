@@ -571,6 +571,7 @@ pub(crate) fn freehand_tool(tool: Tool) -> bool {
             | Tool::Burn
             | Tool::Sponge
             | Tool::Lasso
+            | Tool::PaintBucket
             | Tool::MagneticLasso
             | Tool::Patch
             | Tool::ContentAwareMove

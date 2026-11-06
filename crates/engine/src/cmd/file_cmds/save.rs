@@ -250,6 +250,9 @@ pub(crate) fn encode(doc: &Document, path: &str, save: impl Into<SaveOpts>) -> R
     if let Some(f) = save.jpeg_format {
         opts.encode.jpeg_format = f;
     }
+    // Draft layers (Layer › Draft Layer) stay in PIRA's own files and out of everything else.
+    let drafts_hidden = (!path.to_ascii_lowercase().ends_with("pcraft")).then(|| crate::line_art_cmds::without_drafts(doc)).flatten();
+    let doc = drafts_hidden.as_ref().unwrap_or(doc);
     photocraft_io::export(doc, path, &opts).map(|r| (r.bytes, r.warnings)).map_err(|e| EngineError::Other(format!("{path}: {e}")))
 }
 

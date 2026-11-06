@@ -149,7 +149,36 @@ pub(crate) fn finish_gesture(app: &mut PhotocraftApp, d: Drag) {
             let (dx, dy) = ((end[0] - d.start[0]).round(), (end[1] - d.start[1]).round());
             crate::move_ui::finish(app, dx, dy);
         }
+        Tool::PaintBucket => bucket_release(app, &d),
         _ => {}
+    }
+}
+
+/// How far (screen points) a Paint Bucket press must travel to be a Lasso Fill, not a tap.
+const BUCKET_LASSO_MIN: f64 = 8.0;
+
+/// Paint Bucket release: a tap fills the area under the press (`paint.bucket`); a drag fills
+/// inside the lasso it drew (`paint.lassoFill`, the options bar's Drag: the shape, the enclosed
+/// areas, or the unfilled pixels).
+pub(crate) fn bucket_release(app: &mut PhotocraftApp, d: &Drag) {
+    let o = app.ui.tool_options.clone();
+    let mode = if o.bucket_clear { "clear" } else { o.bucket_blend_mode.label() };
+    let zoom = f64::from(app.point_zoom().max(0.01));
+    let reach = d.points.iter().map(|p| (p[0] - d.start[0]).hypot(p[1] - d.start[1])).fold(0.0, f64::max) * zoom;
+    let sample = if o.bucket_reference { Some("reference") } else { o.sample_all.paint_bucket.then_some("all") };
+    if reach < BUCKET_LASSO_MIN || d.points.len() < 3 {
+        let contents = if o.bucket_fill_pattern { "pattern" } else { "foreground" };
+        let (x, y) = (d.start[0].floor(), d.start[1].floor());
+        let _ = app.run(
+            "paint.bucket",
+            json!({"x": x, "y": y, "tolerance": o.tolerance, "contiguous": o.contiguous, "antiAlias": o.anti_alias, "sampleAllLayers": o.sample_all.paint_bucket, "sample": sample, "closeGap": o.close_gap.round(), "expand": o.fill_expand.round(), "opacity": o.fill_opacity, "contents": contents, "mode": mode, "target": paint_target(app)}),
+        );
+    } else {
+        let pts: Vec<[f64; 2]> = d.points.iter().map(|p| [p[0], p[1]]).collect();
+        let _ = app.run(
+            "paint.lassoFill",
+            json!({"points": pts, "kind": o.lasso_fill_kind, "sample": sample, "expand": o.fill_expand.round(), "antiAlias": o.anti_alias, "opacity": o.fill_opacity, "mode": mode, "target": paint_target(app)}),
+        );
     }
 }
 

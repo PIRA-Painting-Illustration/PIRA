@@ -13,7 +13,7 @@ fn f(p: &Value, k: &str, d: f32) -> f32 {
 fn b(p: &Value, k: &str, d: bool) -> bool {
     p.get(k).and_then(Value::as_bool).unwrap_or(d)
 }
-fn color(v: Option<&Value>, d: [f32; 4]) -> [f32; 4] {
+pub(crate) fn color(v: Option<&Value>, d: [f32; 4]) -> [f32; 4] {
     match v {
         Some(Value::Array(a)) if a.len() >= 3 => {
             let c: Vec<f32> = a.iter().map(|x| x.as_f64().unwrap_or(0.0) as f32).collect();
@@ -37,12 +37,12 @@ fn point(p: &Value, k: &str) -> Option<(f32, f32)> {
 
 /// `opacity` (1..100 %) as a coverage in 0.01..=1, clamped like the Magic Eraser's: a value
 /// above 1 would overshoot the blend (#4167).
-fn opacity(p: &Value, cmd: &str) -> Result<f32> {
+pub(crate) fn opacity(p: &Value, cmd: &str) -> Result<f32> {
     Ok(crate::eraser_cmds::number(p, cmd, "opacity", 100.0, 1.0..=100.0)? as f32 / 100.0)
 }
 
 /// The Paint Bucket's `mode`: a blend mode (not Pass Through, a group's) or `clear`.
-fn fill_mode(p: &Value) -> Result<FillMode> {
+pub(crate) fn fill_mode(p: &Value) -> Result<FillMode> {
     let bad = |msg: String| EngineError::BadParams { cmd: "paint.bucket".into(), msg };
     match p.get("mode") {
         None | Some(Value::Null) => Ok(FillMode::Blend(photocraft_color::BlendMode::Normal)),
@@ -62,11 +62,16 @@ fn bucket(s: &mut Session, p: &Value) -> Result<Value> {
     let (tol, contiguous, aa) = (f(p, "tolerance", 32.0), b(p, "contiguous", true), b(p, "antiAlias", true));
     let opacity = opacity(p, "paint.bucket")?;
     let mode = fill_mode(p)?;
-    let all = b(p, "sampleAllLayers", false) && crate::channel_cmds::target_of(p) == crate::channel_cmds::Target::Pixels;
-    // Other visible layers can define the region, but the fill still writes only to the target.
+    let sample = crate::line_art_cmds::sample_param("paint.bucket", p)?;
+    let gap = crate::line_art_cmds::gap_param("paint.bucket", p)?;
+    let layer = if p.get("layer").is_some() { Some(crate::commands::layer_param(s, p)?) } else { s.active().and_then(|st| st.active_layer) };
+    // Other layers (all, or the reference layers) can define the region, and Close Gap / Expand
+    // shape it, but the fill still writes only to the target.
+    let all = crate::channel_cmds::target_of(p) == crate::channel_cmds::Target::Pixels
+        && (sample != crate::line_art_cmds::Sample::Layer || gap != photocraft_algo::selection::GapOptions::default());
     let region = if all {
-        let (area, img) = crate::selection_cmds::sample_rgba8(s, true)?;
-        let region = photocraft_algo::selection::wand_region(&img, area, (x, y), tol, contiguous, aa);
+        let (area, img) = crate::line_art_cmds::sample_image(s, "paint.bucket", layer, sample)?;
+        let region = photocraft_algo::selection::wand_region_gap(&img, area, (x, y), tol, contiguous, aa, gap);
         drop(img);
         region
     } else {
@@ -85,7 +90,6 @@ fn bucket(s: &mut Session, p: &Value) -> Result<Value> {
     };
     // A foreground picked as CMYK fills a CMYK document with the picked inks (#4196).
     let inks = s.tools.picked_cmyk([c[0], c[1], c[2]]).filter(|_| c[3] >= 1.0 && pattern.is_none());
-    let layer = if p.get("layer").is_some() { Some(crate::commands::layer_param(s, p)?) } else { s.active().and_then(|st| st.active_layer) };
     let filled = s.edit("Paint Bucket", |doc, _| {
         let area = doc.bounds();
         let sel = doc.selection.clone();
@@ -179,7 +183,7 @@ pub fn specs() -> Vec<CommandSpec> {
             label: "Paint Bucket",
             menu: &[],
             shortcut: None,
-            params: r##"{"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"contents":"foreground|pattern"="foreground","color":"#rrggbb"=foreground,"pattern":id|name (contents=pattern),"scale":%=100,"angle":deg,"opacity":1..100=100,"mode":"normal|multiply|…|clear (erases the filled area)"="normal","target":"pixels"|"mask"|"filterMask"|"quickMask"|{"channel":i}=Channels panel target}"##,
+            params: r##"{"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"sample":"layer|all|reference"? (overrides sampleAllLayers; reference: only reference layers),"closeGap":0..64 px=0 (breaks in the lines up to this wide hold the fill in),"expand":0..32 px=0 (grow the fill under the lines),"contents":"foreground|pattern"="foreground","color":"#rrggbb"=foreground,"pattern":id|name (contents=pattern),"scale":%=100,"angle":deg,"opacity":1..100=100,"mode":"normal|multiply|…|clear (erases the filled area)"="normal","target":"pixels"|"mask"|"filterMask"|"quickMask"|{"channel":i}=Channels panel target}"##,
             enabled: crate::commands::has_paintable,
             run: bucket,
             journal: true,

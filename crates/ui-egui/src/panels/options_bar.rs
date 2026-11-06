@@ -212,6 +212,8 @@ fn brush_specific_options(app: &mut PhotocraftApp, ui: &mut egui::Ui, t: Tokens,
             smoothing_field(ui, b, 58.0);
             smoothing_options(ui, b);
             widgets::vline(ui, 22.0);
+            widgets::checkbox(ui, &mut app.ui.tool_options.smart_shape, tl!("Smart Shape"));
+            widgets::vline(ui, 22.0);
             if icons::button(ui, "circle-dot", 24.0, b.pressure_size, tl!("Always use pressure for size")).clicked() {
                 b.pressure_size = !b.pressure_size;
             }
@@ -417,6 +419,7 @@ fn selection_specific_options(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: 
             widgets::checkbox(ui, &mut app.ui.tool_options.anti_alias, tl!("Anti-alias"));
             widgets::checkbox(ui, &mut app.ui.tool_options.contiguous, tl!("Contiguous"));
             widgets::checkbox(ui, &mut app.ui.tool_options.sample_all.magic_wand, tl!("Sample All Layers"));
+            line_art_options(ui, |o| &mut o.wand_reference, &mut app.ui.tool_options);
             widgets::vline(ui, 22.0);
             if widgets::secondary_button(ui, tl!("Select Subject"), 0.0).clicked() {
                 let r = app.run("select.subject", json!({}));
@@ -448,6 +451,11 @@ fn selection_specific_options(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: 
             widgets::checkbox(ui, &mut app.ui.tool_options.anti_alias, tl!("Anti-alias"));
             widgets::checkbox(ui, &mut app.ui.tool_options.contiguous, tl!("Contiguous"));
             widgets::checkbox(ui, &mut app.ui.tool_options.sample_all.paint_bucket, tl!("All Layers"));
+            line_art_options(ui, |o| &mut o.bucket_reference, &mut app.ui.tool_options);
+            // Dragging with the bucket draws a Lasso Fill.
+            let kinds =
+                [("shape".to_string(), tl!("Lasso Fill")), ("enclosed".to_string(), tl!("Enclosed Areas")), ("unfilled".to_string(), tl!("Unfilled Pixels"))];
+            widgets::dropdown(ui, "bucket-drag", tl!("Drag"), &mut app.ui.tool_options.lasso_fill_kind, &kinds, 128.0);
         }
         Tool::Gradient => {
             // Live "Gradient" (a Gradient Fill layer) or "Classic gradient" (pixels).
@@ -884,6 +892,16 @@ pub(crate) fn set_opacity_pressure(b: &mut photocraft_paint::BrushSettings, on: 
             tr.opacity.control = photocraft_paint::Control::Off;
         }
     }
+}
+
+/// Paint Bucket / Magic Wand line-art options: Reference Layers (only the layers marked with
+/// Layer › Reference Layer bound the area), Close Gap and Expand.
+fn line_art_options(ui: &mut egui::Ui, reference: fn(&mut crate::state::ToolOptions) -> &mut bool, o: &mut crate::state::ToolOptions) {
+    widgets::checkbox(ui, reference(o), tl!("Reference Layers"));
+    opt_label(ui, tl!("Close Gap"));
+    widgets::value_field(ui, &mut o.close_gap, 0.0..=photocraft_algo::selection::MAX_GAP as f32, "px", 54.0);
+    opt_label(ui, tl!("Expand"));
+    widgets::value_field(ui, &mut o.fill_expand, 0.0..=photocraft_algo::selection::MAX_EXPAND as f32, "px", 54.0);
 }
 
 #[cfg(test)]

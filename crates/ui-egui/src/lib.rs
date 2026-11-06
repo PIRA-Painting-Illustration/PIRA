@@ -38,6 +38,7 @@ pub mod control;
 pub mod cutout;
 pub mod dialogs;
 pub mod dock;
+pub mod drawing_kit;
 pub(crate) mod edit_session;
 pub mod file_dialog;
 pub mod file_open;
@@ -59,7 +60,6 @@ pub mod notices;
 pub mod os_window;
 pub mod panels;
 pub mod pira;
-pub mod drawing_kit;
 pub mod platform_menu;
 pub mod preset_files_ui;
 pub mod proxy;
@@ -294,11 +294,10 @@ pub use tools::anchor_tools;
 pub use tools::artboard_tool;
 pub(crate) use tools::brush_cursor;
 pub use tools::brush_picker;
-pub use tools::color_popup;
-pub use tools::kit_popup;
 pub use tools::brush_resize;
 use tools::cam_transform;
 pub use tools::cas_transform;
+pub use tools::color_popup;
 pub use tools::corner_radius;
 pub use tools::crop_mode;
 pub use tools::crop_overlay;
@@ -311,8 +310,8 @@ pub use tools::direct_select;
 pub use tools::eraser_ui;
 pub use tools::eyedropper_ui;
 pub use tools::frame_tool;
-pub use tools::object_tool;
 pub use tools::gradient_ui;
+pub use tools::kit_popup;
 pub use tools::lasso_ui;
 pub use tools::magnetic_lasso_ui;
 pub use tools::move_box;
@@ -321,6 +320,7 @@ pub use tools::move_hover;
 pub use tools::move_lock;
 pub use tools::move_mods;
 pub use tools::object_finder;
+pub use tools::object_tool;
 use tools::paint_picker;
 use tools::path_components;
 pub use tools::perspective_crop_ui;
@@ -333,6 +333,7 @@ use tools::shape_options;
 use tools::shape_paint_ui;
 pub use tools::shape_stroke_ui;
 pub use tools::slice_ui;
+pub use tools::smart_shape;
 pub use tools::stroke_constraint;
 pub use tools::stroke_trace;
 pub use tools::stroke_trail;
@@ -742,6 +743,8 @@ pub struct PhotocraftApp {
     pub(crate) allow_close: bool,
     /// Pen pressure/tilt from the platform (see `stylus`).
     pub stylus: stylus::Stylus,
+    /// Smart Shape: how long the pen has been still in the current stroke.
+    pub smart_hold: crate::smart_shape::Hold,
     control_click: control_click::ControlClick,
     /// Run long commands and file opens as background jobs with progress and Cancel (#210; see
     /// `jobs_ui`). The desktop app turns it on; off (the default), everything runs inline as

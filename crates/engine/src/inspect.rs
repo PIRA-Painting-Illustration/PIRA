@@ -132,6 +132,18 @@ fn layer_sel(
         "linkGroup": l.link_group,
         "hasXmp": l.xmp.is_some(),
     });
+    if l.pira.reference {
+        v["reference"] = json!(true);
+    }
+    if l.pira.draft {
+        v["draft"] = json!(true);
+    }
+    if let Some(b) = l.pira.border {
+        v["border"] = json!({"width": b.width, "color": format!("#{:02x}{:02x}{:02x}", b.color[0], b.color[1], b.color[2])});
+    }
+    if let Some(c) = l.pira.line_color {
+        v["lineColor"] = json!(format!("#{:02x}{:02x}{:02x}", c[0], c[1], c[2]));
+    }
     match &l.content {
         LayerContent::Group(g) => {
             v["children"] = Value::Array(g.children.iter().rev().map(|c| layer_sel(c, selected, instances, meta, detail)).collect());

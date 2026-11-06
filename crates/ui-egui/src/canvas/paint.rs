@@ -590,6 +590,13 @@ pub(super) fn draw_drag_preview(app: &mut PhotocraftApp, painter: &egui::Painter
             }
             painter.add(egui::Shape::line(pts, Stroke::new(1.5, crate::theme::Tokens::get(painter.ctx()).accent)));
         }
+        // A Paint Bucket drag is a Lasso Fill: the same solid outline while it's drawn.
+        Tool::PaintBucket => {
+            let pts: Vec<Pos2> = d.points.iter().map(|p| xf.to_screen(p[0] as f32, p[1] as f32).round() + vec2(0.5, 0.5)).collect();
+            if pts.len() > 1 {
+                crate::tool_feedback::draw_solid_path(painter, &pts, false);
+            }
+        }
         Tool::Lasso | Tool::Patch | Tool::ContentAwareMove => {
             let mut pts: Vec<Pos2> = d.points.iter().map(|p| xf.to_screen(p[0] as f32, p[1] as f32)).collect();
             if let Some(lasso) = &d.lasso {

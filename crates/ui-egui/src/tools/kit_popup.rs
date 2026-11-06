@@ -76,6 +76,7 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
     let mut brush = before.clone();
     let mut pick: Option<String> = None;
     let mut settings = false;
+    let mut smart_shape = app.ui.tool_options.smart_shape;
     let area = egui::Area::new(id().with("area")).order(egui::Order::Foreground).pivot(pivot).fixed_pos(pos).constrain(true).show(ctx, |ui| {
         egui::Frame::popup(ui.style()).fill(t.card).inner_margin(8.0).show(ui, |ui| {
             ui.set_width(WIDTH);
@@ -121,8 +122,11 @@ pub fn show(app: &mut PhotocraftApp, ctx: &egui::Context) {
                 brush.smoothing.amount = (st * 100.0).round() / 100.0;
                 brush.smoothing.enabled = brush.smoothing.amount > 0.0;
             }
+            ui.add_space(4.0);
+            crate::widgets::checkbox(ui, &mut smart_shape, tl!("Smart Shape (hold to snap)"));
         });
     });
+    app.ui.tool_options.smart_shape = smart_shape;
     if let Some(name) = pick
         && current.as_deref() != Some(name.as_str())
     {
@@ -191,7 +195,12 @@ fn sample(ui: &mut egui::Ui, name: &str, brush: &photocraft_engine::BrushSetting
     let (r, _) = ui.allocate_exact_size(vec2(WIDTH, 56.0), Sense::hover());
     ui.painter().rect_filled(r, t.radius_sm, t.field);
     let stroke = crate::brush_preview::stroke_texture(ui.ctx(), "kit-sample", brush, (WIDTH - 20.0) as u32, 40, t.text);
-    ui.painter().image(stroke.id(), Rect::from_min_size(r.min + vec2(10.0, 12.0), vec2(WIDTH - 20.0, 40.0)), Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+    ui.painter().image(
+        stroke.id(),
+        Rect::from_min_size(r.min + vec2(10.0, 12.0), vec2(WIDTH - 20.0, 40.0)),
+        Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)),
+        Color32::WHITE,
+    );
     ui.painter().text(r.min + vec2(8.0, 4.0), egui::Align2::LEFT_TOP, name, egui::FontId::proportional(12.0), t.text_dim);
 }
 
