@@ -106,7 +106,7 @@ fn photo(doc: &Document, source: Option<LayerId>) -> Result<(Vec<[f32; 3]>, usiz
                     l.visible = false;
                 }
             }
-            photocraft_compose::render(&clean, area).px
+            photocraft_compose::render(&clean, area).into_px()
         }
     };
     let over_white = |p: [f32; 4]| {

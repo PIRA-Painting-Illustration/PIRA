@@ -18,6 +18,12 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
     let area = ui.available_rect_before_wrap();
     paint_dots(ui, area, app.session.prefs().interface.show_canvas_dots);
     open_on_double_click(app, ui, area);
+    // Home over open documents hides the options bar and its Home toggle: the same toggle in the
+    // corner is the way back to them.
+    if !app.session.documents().is_empty() {
+        let corner = Rect::from_min_size(area.min + egui::vec2(12.0, 12.0), egui::vec2(40.0, 40.0));
+        ui.scope_builder(egui::UiBuilder::new().max_rect(corner), |ui| crate::panels::chrome_ui::home_button(app, ui));
+    }
     // File › Open Recent, newest first (on the web there are no paths to reopen).
     let show_recent = app.session.prefs().interface.show_home_recent_files;
     let recent: Vec<String> =
@@ -87,7 +93,7 @@ pub(super) fn start_screen(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
 }
 
 /// Wayland has no native file drops (winit 0.30, #386), so the hint offers File › Open and paste.
-pub(super) fn start_screen_drop_hint(app: &PhotocraftApp) -> std::borrow::Cow<'static, str> {
+pub(crate) fn start_screen_drop_hint(app: &PhotocraftApp) -> std::borrow::Cow<'static, str> {
     if app.services.is_wayland {
         crate::i18n::fmt(tl!("Use File › Open, or paste a copied image with {paste}."), &[("paste", &crate::notices::paste_hint(app))]).into()
     } else {
