@@ -39,7 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Updates from the fork's GitHub releases.
+ * Updates from PIRA's GitHub releases.
  *
  * <p>Releases are tagged {@code android-v<major>.<minor>.<patch>[-<build>]} (pre-releases
  * included) with the APK attached. At startup (unless Help › Check for Updates at Startup is
@@ -48,15 +48,18 @@ import java.util.regex.Pattern;
  * or skip that version. Installing downloads the APK into the cache and hands it to Android's
  * package installer, which asks the user to confirm (and, the first time, to allow PhotoCraft to
  * install apps). Updates only install when they are signed with the same key as this build.
+ *
+ * <p>The repository is private, so dev builds carry a read-only token ({@code UPDATE_TOKEN}, from
+ * the build; see app/build.gradle). It goes only to api.github.com, never to the file host GitHub
+ * redirects downloads to. A build without one has no update channel.
  */
 final class Updater {
     private static final String TAG = "PIRA";
-    /**
-     * The repository whose releases are the updates. Empty: PIRA has no release channel yet, so
-     * no check is made (never point this at PhotoCraft's releases: they are a different app).
-     */
-    static final String REPO = "";
-    private static final String API = "https://api.github.com/repos/" + REPO + "/releases?per_page=20";
+    /** The repository whose releases are the updates (never PhotoCraft's: a different app). */
+    static final String REPO = "PIRA-Painting-Illustration/PIRA";
+    private static final String API_HOST = "api.github.com";
+    private static final String API = "https://" + API_HOST + "/repos/" + REPO + "/releases?per_page=20";
+    private static final String TOKEN = BuildConfig.UPDATE_TOKEN;
     private static final Pattern TAG_VERSION = Pattern.compile("^android-v(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?$");
     private static final Pattern NAME_VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?");
     private static final String INSTALL_ACTION = "art.pira.UPDATE_INSTALLED";
@@ -93,9 +96,9 @@ final class Updater {
      * say so when there is none or the check fails, and offer a skipped version again.
      */
     void check(boolean manual) {
-        if (REPO.isEmpty()) {
+        if (TOKEN.isEmpty()) {
             if (manual) {
-                toast("PIRA has no update channel yet.");
+                toast("This copy of PIRA has no update channel (it was built without an update token).");
             }
             return;
         }
@@ -196,7 +199,8 @@ final class Updater {
                     r.tag = tag;
                     r.title = rel.optString("name", tag);
                     r.notes = rel.optString("body", "");
-                    r.apkUrl = a.getString("browser_download_url");
+                    // The API's asset link: the browser link needs a signed-in browser on a private repository.
+                    r.apkUrl = a.getString("url");
                     r.apkSize = a.optLong("size", -1);
                     r.version = v;
                     best = r;
@@ -207,20 +211,43 @@ final class Updater {
         return best;
     }
 
+    /**
+     * GET over HTTPS. Redirects (GitHub sends asset downloads to its file host, with the access
+     * in the link) are followed by hand so the token only ever goes to api.github.com.
+     */
     private HttpURLConnection open(String url) throws IOException {
-        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-        c.setConnectTimeout(15000);
-        c.setReadTimeout(30000);
-        c.setRequestProperty("User-Agent", "PIRA-Android/" + currentName());
-        c.setRequestProperty("Accept", url.startsWith("https://api.github.com/") ? "application/vnd.github+json" : "application/octet-stream");
-        // GitHub sends release downloads to its file host: both HTTPS, so followed.
-        c.setInstanceFollowRedirects(true);
-        int code = c.getResponseCode();
-        if (code != 200) {
+        boolean listing = url.equals(API);
+        for (int hop = 0; hop < 5; hop++) {
+            URL u = new URL(url);
+            if (!"https".equals(u.getProtocol())) {
+                throw new IOException("refused a download that isn't HTTPS");
+            }
+            HttpURLConnection c = (HttpURLConnection) u.openConnection();
+            c.setConnectTimeout(15000);
+            c.setReadTimeout(30000);
+            c.setInstanceFollowRedirects(false);
+            c.setRequestProperty("User-Agent", "PIRA-Android/" + currentName());
+            c.setRequestProperty("Accept", listing ? "application/vnd.github+json" : "application/octet-stream");
+            if (API_HOST.equals(u.getHost())) {
+                c.setRequestProperty("Authorization", "Bearer " + TOKEN);
+                c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
+            }
+            int code = c.getResponseCode();
+            if (code == 200) {
+                return c;
+            }
+            String next = c.getHeaderField("Location");
             c.disconnect();
+            if (code >= 300 && code < 400 && next != null) {
+                url = new URL(u, next).toString();
+                continue;
+            }
+            if (code == 401 || (code == 404 && listing)) {
+                throw new IOException("GitHub refused this build's update token (it may have expired or been revoked)");
+            }
             throw new IOException("GitHub answered " + code);
         }
-        return c;
+        throw new IOException("too many redirects");
     }
 
     private byte[] get(String url) throws IOException {

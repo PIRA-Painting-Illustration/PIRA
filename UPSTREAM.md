@@ -34,8 +34,8 @@ The Android **application id** is `art.pira`, so PIRA and PhotoCraft install sid
 - **Branding:** window and title bar, start screen, About (with the upstream credit, no ArtCraft
   Discord button), native menu name, update dialog, GPU status, Android label, log tag and
   settings export name.
-- **Android:** app id `art.pira`; the updater is off (`Updater.REPO` is empty) until PIRA has its
-  own release channel; APK named `pira-<version>-arm64-v8a.apk`.
+- **Android:** app id `art.pira`; the updater reads PIRA's own (private) releases with a read-only
+  token baked into dev builds (`release-dev.sh`); APK named `pira-<version>-arm64-v8a.apk`.
 - **Icon:** placeholder drawn by `tools/pira-icon/make_icon.py`, written over the hicolor PNGs.
   The SVG, `.ico`, `.icns` and 1024 px PNG are still PhotoCraft's kitsune (desktop builds only).
 
