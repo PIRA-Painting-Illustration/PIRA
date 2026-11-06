@@ -11,6 +11,19 @@ pub struct ToolOptions {
     /// Sample All Layers, kept per tool as in Photoshop (#5524). Stored under a new key, so the
     /// single shared `sample_all_layers` of older preferences is ignored on load.
     pub sample_all: SampleAllLayers,
+    /// Paint Bucket / Magic Wand: find the area on the reference layers only (Layer › Reference
+    /// Layer; wins over All Layers).
+    pub bucket_reference: bool,
+    pub wand_reference: bool,
+    /// Paint Bucket / Magic Wand: Close Gap and Expand, in pixels (0 = off).
+    pub close_gap: f32,
+    pub fill_expand: f32,
+    /// Paint Bucket drag (Lasso Fill): "shape" fills the lasso, "enclosed" the areas between the
+    /// lines wholly inside it, "unfilled" only the empty pixels inside it.
+    pub lasso_fill_kind: String,
+    /// Brush, Pencil and Eraser: hold the pen still at the end of a stroke to snap it to a line,
+    /// ellipse or rectangle (`smart_shape`).
+    pub smart_shape: bool,
     /// Object Selection › Object Finder: hovering highlights the object a click selects (#4087).
     pub object_finder: bool,
     /// Remove tool: the fill goes to a new layer above the target (Photoshop's Create a new layer).
@@ -388,6 +401,12 @@ impl Default for ToolOptions {
             contiguous: true,
             anti_alias: true,
             sample_all: SampleAllLayers::default(),
+            bucket_reference: false,
+            wand_reference: false,
+            close_gap: 0.0,
+            fill_expand: 0.0,
+            lasso_fill_kind: "shape".into(),
+            smart_shape: true,
             object_finder: true,
             remove_new_layer: false,
             remove_after_each_stroke: true,

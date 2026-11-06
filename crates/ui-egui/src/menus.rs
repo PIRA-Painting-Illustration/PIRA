@@ -6,7 +6,6 @@ use crate::PhotocraftApp;
 use crate::state::DialogKind;
 
 mod bar;
-pub mod pira_menu;
 pub mod enable_rules;
 mod invoke;
 mod items;
@@ -14,6 +13,7 @@ pub mod menu_keys;
 pub mod menu_nav;
 pub mod native_menu;
 pub mod parity;
+pub mod pira_menu;
 pub mod plugin_ui;
 mod render;
 mod search;
@@ -34,6 +34,8 @@ use render::submenu_enabled;
 #[cfg(test)]
 use search::HELP_SEARCH_MAX;
 pub use search::{search_items, search_rank};
+#[cfg(test)]
+pub(crate) use state::checked as is_checked;
 pub use state::is_enabled;
 pub(crate) use state::reveal_label;
 #[cfg(test)]

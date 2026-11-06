@@ -414,6 +414,17 @@ impl Stylus {
         self.times.push(self.clock_ms);
     }
 
+    /// The drag's points were replaced by `n` new ones (Smart Shape): spread the recorded time
+    /// evenly over them, and give them the pen's average tilt and rotation.
+    pub(crate) fn respread(&mut self, n: usize) {
+        let (Some(&t0), Some(&t1)) = (self.times.first(), self.times.last()) else { return };
+        let k = self.stroke.len().max(1) as f32;
+        let mean = self.stroke.iter().fold([0.0f32; 3], |a, p| [a[0] + p[0] / k, a[1] + p[1] / k, a[2] + p[2] / k]);
+        let step = if n > 1 { (t1 - t0) / (n - 1) as f64 } else { 0.0 };
+        self.times = (0..n).map(|i| t0 + step * i as f64).collect();
+        self.stroke = vec![mean; n];
+    }
+
     /// Time of the drag's last recorded point.
     pub(crate) fn last_point_ms(&self) -> Option<f64> {
         self.times.last().copied()

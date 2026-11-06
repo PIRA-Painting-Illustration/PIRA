@@ -17,6 +17,7 @@ pub mod effects;
 pub mod frame;
 pub mod mode;
 pub mod pattern;
+pub mod pira_layer;
 pub mod scene3d;
 pub mod slices;
 pub mod text;
@@ -40,10 +41,11 @@ pub use effects::{
 pub use frame::Frame;
 pub use mode::{ColorTable, Duotone, DuotoneInk, StackMode};
 pub use pattern::Pattern;
-pub use scene3d::{Body3d, Camera3d, Figure3d, Look3d, Scene3d, Scene3dLayer, Shading3d};
 pub use photocraft_color::{BlendMode, Color, ColorMode, PixelFormat, SampleType};
 pub use photocraft_geom::{Affine, Rect, Size};
 pub use photocraft_raster::Surface;
+pub use pira_layer::{Border, PiraLayer};
+pub use scene3d::{Body3d, Camera3d, Figure3d, Look3d, Scene3d, Scene3dLayer, Shading3d};
 use serde::{Deserialize, Serialize};
 pub use slices::{Slice, SliceKind, SliceOrigin, Slices};
 pub use text_styles::TextStyles;
@@ -688,6 +690,8 @@ pub struct Layer {
     /// embedding apps keep data about the layer under their own namespaces. Copied by
     /// [`Layer::duplicate`], as in Photoshop. PSD `shmd` › `cust` › `layerXMP`.
     pub xmp: Option<Arc<str>>,
+    /// PIRA's own settings (reference layer, …).
+    pub pira: PiraLayer,
 }
 
 impl Layer {
@@ -723,6 +727,7 @@ impl Layer {
             advanced: AdvancedBlending::default(),
             video: None,
             xmp: None,
+            pira: PiraLayer::default(),
         }
     }
     pub fn raster(name: impl Into<String>, format: PixelFormat) -> Self {

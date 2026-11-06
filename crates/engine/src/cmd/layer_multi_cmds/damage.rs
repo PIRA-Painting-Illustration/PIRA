@@ -169,6 +169,7 @@ fn layer_pixels_cmp(a: &Layer, b: &Layer, surf: SurfaceCmp) -> bool {
         advanced,
         video: _,
         xmp: _,
+        pira: _,
     } = a;
     *id == b.id
         && *visible == b.visible

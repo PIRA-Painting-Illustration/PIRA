@@ -121,7 +121,7 @@ pub fn is_enabled(app: &PhotocraftApp, id: &str) -> bool {
 const MODE_CHECKS: [&str; 11] = ["rgb", "grayscale", "cmyk", "lab", "multichannel", "indexedColor", "bitmap", "duotone", "bits8", "bits16", "bits32"];
 
 /// Is a UI-level panel toggle currently on (for checkmarks)?
-pub(super) fn checked(app: &PhotocraftApp, id: &str) -> Option<bool> {
+pub(crate) fn checked(app: &PhotocraftApp, id: &str) -> Option<bool> {
     if let Some(checked) = crate::panel_docking::checked(app, id) {
         return Some(checked);
     }
@@ -163,6 +163,15 @@ pub(super) fn checked(app: &PhotocraftApp, id: &str) -> Option<bool> {
     }
     // Check items stay check items with no document open (`Some(false)`, not `None`): a native
     // menu can't change an item's kind in place, so a change would rebuild the whole menu.
+    if matches!(id, "layer.setReference" | "layer.setDraft" | "layer.setLineColor" | "layer.setBorder") {
+        let l = app.session.active().and_then(|d| d.active_layer.and_then(|l| d.doc.layer(l)));
+        return Some(l.is_some_and(|l| match id {
+            "layer.setReference" => l.pira.reference,
+            "layer.setDraft" => l.pira.draft,
+            "layer.setBorder" => l.pira.border.is_some(),
+            _ => l.pira.line_color.is_some(),
+        }));
+    }
     if id == "select.isolateLayers" {
         return Some(app.session.active().is_some_and(|d| !d.isolated_layers.is_empty()));
     }

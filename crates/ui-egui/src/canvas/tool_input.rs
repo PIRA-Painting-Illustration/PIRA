@@ -45,6 +45,13 @@ fn tool_move(app: &mut PhotocraftApp, x: f64, y: f64, pressure: f32, mods: egui:
         // ⇧: a selection-tool drag of the selection locks to multiples of 45° (#6231). The Move
         // tool's own drags were already locked by `move_mods::filter_event`.
         let [x, y] = crate::move_mods::selection_drag_to(d, [x, y], mods.shift && tool != Tool::Move);
+        // Smart Shape: track the pen's stillness; a snapped stroke keeps its shape.
+        if crate::smart_shape::applies(d.tool) {
+            if app.smart_hold.snapped {
+                return;
+            }
+            crate::smart_shape::track(&mut app.smart_hold, [x, y], app.stylus.clock_ms, f64::from(zoom));
+        }
         let moved = d.points.last().is_none_or(|p| (p[0] - x).abs() + (p[1] - y).abs() > 0.25);
         // A held pen repeats its point now and then, so the stroke's time keeps advancing.
         let held = app.stylus.last_point_ms().is_some_and(|t| app.stylus.clock_ms - t >= HOLD_REPEAT_MS)
@@ -458,7 +465,7 @@ pub fn tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers)
                 Tool::MagicWand => {
                     let o = app.ui.tool_options.clone();
                     let mode = selection_mode(app, mods);
-                    let _ = app.run("select.magicWand", json!({"x": x.floor(), "y": y.floor(), "tolerance": o.tolerance, "contiguous": o.contiguous, "antiAlias": o.anti_alias, "sampleAllLayers": o.sample_all.magic_wand, "mode": mode}));
+                    let _ = app.run("select.magicWand", json!({"x": x.floor(), "y": y.floor(), "tolerance": o.tolerance, "contiguous": o.contiguous, "antiAlias": o.anti_alias, "sampleAllLayers": o.sample_all.magic_wand, "sample": o.wand_reference.then_some("reference"), "closeGap": o.close_gap.round(), "expand": o.fill_expand.round(), "mode": mode}));
                     return;
                 }
                 Tool::MagicEraser => {
@@ -466,10 +473,8 @@ pub fn tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers)
                     return;
                 }
                 Tool::PaintBucket => {
-                    let o = app.ui.tool_options.clone();
-                    let contents = if o.bucket_fill_pattern { "pattern" } else { "foreground" };
-                    let mode = if o.bucket_clear { "clear" } else { o.bucket_blend_mode.label() };
-                    let _ = app.run("paint.bucket", json!({"x": x.floor(), "y": y.floor(), "tolerance": o.tolerance, "contiguous": o.contiguous, "antiAlias": o.anti_alias, "sampleAllLayers": o.sample_all.paint_bucket, "opacity": o.fill_opacity, "contents": contents, "mode": mode, "target": paint_target(app)}));
+                    // A tap fills on release; a drag draws a Lasso Fill (`gesture::bucket_release`).
+                    app.drag = Some(Drag::new(Tool::PaintBucket, [x, y], vec![[x, y, pressure as f64]], mods, false));
                     return;
                 }
                 Tool::RedEye => {
@@ -523,6 +528,7 @@ pub fn tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers)
             // ⌥ flips Dodge/Burn and Blur/Sharpen for this stroke.
             let tool = crate::retouch_ui::alt_flipped(tool, mods.alt);
             let mut drag = Drag { clear, ..Drag::new(tool, from.map_or([x, y], |p| [p[0], p[1]]), points, mods, erase) };
+            app.smart_hold = Default::default();
             drag.capture_vector_owners(app);
             app.drag = Some(drag);
             app.trail = None;
@@ -595,7 +601,9 @@ pub fn tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers)
                 }
                 return;
             }
-            if d.points.last().is_none_or(|p| p[0] != x || p[1] != y) {
+            // A Smart Shape stroke ends where its shape does, not where the pen lifted.
+            let snapped = app.smart_hold.snapped && crate::smart_shape::applies(d.tool);
+            if !snapped && d.points.last().is_none_or(|p| p[0] != x || p[1] != y) {
                 d.points.push([x, y, d.points.last().map_or(1.0, |p| p[2])]);
                 app.stylus.record_point();
             }

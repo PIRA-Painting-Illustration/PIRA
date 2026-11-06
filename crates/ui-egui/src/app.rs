@@ -208,6 +208,7 @@ impl PhotocraftApp {
             held_preset_import: None,
             allow_close: false,
             stylus: Default::default(),
+            smart_hold: Default::default(),
             control_click: Default::default(),
             background_jobs: false,
             compact_layout: false,

@@ -241,6 +241,9 @@ pub struct LayerM {
     /// The layer's own XMP packet (missing in older files = none).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub xmp: Option<String>,
+    /// PIRA's own layer settings (missing in older files = none set).
+    #[serde(default, skip_serializing_if = "photocraft_doc::PiraLayer::is_default")]
+    pub pira: photocraft_doc::PiraLayer,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

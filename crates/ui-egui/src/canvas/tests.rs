@@ -3052,3 +3052,56 @@ fn torn_off_document_is_not_drawn_again_in_the_main_window() {
         assert_eq!(tabs, Some(vec![1]), "{kind:?}: only the docked document stays on the main tab strip");
     }
 }
+
+/// The Paint Bucket's line-art options reach the fill: with Reference Layers on it finds the area
+/// on the reference layer only, with Close Gap and Expand; Layer › Reference Layer is checked.
+#[test]
+fn bucket_line_art_options_fill_from_the_reference_layer() {
+    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+    app.run("file.new", json!({"width": 40, "height": 20, "background": "white"})).unwrap();
+    app.run("shape.create", json!({"kind": "rect", "rect": [20, 0, 1, 20], "fill": "#000000"})).unwrap();
+    app.run("layer.rasterize.shape", json!({})).unwrap();
+    app.run("layer.mergeDown", json!({})).unwrap();
+    assert_eq!(crate::menus::is_checked(&app, "layer.setReference"), Some(false));
+    app.run("layer.setReference", json!({})).unwrap();
+    assert_eq!(crate::menus::is_checked(&app, "layer.setReference"), Some(true));
+    app.run("layer.new.layer", json!({})).unwrap();
+    app.ui.tool = Tool::PaintBucket;
+    app.ui.tool_options.bucket_reference = true;
+    app.ui.tool_options.close_gap = 2.0;
+    app.ui.tool_options.fill_expand = 1.0;
+    app.ui.tool_options.anti_alias = false;
+    app.run("tools.setColors", json!({"foreground": [1.0, 0.0, 0.0, 1.0], "background": [1.0, 1.0, 1.0, 1.0]})).unwrap();
+    tool_event(&mut app, ToolEvent::Down { x: 5.0, y: 5.0, pressure: 1.0 }, egui::Modifiers::NONE);
+    tool_event(&mut app, ToolEvent::Up { x: 5.0, y: 5.0 }, egui::Modifiers::NONE);
+    let (cmd, p) = app.session.journal.last().cloned().unwrap();
+    assert_eq!(cmd, "paint.bucket");
+    assert_eq!((p["sample"].clone(), p["closeGap"].clone(), p["expand"].clone()), (json!("reference"), json!(2.0), json!(1.0)));
+    let st = app.session.active().unwrap();
+    let px = |x| st.doc.layer(st.active_layer.unwrap()).unwrap().surface().unwrap().pixel(x, 10);
+    assert_eq!(px(10), vec![1.0, 0.0, 0.0, 1.0], "filled from the reference layer's lines");
+    assert_eq!(px(20)[3], 1.0, "Expand reaches under the line");
+    assert_eq!(px(30)[3], 0.0, "the line holds the fill");
+}
+
+/// Smart Shape: a wobbly Brush stroke held still at its end commits as a straight line, and
+/// moving after the snap doesn't add to it.
+#[test]
+fn smart_shape_snaps_a_held_stroke_to_a_line() {
+    let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
+    app.run("file.new", json!({"width": 200, "height": 100, "background": "white"})).unwrap();
+    app.ui.tool = Tool::Brush;
+    tool_event(&mut app, ToolEvent::Down { x: 10.0, y: 50.0, pressure: 0.5 }, egui::Modifiers::NONE);
+    for i in 1..30 {
+        let wobble = if i % 2 == 0 { 1.5 } else { -1.5 };
+        tool_event(&mut app, ToolEvent::Move { x: 10.0 + f64::from(i) * 5.0, y: 50.0 + wobble, pressure: 0.5 }, egui::Modifiers::NONE);
+    }
+    let still = app.smart_hold.at.expect("the hold is tracked").1;
+    assert!(crate::smart_shape::check(&mut app, still + crate::smart_shape::HOLD_MS + 1.0), "snapped");
+    tool_event(&mut app, ToolEvent::Move { x: 60.0, y: 90.0, pressure: 0.5 }, egui::Modifiers::NONE);
+    tool_event(&mut app, ToolEvent::Up { x: 60.0, y: 90.0 }, egui::Modifiers::NONE);
+    let (cmd, p) = app.session.journal.last().cloned().unwrap();
+    assert_eq!(cmd, "paint.stroke");
+    let pts = p["points"].as_array().unwrap();
+    assert!(pts.iter().all(|q| (q[1].as_f64().unwrap() - 50.0).abs() < 2.0), "straight, and the move after the snap isn't in it: {pts:?}");
+}

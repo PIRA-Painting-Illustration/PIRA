@@ -230,6 +230,7 @@ fn layer_m(l: &Layer, sink: &mut dyn Sink) -> LayerM {
         advanced: l.advanced,
         video: l.video.as_ref().map(|v| video_m(v, sink)),
         xmp: l.xmp.as_deref().map(str::to_string),
+        pira: l.pira,
     }
 }
 
@@ -596,6 +597,7 @@ impl Loader<'_> {
             advanced: m.advanced,
             video: m.video.as_ref().map(|v| self.video(v)).transpose()?,
             xmp: m.xmp.as_deref().map(Arc::from),
+            pira: m.pira,
         })
     }
 

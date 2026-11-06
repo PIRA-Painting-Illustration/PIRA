@@ -168,7 +168,7 @@ pub fn option_keys(tool: Tool) -> &'static [&'static str] {
         Tool::SingleRowMarquee | Tool::SingleColumnMarquee => reset!(feather),
         Tool::Lasso | Tool::PolygonLasso => reset!(feather, anti_alias),
         Tool::MagneticLasso => reset!(feather, anti_alias, magnetic_width, magnetic_contrast, magnetic_frequency, magnetic_pressure),
-        Tool::MagicWand => reset!(tolerance, anti_alias, contiguous),
+        Tool::MagicWand => reset!(tolerance, anti_alias, contiguous, wand_reference, close_gap, fill_expand),
         Tool::QuickSelection => reset!(enhance_edge),
         Tool::ObjectSelection => reset!(enhance_edge, object_finder),
         Tool::Crop => reset!(
@@ -188,15 +188,27 @@ pub fn option_keys(tool: Tool) -> &'static [&'static str] {
         ),
         Tool::PerspectiveCrop => reset!(crop_width, crop_height, crop_resolution, crop_resolution_unit, perspective_crop_grid),
         Tool::Eyedropper => reset!(eyedropper_size, eyedropper_sample, eyedropper_ring),
-        Tool::Brush => reset!(brush_clear),
-        Tool::Pencil => reset!(pencil_auto_erase, pencil_clear),
-        Tool::Eraser => reset!(eraser_mode),
+        Tool::Brush => reset!(brush_clear, smart_shape),
+        Tool::Pencil => reset!(pencil_auto_erase, pencil_clear, smart_shape),
+        Tool::Eraser => reset!(eraser_mode, smart_shape),
         Tool::Remove => reset!(remove_new_layer, remove_after_each_stroke),
         Tool::BackgroundEraser => reset!(bg_sampling, bg_limits, bg_tolerance, bg_protect_fg),
         Tool::ColorReplacement => reset!(cr_mode, cr_sampling, cr_limits, cr_tolerance, cr_anti_alias),
         Tool::MagicEraser => reset!(tolerance, anti_alias, contiguous, magic_eraser_opacity),
         Tool::Gradient => reset!(gradient_style, gradient_reverse, gradient_dither, gradient_classic, gradient_blend_mode, fill_opacity),
-        Tool::PaintBucket => reset!(bucket_fill_pattern, bucket_blend_mode, bucket_clear, fill_opacity, tolerance, anti_alias, contiguous),
+        Tool::PaintBucket => reset!(
+            bucket_fill_pattern,
+            bucket_blend_mode,
+            bucket_clear,
+            fill_opacity,
+            tolerance,
+            anti_alias,
+            contiguous,
+            bucket_reference,
+            close_gap,
+            fill_expand,
+            lasso_fill_kind
+        ),
         Tool::Type | Tool::VerticalType | Tool::HorizontalTypeMask | Tool::VerticalTypeMask => {
             reset!(type_font, type_style, type_size, type_aa, type_align, type_direction, type_style_defaults)
         }

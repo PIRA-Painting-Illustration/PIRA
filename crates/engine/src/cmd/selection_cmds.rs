@@ -135,11 +135,13 @@ pub(crate) fn sample_rgba8(s: &Session, all_layers: bool) -> Result<(Rect, Vec<[
 
 fn magic_wand(s: &mut Session, p: &Value) -> Result<Value> {
     let (x, y) = (f(p, "x", 0.0).floor() as i32, f(p, "y", 0.0).floor() as i32);
+    let sample = crate::line_art_cmds::sample_param("select.magicWand", p)?;
+    let gap = crate::line_art_cmds::gap_param("select.magicWand", p)?;
     let (area, img) = match shown_gray(s) {
         Some(plane) => plane,
-        None => sample_rgba8(s, b(p, "sampleAllLayers", false))?,
+        None => crate::line_art_cmds::sample_image(s, "select.magicWand", None, sample)?,
     };
-    let region = sel::wand_region(&img, area, (x, y), f(p, "tolerance", 32.0), b(p, "contiguous", true), b(p, "antiAlias", true));
+    let region = sel::wand_region_gap(&img, area, (x, y), f(p, "tolerance", 32.0), b(p, "contiguous", true), b(p, "antiAlias", true), gap);
     drop(img);
     let m = mode(p);
     let selected = s.edit("Magic Wand", |doc, _| {
@@ -711,7 +713,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "select.magicWand",
             "Magic Wand",
             [],
-            r##"{"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"mode":"replace|add|subtract|intersect"="replace"} (samples the visible alpha, Quick Mask, or layer mask when that is the picture)"##,
+            r##"{"x":px,"y":px,"tolerance":0..255=32,"contiguous":bool=true,"antiAlias":bool=true,"sampleAllLayers":bool=false,"sample":"layer|all|reference"? (overrides sampleAllLayers),"closeGap":0..64 px=0,"expand":0..32 px=0,"mode":"replace|add|subtract|intersect"="replace"} (samples the visible alpha, Quick Mask, or layer mask when that is the picture)"##,
             has_doc,
             magic_wand
         ),

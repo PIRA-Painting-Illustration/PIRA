@@ -206,6 +206,10 @@ pub fn properties(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: &Layer) {
             ui.add_space(ROW_GAP);
         }
     }
+    // Line Art switches: for pixel layers, where line art and colours live.
+    if matches!(layer.content, LayerContent::Raster(_)) {
+        line_art(ui, layer, &mut run);
+    }
     // Gradient fills: their gradient first, as in Photoshop's Properties panel.
     let gradient = matches!(layer.content, LayerContent::Fill(photocraft_doc::Fill::Gradient { .. }));
     if gradient {
@@ -237,6 +241,53 @@ pub fn properties(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: &Layer) {
             app.ui.status_error = true;
         }
     }
+}
+
+/// The Line Art section: Reference Layer, Draft Layer, Line Color and Border Effect switches,
+/// with the border's width and colour.
+fn line_art(ui: &mut egui::Ui, layer: &Layer, run: &mut Vec<(String, Value)>) {
+    if !section(ui, "line-art", tl!("Line Art")) {
+        return;
+    }
+    let id = layer.id.0;
+    let mut toggle = |ui: &mut egui::Ui, on: bool, label: &str, cmd: &str| {
+        let mut v = on;
+        if widgets::checkbox(ui, &mut v, label).changed() {
+            run.push((cmd.into(), json!({"layer": id})));
+        }
+    };
+    ui.horizontal_wrapped(|ui| {
+        toggle(ui, layer.pira.reference, tl!("Reference Layer"), "layer.setReference");
+        toggle(ui, layer.pira.draft, tl!("Draft Layer"), "layer.setDraft");
+    });
+    ui.add_space(ROW_GAP);
+    ui.horizontal_wrapped(|ui| {
+        toggle(ui, layer.pira.line_color.is_some(), tl!("Line Color"), "layer.setLineColor");
+        toggle(ui, layer.pira.border.is_some(), tl!("Border"), "layer.setBorder");
+    });
+    if let Some(b) = layer.pira.border {
+        ui.add_space(ROW_GAP);
+        ui.horizontal(|ui| {
+            let mut w = f32::from(b.width);
+            if widgets::value_field(ui, &mut w, 1.0..=f32::from(photocraft_engine::line_art_cmds::MAX_BORDER), "px", 58.0).changed()
+                && w.round() as u16 != b.width
+            {
+                run.push(("layer.setBorder".into(), json!({"layer": id, "width": w.round()})));
+            }
+            let mut c = if b.color == [0, 0, 0] {
+                1u8
+            } else if b.color == [255, 255, 255] {
+                0
+            } else {
+                2
+            };
+            let options = [(0u8, tl!("White")), (1, tl!("Black")), (2, tl!("Custom"))];
+            if widgets::dropdown(ui, "border-color", tl!("Color"), &mut c, &options, 90.0) && c < 2 {
+                run.push(("layer.setBorder".into(), json!({"layer": id, "color": if c == 0 { "#ffffff" } else { "#000000" }})));
+            }
+        });
+    }
+    ui.add_space(ROW_GAP);
 }
 
 /// The Align and Distribute section: its buttons run `layer.align.*` and `layer.distribute.*` on
