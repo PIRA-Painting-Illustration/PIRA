@@ -42,6 +42,10 @@ fn tool_move(app: &mut PhotocraftApp, x: f64, y: f64, pressure: f32, mods: egui:
         // The perspective ruler: strokes snap towards a vanishing point.
         let ruler = app.session.active().and_then(|st| st.perspective());
         let [x, y] = crate::stroke_constraint::perspective(d.tool, &mut d.perspective, last, [x, y], mods.shift, ruler.as_ref(), zoom, false);
+        // Special rulers (when the perspective ruler isn't steering the stroke).
+        let rulers = if d.perspective.is_none() { crate::stroke_constraint::snapping_rulers(&app.session) } else { Vec::new() };
+        // A stroke that just locked onto one moved its first points onto it: redraw it.
+        let ([x, y], relocked) = crate::stroke_constraint::special(d.tool, &mut d.special, &mut d.points, last, [x, y], mods.shift, &rulers, zoom, false);
         // ⇧: a selection-tool drag of the selection locks to multiples of 45° (#6231). The Move
         // tool's own drags were already locked by `move_mods::filter_event`.
         let [x, y] = crate::move_mods::selection_drag_to(d, [x, y], mods.shift && tool != Tool::Move);
@@ -60,6 +64,9 @@ fn tool_move(app: &mut PhotocraftApp, x: f64, y: f64, pressure: f32, mods: egui:
             d.points.push([x, y, pressure as f64]);
             app.stylus.record_point();
         }
+        if relocked {
+            super::restart_live_stroke(app);
+        }
     }
 }
 
@@ -76,6 +83,10 @@ fn preflight_tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modi
     }
     // The perspective ruler: with the Ruler tool, a press on a vanishing point drags it.
     if crate::perspective_ruler_ui::pointer(app, ev) {
+        return None;
+    }
+    // Special rulers: with the Ruler tool, a drag draws one or reshapes one by a handle.
+    if crate::special_ruler_ui::pointer(app, ev) {
         return None;
     }
     // An Alt+right-drag armed for this press (`paint_mouse`): taken before anything else can
@@ -595,6 +606,8 @@ pub fn tool_event(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers)
             let [x, y] = crate::stroke_constraint::constrain(d.tool, &mut d.constrain, d.start, last, [x, y], mods.shift, zoom);
             let ruler = app.session.active().and_then(|st| st.perspective());
             let [x, y] = crate::stroke_constraint::perspective(d.tool, &mut d.perspective, last, [x, y], mods.shift, ruler.as_ref(), zoom, true);
+            let rulers = if d.perspective.is_none() { crate::stroke_constraint::snapping_rulers(&app.session) } else { Vec::new() };
+            let ([x, y], _) = crate::stroke_constraint::special(d.tool, &mut d.special, &mut d.points, last, [x, y], mods.shift, &rulers, zoom, true);
             let [x, y] = crate::move_mods::selection_drag_to(&mut d, [x, y], mods.shift && app.active_tool() != Tool::Move);
             // A Move-tool click (released where it was pressed) selects, it never moves: snapping
             // the release point would otherwise nudge the layer onto a nearby edge.

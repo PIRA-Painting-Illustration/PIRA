@@ -82,7 +82,7 @@ Order: what a tablet illustrator hits first, then what a single comic page needs
 bigger systems (vectors, animation, books). Each stage ships on its own as dev releases.
 Sizes are rough for one developer with Claude: S = days, M = 1–2 weeks, L = a month or more.
 
-### Stage 1: line art and colouring basics (S–M each)
+### Stage 1: line art and colouring basics (S–M each) — done (0.1.0-2)
 1. **Fill gap closing and reference layers**: Close Gap amount on the bucket, a "Reference
    layer" flag, and bucket/magic wand sampling "reference layers". The single biggest day-to-day
    gap for colouring line art.
@@ -93,12 +93,16 @@ Sizes are rough for one developer with Claude: S = days, M = 1–2 weeks, L = a 
 5. **Smart Shape**: hold the pen still at the end of a stroke to snap it to a line, ellipse or
    rectangle; drag before lifting to adjust.
 
-### Stage 2: rulers (M)
+### Stage 2: rulers (M) — done (0.1.0-4)
 6. Ruler layer model (rulers belong to a layer, show on that layer or all), then straight, curve,
    concentric, parallel and radial rulers with snap; fisheye perspective. Builds on
    `stroke_constraint::perspective`.
+   Built as `ruler_cmds` (`ruler.add/set/delete/clear/snap/show/list`): rulers are saved in
+   `.pcraft` with the layer they belong to (or every layer). The Ruler tool's Special Ruler
+   option draws them and their handles reshape them. Fisheye draws arcs through two vanishing
+   points.
 
-### Stage 3: comic page (M–L)
+### Stage 3: comic page (M–L) — done (0.1.0-3)
 7. **Comic paper presets** and guides (finish size, bleed, safe area) in New Document.
 8. **Frame border layers and the panel cut tool** (a frame is a vector outline that masks its
    contents; cutting splits it with a gutter).

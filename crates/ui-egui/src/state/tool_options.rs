@@ -29,6 +29,10 @@ pub struct ToolOptions {
     pub panel_gutter: f32,
     pub panel_rows: f32,
     pub panel_columns: f32,
+    /// Ruler tool: the Special Ruler kind a drag draws (`special_ruler_ui::KINDS`; 0 measures),
+    /// and whether new rulers show on every layer.
+    pub special_ruler: usize,
+    pub ruler_all_layers: bool,
     /// Object Selection › Object Finder: hovering highlights the object a click selects (#4087).
     pub object_finder: bool,
     /// Remove tool: the fill goes to a new layer above the target (Photoshop's Create a new layer).
@@ -415,6 +419,8 @@ impl Default for ToolOptions {
             panel_gutter: 0.0,
             panel_rows: 1.0,
             panel_columns: 1.0,
+            special_ruler: 0,
+            ruler_all_layers: false,
             object_finder: true,
             remove_new_layer: false,
             remove_after_each_stroke: true,

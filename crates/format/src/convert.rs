@@ -285,7 +285,7 @@ pub(crate) fn doc_m(d: &Document, sink: &mut dyn Sink) -> DocM {
         text_styles: d.text_styles.clone(),
         slices: d.slices.clone(),
         perspective_ruler: d.perspective_ruler.clone(),
-        pira: d.pira,
+        pira: d.pira.clone(),
     }
 }
 
@@ -495,9 +495,7 @@ impl Loader<'_> {
                     warp: warp.clone(),
                 })
             }
-            ContentM::Scene3d { scene, cache } => {
-                LayerContent::Scene3d(photocraft_doc::Scene3dLayer { scene: scene.clone(), cache: self.opt_surface(cache)? })
-            }
+            ContentM::Scene3d { scene, cache } => LayerContent::Scene3d(photocraft_doc::Scene3dLayer { scene: scene.clone(), cache: self.opt_surface(cache)? }),
             ContentM::Shape { fill, cache, psd_raw, path, stroke, live, arrow_live, density, feather } => LayerContent::Shape(ShapeLayer {
                 path: path.clone(),
                 fill: fill.clone(),
@@ -722,7 +720,12 @@ impl Loader<'_> {
                 .perspective_ruler
                 .clone()
                 .filter(|p| photocraft_doc::perspective_ruler_ok(p, f64::from(m.size.width), f64::from(m.size.height))),
-            pira: m.pira,
+            pira: {
+                // Rulers that don't fit the canvas are dropped, as the engine would refuse them.
+                let mut pira = m.pira.clone();
+                pira.rulers.retain(|r| r.shape.ok(f64::from(m.size.width), f64::from(m.size.height)));
+                pira
+            },
         })
     }
 
