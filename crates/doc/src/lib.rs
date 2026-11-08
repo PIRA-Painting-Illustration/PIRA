@@ -44,7 +44,7 @@ pub use pattern::Pattern;
 pub use photocraft_color::{BlendMode, Color, ColorMode, PixelFormat, SampleType};
 pub use photocraft_geom::{Affine, Rect, Size};
 pub use photocraft_raster::Surface;
-pub use pira_layer::{Border, ComicPage, PiraDoc, PiraLayer};
+pub use pira_layer::{Border, ComicPage, PiraDoc, PiraLayer, RulerShape, SpecialRuler};
 pub use scene3d::{Body3d, Camera3d, Figure3d, Look3d, Scene3d, Scene3dLayer, Shading3d};
 use serde::{Deserialize, Serialize};
 pub use slices::{Slice, SliceKind, SliceOrigin, Slices};

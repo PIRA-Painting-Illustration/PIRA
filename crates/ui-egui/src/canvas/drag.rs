@@ -18,6 +18,8 @@ pub struct Drag {
     pub constrain: Option<crate::stroke_constraint::Axis>,
     /// The line a stroke snapped to on the perspective ruler, once its direction is locked.
     pub perspective: Option<crate::stroke_constraint::Axis>,
+    /// The special ruler guide a stroke follows, once picked (`stroke_constraint::special`).
+    pub special: Option<crate::stroke_constraint::RulerLock>,
     /// Modifiers held now (updated on every pointer event of the gesture).
     pub live: egui::Modifiers,
     /// Which of the modifiers held at the press have been released since.
@@ -49,6 +51,7 @@ impl Drag {
             clear: false,
             constrain: None,
             perspective: None,
+            special: None,
             live: modifiers,
             released: egui::Modifiers::NONE,
             reposition: false,

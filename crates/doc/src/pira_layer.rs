@@ -39,12 +39,15 @@ impl PiraLayer {
 }
 
 /// PIRA's own document settings.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct PiraDoc {
     /// A comic page: where the printed page is trimmed and where the safe area is. `None` for
     /// an ordinary document.
     pub page: Option<ComicPage>,
+    /// Special rulers (the Ruler tool's Special Ruler option): lines and curves strokes snap to.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rulers: Vec<SpecialRuler>,
 }
 
 impl PiraDoc {
@@ -73,5 +76,74 @@ impl ComicPage {
         let t = self.trim(width, height);
         let m = f64::from(self.safe);
         [t[0] + m, t[1] + m, t[2] - m, t[3] - m]
+    }
+}
+
+/// A special ruler, as in Clip Studio Paint: a guide painting strokes snap to. It belongs to a
+/// layer and shows (and snaps) only while that layer is active, or on every layer.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpecialRuler {
+    pub shape: RulerShape,
+    /// The layer it belongs to; `None` = every layer.
+    #[serde(default)]
+    pub layer: Option<crate::LayerId>,
+}
+
+/// A special ruler's geometry, in document pixels.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum RulerShape {
+    /// The line through `a` and `b`: strokes near it run along it.
+    Straight { a: [f64; 2], b: [f64; 2] },
+    /// A smooth curve through its points: strokes near it follow it.
+    Curve { points: Vec<[f64; 2]> },
+    /// Ellipses around `center` with the shape of `radii` (turned by `angle` radians): a stroke
+    /// runs round the one through where it starts.
+    Concentric { center: [f64; 2], radii: [f64; 2], angle: f64 },
+    /// Lines parallel to `a`→`b`, through wherever a stroke starts.
+    Parallel { a: [f64; 2], b: [f64; 2] },
+    /// Lines through `center`: strokes run towards or away from it.
+    Radial { center: [f64; 2] },
+    /// Fisheye perspective: arcs through the two vanishing points `a` and `b`, one through
+    /// wherever a stroke starts.
+    Fisheye { a: [f64; 2], b: [f64; 2] },
+}
+
+impl RulerShape {
+    /// Every point the ruler is defined by.
+    pub fn points(&self) -> Vec<[f64; 2]> {
+        match self {
+            RulerShape::Straight { a, b } | RulerShape::Parallel { a, b } | RulerShape::Fisheye { a, b } => vec![*a, *b],
+            RulerShape::Curve { points } => points.clone(),
+            RulerShape::Concentric { center, .. } | RulerShape::Radial { center } => vec![*center],
+        }
+    }
+
+    /// The kind's name, as the commands take it.
+    pub fn kind(&self) -> &'static str {
+        match self {
+            RulerShape::Straight { .. } => "straight",
+            RulerShape::Curve { .. } => "curve",
+            RulerShape::Concentric { .. } => "concentric",
+            RulerShape::Parallel { .. } => "parallel",
+            RulerShape::Radial { .. } => "radial",
+            RulerShape::Fisheye { .. } => "fisheye",
+        }
+    }
+
+    /// Whether the ruler is usable on a `w` × `h` canvas: finite numbers near the canvas, two
+    /// distinct points where it needs a direction, 2 to 64 curve points and non-zero radii.
+    pub fn ok(&self, w: f64, h: f64) -> bool {
+        let limit = crate::PERSPECTIVE_RULER_REACH * w.max(h).max(1.0);
+        let fine = |p: &[f64; 2]| p.iter().all(|v| v.is_finite() && v.abs() <= limit);
+        let apart = |a: &[f64; 2], b: &[f64; 2]| (a[0] - b[0]).hypot(a[1] - b[1]) > 1e-6;
+        self.points().iter().all(fine)
+            && match self {
+                RulerShape::Straight { a, b } | RulerShape::Parallel { a, b } | RulerShape::Fisheye { a, b } => apart(a, b),
+                RulerShape::Curve { points } => (2..=64).contains(&points.len()) && points.windows(2).any(|w| apart(&w[0], &w[1])),
+                RulerShape::Concentric { radii, angle, .. } => fine(radii) && radii.iter().all(|r| *r > 0.5) && angle.is_finite(),
+                RulerShape::Radial { .. } => true,
+            }
     }
 }

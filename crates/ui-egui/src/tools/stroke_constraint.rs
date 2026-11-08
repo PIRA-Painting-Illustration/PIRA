@@ -121,6 +121,70 @@ pub fn perspective(
     }
 }
 
+/// A stroke on the special rulers: where it set off and, once it has picked, the guide it
+/// follows (`None` there: no ruler applied, so it draws freely).
+#[derive(Clone, Debug, PartialEq)]
+pub struct RulerLock {
+    pub origin: [f64; 2],
+    pub picked: Option<Option<photocraft_engine::ruler_cmds::Guide>>,
+}
+
+/// Screen points from a Straight or Curve ruler within which a stroke snaps onto it.
+pub const RULER_RANGE: f64 = 40.0;
+
+/// The special rulers strokes on the active document snap to now: those shown on the active
+/// layer, none while snapping is off.
+pub fn snapping_rulers(session: &photocraft_engine::Session) -> Vec<photocraft_doc::RulerShape> {
+    session
+        .active()
+        .filter(|st| st.rulers_view.snap && !st.doc.pira.rulers.is_empty())
+        .map(|st| st.rulers_here().into_iter().map(|(_, r)| r.shape.clone()).collect())
+        .unwrap_or_default()
+}
+
+/// Special rulers: a painting stroke picks the guide it heads along from its first few points
+/// (`ruler_cmds::pick`) and then stays on it. ⇧ takes over (straight 45° lines). When the guide
+/// is picked, the stroke's points so far move onto it too, and the result says so (the live
+/// stroke must be redrawn).
+#[allow(clippy::too_many_arguments)]
+pub fn special(
+    tool: Tool,
+    lock: &mut Option<RulerLock>,
+    points: &mut [[f64; 3]],
+    last: [f64; 2],
+    p: [f64; 2],
+    shift: bool,
+    rulers: &[photocraft_doc::RulerShape],
+    zoom: f32,
+    release: bool,
+) -> ([f64; 2], bool) {
+    if rulers.is_empty() || shift || !connects(tool) {
+        *lock = None;
+        return (p, false);
+    }
+    let zoom = f64::from(zoom.max(1e-3));
+    let l = lock.get_or_insert(RulerLock { origin: last, picked: None });
+    let mut locked = false;
+    if l.picked.is_none() {
+        if !release && (p[0] - l.origin[0]).hypot(p[1] - l.origin[1]) < LOCK_DISTANCE * 2.0 / zoom {
+            return (l.origin, false);
+        }
+        let g = photocraft_engine::ruler_cmds::pick(rulers, l.origin, p, RULER_RANGE / zoom);
+        if let Some(g) = &g {
+            for q in points.iter_mut() {
+                let [x, y] = g.project([q[0], q[1]]);
+                (q[0], q[1]) = (x, y);
+            }
+            locked = !points.is_empty();
+        }
+        l.picked = Some(g);
+    }
+    match l.picked.as_ref().and_then(Option::as_ref) {
+        Some(g) => (g.project(p), locked),
+        None => (p, false),
+    }
+}
+
 /// Where the ⇧-click line preview starts (#257): the end of the last stroke on the active
 /// document, while ⇧ is held with a painting tool and nothing is being painted.
 pub fn line_preview_start(app: &crate::PhotocraftApp, tool: Tool, shift: bool) -> Option<[f64; 2]> {

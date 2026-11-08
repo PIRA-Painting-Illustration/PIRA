@@ -215,6 +215,7 @@ impl PhotocraftApp {
             edge_strip: None,
             edge_strip_rect: None,
             perspective_drag: None,
+            special_ruler: Default::default(),
             phone_panel: None,
             full_screen_toolbar: false,
             min_frame_ms: None,

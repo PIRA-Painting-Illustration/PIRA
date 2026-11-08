@@ -147,6 +147,7 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                             // their strokes snap too: the switch goes at the end of theirs.
                             if crate::stroke_constraint::connects(tool) {
                                 crate::perspective_ruler_ui::snap_button(app, ui);
+                                crate::special_ruler_ui::snap_button(app, ui);
                             }
                             return;
                         }
@@ -161,6 +162,7 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                         }
                         if crate::stroke_constraint::connects(tool) {
                             crate::perspective_ruler_ui::snap_button(app, ui);
+                            crate::special_ruler_ui::snap_button(app, ui);
                         }
                         crate::brush_panel::commit_gesture(app, ui.ctx(), &brush_before, &brush);
                     });

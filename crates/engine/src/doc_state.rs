@@ -37,6 +37,8 @@ pub struct DocState {
     /// The perspective ruler's Snap and Show switches (view state; the vanishing points are
     /// the document's, `Document::perspective_ruler`).
     pub perspective_view: crate::perspective_cmds::PerspectiveView,
+    /// The special rulers' Snap and Show switches (view state, not history).
+    pub rulers_view: crate::ruler_cmds::RulersView,
     /// Layers panel: layers whose effects list is collapsed under their row (the fx triangle;
     /// view state, not history). Effects lists start open.
     pub fx_collapsed: Vec<LayerId>,
@@ -112,6 +114,7 @@ impl DocState {
             isolated_layers: Vec::new(),
             symmetry: None,
             perspective_view: Default::default(),
+            rulers_view: Default::default(),
             fx_collapsed: Vec::new(),
             show_only: None,
             floating: None,
