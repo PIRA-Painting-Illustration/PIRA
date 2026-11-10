@@ -219,7 +219,9 @@ fn open_filters_keep_literal_extensions_on_windows_and_macos() {
 #[test]
 fn native_services_provide_update_transport() {
     // PIRA checks for updates only once it publishes releases (`UPDATES_ENABLED`).
-    assert_eq!(native(None).check_updates.is_some(), photocraft_ui_egui::UPDATES_ENABLED);
+    let services = native(None);
+    assert_eq!(services.check_updates.is_some(), photocraft_ui_egui::UPDATES_ENABLED);
+    assert!(services.last_update.is_some());
 }
 
 #[test]
