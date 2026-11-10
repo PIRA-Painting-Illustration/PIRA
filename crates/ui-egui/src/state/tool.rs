@@ -71,6 +71,8 @@ pub enum Tool {
     EllipseShape,
     Triangle,
     Polygon,
+    /// The shape flyout's Star Tool (#11377): a live polygon shape with a star ratio.
+    Star,
     Line,
     CustomShape,
     Slice,
@@ -83,7 +85,7 @@ pub enum Tool {
 }
 
 impl Tool {
-    pub const ALL: [Tool; 70] = [
+    pub const ALL: [Tool; 71] = [
         Tool::Move,
         Tool::Artboard,
         Tool::RectMarquee,
@@ -103,8 +105,8 @@ impl Tool {
         Tool::Count,
         Tool::Brush,
         Tool::Pencil,
-        Tool::MixerBrush,
         Tool::ColorReplacement,
+        Tool::MixerBrush,
         Tool::Eraser,
         Tool::BackgroundEraser,
         Tool::MagicEraser,
@@ -117,8 +119,8 @@ impl Tool {
         Tool::Hand,
         Tool::RotateView,
         Tool::Zoom,
-        Tool::Remove,
         Tool::SpotHealing,
+        Tool::Remove,
         Tool::Healing,
         Tool::Patch,
         Tool::ContentAwareMove,
@@ -147,6 +149,7 @@ impl Tool {
         Tool::EllipseShape,
         Tool::Triangle,
         Tool::Polygon,
+        Tool::Star,
         Tool::Line,
         Tool::CustomShape,
         Tool::Slice,
@@ -226,6 +229,7 @@ impl Tool {
             Tool::EllipseShape => "Ellipse Tool",
             Tool::Triangle => "Triangle Tool",
             Tool::Polygon => "Polygon Tool",
+            Tool::Star => "Star Tool",
             Tool::Line => "Line Tool",
             Tool::CustomShape => "Custom Shape Tool",
         }
@@ -280,7 +284,7 @@ impl Tool {
             Tool::Crop | Tool::PerspectiveCrop | Tool::Slice | Tool::SliceSelect => 'C',
             Tool::Frame | Tool::PanelCut => 'K',
             // O is the Dodge group's.
-            Tool::Object => ' ',
+            Tool::Object => '\0',
             Tool::Gradient | Tool::PaintBucket => 'G',
             Tool::Type | Tool::VerticalType | Tool::HorizontalTypeMask | Tool::VerticalTypeMask => 'T',
             Tool::Hand => 'H',
@@ -294,9 +298,11 @@ impl Tool {
             Tool::SingleRowMarquee | Tool::SingleColumnMarquee => '\0',
             Tool::Dodge | Tool::Burn | Tool::Sponge => 'O',
             Tool::QuickSelection | Tool::ObjectSelection => 'W',
-            Tool::Pen | Tool::FreeformPen | Tool::CurvaturePen | Tool::AddAnchorPoint | Tool::DeleteAnchorPoint | Tool::ConvertPoint => 'P',
+            Tool::Pen | Tool::FreeformPen | Tool::CurvaturePen => 'P',
+            // In the Pen flyout, but P never reaches them.
+            Tool::AddAnchorPoint | Tool::DeleteAnchorPoint | Tool::ConvertPoint => '\0',
             Tool::PathSelection | Tool::DirectSelection => 'A',
-            Tool::Rectangle | Tool::EllipseShape | Tool::Triangle | Tool::Polygon | Tool::Line | Tool::CustomShape => 'U',
+            Tool::Rectangle | Tool::EllipseShape | Tool::Triangle | Tool::Polygon | Tool::Star | Tool::Line | Tool::CustomShape => 'U',
         }
     }
     /// Glyph drawn in the toolbar (vector icons come later).
