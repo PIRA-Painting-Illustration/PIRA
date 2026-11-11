@@ -3545,6 +3545,7 @@ dependencies = [
  "byteorder-lite",
  "color_quant",
  "gif 0.14.2",
+ "image-webp",
  "moxcms",
  "num-traits",
  "png 0.18.1",
@@ -5941,6 +5942,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "photocraft-scene3d-egui"
+version = "0.20.1"
+dependencies = [
+ "egui",
+ "photocraft-doc",
+ "photocraft-scene3d",
+]
+
+[[package]]
 name = "photocraft-tablet"
 version = "0.20.1"
 dependencies = [
@@ -6013,6 +6023,7 @@ dependencies = [
  "photocraft-raster",
  "photocraft-raw",
  "photocraft-scene3d",
+ "photocraft-scene3d-egui",
  "photocraft-testkit",
  "photocraft-text",
  "photocraft-vector",
@@ -6148,6 +6159,27 @@ dependencies = [
  "bindgen",
  "libspa-sys",
  "system-deps",
+]
+
+[[package]]
+name = "pira-pose"
+version = "0.1.0"
+dependencies = [
+ "android_logger",
+ "craft-ui",
+ "eframe",
+ "egui",
+ "image",
+ "log",
+ "photocraft-doc",
+ "photocraft-geom",
+ "photocraft-posetrack",
+ "photocraft-scene3d",
+ "photocraft-scene3d-egui",
+ "rfd",
+ "serde",
+ "serde_json",
+ "winit",
 ]
 
 [[package]]

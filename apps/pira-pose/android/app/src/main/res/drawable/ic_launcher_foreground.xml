@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:translateX="0" android:translateY="0">
+        <!-- head -->
+        <path android:fillColor="#D9A877" android:pathData="M54,25 m-6.5,0 a6.5,7.5 0 1,0 13,0 a6.5,7.5 0 1,0 -13,0" />
+        <!-- torso -->
+        <path android:fillColor="#CC9A69" android:pathData="M45,35 L63,35 Q66,36 65,42 L62,58 Q61,61 58,61 L50,61 Q47,61 46,58 L43,42 Q42,36 45,35 Z" />
+        <!-- arms, one raised -->
+        <path android:fillColor="#D9A877" android:pathData="M63,37 L75,25 Q78,23 79,26 L67,41 Z" />
+        <path android:fillColor="#D9A877" android:pathData="M45,37 L36,50 Q34,53 31,51 L41,36 Z" />
+        <!-- legs, mid-stride -->
+        <path android:fillColor="#D9A877" android:pathData="M49,60 L56,60 L50,82 Q49,85 46,84 L45,83 Z" />
+        <path android:fillColor="#C48F5E" android:pathData="M53,60 L59,60 L65,82 Q66,85 63,85 L61,84 Z" />
+        <!-- joints -->
+        <path android:fillColor="#8C5E36" android:pathData="M54,35 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0" />
+        <path android:fillColor="#8C5E36" android:pathData="M54,60 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0" />
+    </group>
+</vector>

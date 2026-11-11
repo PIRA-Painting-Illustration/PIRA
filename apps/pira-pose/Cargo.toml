@@ -1,0 +1,54 @@
+[package]
+name = "pira-pose"
+description = "PIRA Pose: PIRA's posable 3D mannequins as an app of their own (Android and Windows)"
+# Its own version (the APK's): PIRA Pose ships apart from PIRA.
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+name = "pira_pose"
+# cdylib: the `libpira_pose.so` GameActivity loads on Android; rlib: the desktop binary and tests.
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "pira-pose"
+path = "src/main.rs"
+
+# The workspace forbids `unsafe`. android-activity finds the app's entry point by symbol name, so
+# `android_main` needs `#[unsafe(no_mangle)]`: as in photocraft-android, this crate denies `unsafe`
+# and allows it on that one function only (`src/android.rs`).
+[lints.rust]
+unsafe_code = "deny"
+
+[lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+
+[dependencies]
+photocraft-doc = { workspace = true }
+photocraft-geom = { workspace = true }
+photocraft-scene3d = { workspace = true }
+photocraft-scene3d-egui = { workspace = true }
+photocraft-posetrack = { workspace = true }
+egui = { workspace = true }
+craft-ui = { workspace = true }
+image = { workspace = true, features = ["png", "jpeg", "webp"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+eframe = { workspace = true, features = ["default_fonts", "wgpu"] }
+rfd = { workspace = true }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "x11", "wayland"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "android-game-activity"] }
+android_logger = { version = "0.15", default-features = false }
+# The `AndroidApp` type android_main receives; pinned to eframe's winit, as in photocraft-android.
+winit = { version = "=0.30.13", default-features = false, features = ["android-game-activity"] }

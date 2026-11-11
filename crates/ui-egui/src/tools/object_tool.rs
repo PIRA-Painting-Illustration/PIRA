@@ -11,6 +11,9 @@
 //!
 //! The 3D panel (beside Brushes) adds mannequins and applies poses from the pose library.
 //!
+//! What a drag does, the handles and the overlays come from `photocraft-scene3d-egui`, shared with
+//! PIRA Pose (`apps/pira-pose`), so the two pose the same way.
+//!
 //! After Match photo › Body, the photo's joints show as coral dots while the Match photo tab is
 //! open, until Done: dragging one moves that joint (the dot follows the pen; the figure refits
 //! once, on release, with `scene3d.refitPhoto`), and the tab sets each limb towards or away from
@@ -20,9 +23,11 @@
 //! and ankles: dragging one puts that joint under the pen (`pose::reach`: a wrist or ankle bends
 //! its arm or leg to get there).
 
-use egui::{Color32, Pos2, Stroke, Vec2};
+use egui::{Color32, Pos2, Stroke};
 use photocraft_doc::{Body3d, LayerContent, LayerId, Scene3d};
-use photocraft_scene3d::{self as s3d, camera, library, light, pose};
+use photocraft_scene3d::{self as s3d, library, light};
+use photocraft_scene3d_egui as pose_ui;
+pub use photocraft_scene3d_egui::DragKind;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -92,22 +97,6 @@ pub struct ObjectToolUi {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum DragKind {
-    Swing(usize, usize),
-    Twist(usize, usize),
-    Slide(usize),
-    Turn(usize),
-    Orbit,
-    Pan,
-    Dolly,
-    Light,
-    /// A photo-match joint (its landmark index) being dragged onto the photo's joint.
-    PhotoPoint(usize),
-    /// A figure's joint (figure, joint) being dragged to a spot (Joints).
-    Reach(usize, usize),
-}
-
-#[derive(Clone, Debug, PartialEq)]
 pub struct ObjectDrag {
     layer: LayerId,
     kind: DragKind,
@@ -159,41 +148,7 @@ fn f32p(p: [f64; 2]) -> [f32; 2] {
 
 /// Applies one step of a drag from `a` to `b` (canvas pixels) to the scene.
 fn step(d: &mut ObjectDrag, a: [f64; 2], b: [f64; 2]) -> bool {
-    let (w, h) = d.size;
-    let delta = Vec2::new((b[0] - a[0]) as f32, (b[1] - a[1]) as f32);
-    match d.kind {
-        DragKind::Swing(f, j) => pose::swing(&mut d.scene, w, h, f, j, f32p(a), f32p(b)),
-        DragKind::Twist(f, j) => d.scene.figures.get_mut(f).is_some_and(|fig| pose::twist(fig, j, delta.x * 0.012)),
-        DragKind::Slide(f) => pose::slide(&mut d.scene, w, h, f, f32p(a), f32p(b)),
-        DragKind::Turn(f) => match d.scene.figures.get_mut(f) {
-            Some(fig) => {
-                fig.yaw += delta.x * 0.012;
-                true
-            }
-            None => false,
-        },
-        DragKind::Orbit => {
-            camera::orbit(&mut d.scene.camera, s3d::glam::Vec2::new(delta.x, delta.y));
-            true
-        }
-        DragKind::Pan => {
-            let view = camera::View::new(&d.scene.camera, w, h);
-            camera::pan(&mut d.scene.camera, s3d::glam::Vec2::new(delta.x, delta.y), &view);
-            true
-        }
-        DragKind::Dolly => {
-            camera::dolly(&mut d.scene.camera, (-delta.y * 0.006).exp());
-            true
-        }
-        DragKind::Light => {
-            let dir = light::from_screen(&d.scene, w, h, f32p(b));
-            light::set_direction(&mut d.scene, dir);
-            true
-        }
-        // Sent as `scene3d.refitPhoto` instead ([`refit_drag`]).
-        DragKind::PhotoPoint(_) => false,
-        DragKind::Reach(f, j) => pose::reach(&mut d.scene, w, h, f, j, f32p(b)),
-    }
+    pose_ui::step(&mut d.scene, &d.kind, d.size, f32p(a), f32p(b))
 }
 
 /// The photo match of `layer`, while the Match photo tab shows it (its joints are draggable).
@@ -207,37 +162,18 @@ fn shown_photo_match(app: &PhotocraftApp, layer: LayerId) -> Option<&photocraft_
 /// The photo-match joint within reach of canvas point `at`, nearest first.
 fn photo_handle_at(app: &PhotocraftApp, layer: LayerId, at: [f64; 2]) -> Option<usize> {
     let m = shown_photo_match(app, layer)?;
-    let points = m.points();
     // About a fingertip on screen, whatever the zoom.
     let reach = 24.0 / app.current_zoom().max(0.01);
-    let at = s3d::glam::Vec2::new(at[0] as f32, at[1] as f32);
-    s3d::retarget::HANDLES
-        .iter()
-        .filter_map(|&i| points.get(i).map(|p| (i, p.distance(at))))
-        .filter(|(_, d)| *d <= reach)
-        .min_by(|a, b| a.1.total_cmp(&b.1))
-        .map(|(i, _)| i)
+    pose_ui::photo_handle_at(&m.points(), f32p(at), reach)
 }
 
 /// The figure joint (Joints) within reach of canvas point `at`, nearest first.
-fn joint_handle_at(app: &PhotocraftApp, scene: &Scene3d, (w, h): (u32, u32), at: [f64; 2]) -> Option<(usize, usize)> {
+fn joint_handle_at(app: &PhotocraftApp, scene: &Scene3d, size: (u32, u32), at: [f64; 2]) -> Option<(usize, usize)> {
     if !app.ui.object_tool.joints {
         return None;
     }
     let reach = 24.0 / app.current_zoom().max(0.01);
-    let at = Pos2::new(at[0] as f32, at[1] as f32);
-    let mut best: Option<((usize, usize), f32)> = None;
-    for (fi, fig) in scene.figures.iter().enumerate().filter(|(_, f)| f.visible) {
-        for (name, _) in pose::REACH_HANDLES {
-            let Some(j) = pose::joint_index(fig, name) else { continue };
-            let Some((p, _)) = pose::joint_px(scene, w, h, fi, j) else { continue };
-            let d = Pos2::new(p[0], p[1]).distance(at);
-            if d <= reach && best.is_none_or(|(_, b)| d < b) {
-                best = Some(((fi, j), d));
-            }
-        }
-    }
-    best.map(|(hit, _)| hit)
+    pose_ui::joint_handle_at(scene, size, f32p(at), reach)
 }
 
 fn refit_drag(app: &mut PhotocraftApp, d: &ObjectDrag, point: usize, at: [f64; 2], draft: bool) {
@@ -307,18 +243,13 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
             let twist = ui.twist || mods.alt;
             let kind = match camera_kind {
                 Some(k) => k,
-                None => match pose::pick(&scene, size.0, size.1, f32p([x, y])) {
-                    Some(hit) => {
-                        app.ui.object_tool.selected = Some((layer.0, hit.figure, hit.joint));
-                        match (hit.joint, twist) {
-                            (0, false) => DragKind::Slide(hit.figure),
-                            (0, true) => DragKind::Turn(hit.figure),
-                            (j, false) => DragKind::Swing(hit.figure, j),
-                            (j, true) => DragKind::Twist(hit.figure, j),
-                        }
+                None => {
+                    let (hit, kind) = pose_ui::pose_drag_at(&scene, size, f32p([x, y]), twist);
+                    if let Some((figure, joint)) = hit {
+                        app.ui.object_tool.selected = Some((layer.0, figure, joint));
                     }
-                    None => DragKind::Orbit,
-                },
+                    kind
+                }
             };
             app.ui.object_tool.drags += 1;
             let key = format!("object-tool-{}", app.ui.object_tool.drags);
@@ -392,92 +323,22 @@ pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform
         {
             *p = s3d::glam::Vec2::new(d.last[0] as f32, d.last[1] as f32);
         }
-        let at = |i: usize| points.get(i).map(|p| to_screen([p.x, p.y]));
-        let coral = Color32::from_rgb(255, 122, 92);
-        for (a, b) in s3d::retarget::HANDLE_LINES {
-            if let (Some(a), Some(b)) = (at(a), at(b)) {
-                painter.line_segment([a, b], Stroke::new(3.0, Color32::from_black_alpha(90)));
-                painter.line_segment([a, b], Stroke::new(1.5, coral));
-            }
-        }
         let held = app.ui.object_tool.drag.as_ref().and_then(|d| if let DragKind::PhotoPoint(i) = d.kind { Some(i) } else { None });
-        for i in s3d::retarget::HANDLES {
-            let Some(c) = at(i) else { continue };
-            let fixed = m.moved.contains_key(&i);
-            let r = if held == Some(i) { 9.0 } else { 6.5 };
-            painter.circle_filled(c, r + 1.5, Color32::from_black_alpha(120));
-            painter.circle_filled(c, r, if fixed { Color32::WHITE } else { coral });
-            if fixed {
-                painter.circle_stroke(c, r - 1.0, Stroke::new(2.0, coral));
-            }
-        }
+        pose_ui::draw_photo_points(painter, &points, &|i| m.moved.contains_key(&i), held, &to_screen);
         return;
     }
     if app.ui.object_tool.mode == DragMode::Light {
-        draw_light(painter, &scene, (w, h), &to_screen);
+        pose_ui::draw_light(painter, &scene, (w, h), &to_screen);
         return;
     }
-    for (fi, fig) in scene.figures.iter().enumerate() {
-        if !fig.visible {
-            continue;
-        }
-        for name in [
-            "hips",
-            "chest",
-            "head",
-            "upper_arm.L",
-            "upper_arm.R",
-            "forearm.L",
-            "forearm.R",
-            "hand.L",
-            "hand.R",
-            "thigh.L",
-            "thigh.R",
-            "shin.L",
-            "shin.R",
-            "foot.L",
-            "foot.R",
-        ] {
-            let Some(j) = pose::joint_index(fig, name) else { continue };
-            if let Some((pivot, _)) = pose::joint_px(&scene, w, h, fi, j) {
-                let c = to_screen(pivot);
-                painter.circle_filled(c, 3.5, Color32::from_black_alpha(110));
-                painter.circle_filled(c, 2.5, Color32::from_white_alpha(200));
-            }
-        }
-    }
+    pose_ui::draw_joint_dots(painter, &scene, (w, h), &to_screen);
     // Joints: the main joints as coral dots on a thin skeleton, to drag into place.
     if app.ui.object_tool.joints {
-        let coral = Color32::from_rgb(255, 122, 92);
         let held = app.ui.object_tool.drag.as_ref().and_then(|d| if let DragKind::Reach(f, j) = d.kind { Some((f, j)) } else { None });
-        for (fi, fig) in scene.figures.iter().enumerate().filter(|(_, f)| f.visible) {
-            let at = |name: &str| pose::joint_index(fig, name).and_then(|j| pose::joint_px(&scene, w, h, fi, j)).map(|(p, _)| to_screen(p));
-            for (a, b) in pose::REACH_LINES {
-                if let (Some(a), Some(b)) = (at(a), at(b)) {
-                    painter.line_segment([a, b], Stroke::new(3.0, Color32::from_black_alpha(90)));
-                    painter.line_segment([a, b], Stroke::new(1.5, coral));
-                }
-            }
-            for (name, _) in pose::REACH_HANDLES {
-                let Some(c) = at(name) else { continue };
-                let r = if held == pose::joint_index(fig, name).map(|j| (fi, j)) { 9.0 } else { 6.5 };
-                painter.circle_filled(c, r + 1.5, Color32::from_black_alpha(120));
-                painter.circle_filled(c, r, coral);
-            }
-        }
+        pose_ui::draw_reach_handles(painter, &scene, (w, h), &to_screen, held);
     }
-    let Some((l, fi, j)) = app.ui.object_tool.selected.filter(|s| s.0 == layer.0) else { return };
-    let Some((pivot, tip)) = pose::joint_px(&scene, w, h, fi, j) else { return };
-    let (a, b) = (to_screen(pivot), to_screen(tip));
-    painter.line_segment([a, b], Stroke::new(3.0, t.accent));
-    let r = (b - a).length().max(14.0);
-    painter.circle_stroke(a, r, Stroke::new(1.5, t.accent.gamma_multiply(0.7)));
-    painter.circle_filled(a, 5.0, t.accent);
-    if let Some(name) = scene.figures.get(fi).and_then(|f| pose::joint_name(f, j)) {
-        let label = pose::joint_label(name);
-        painter.text(a + egui::vec2(10.0, -10.0), egui::Align2::LEFT_BOTTOM, label, egui::FontId::proportional(13.0), t.text);
-    }
-    let _ = l;
+    let Some((_, fi, j)) = app.ui.object_tool.selected.filter(|s| s.0 == layer.0) else { return };
+    pose_ui::draw_selected(painter, &scene, (w, h), &to_screen, (fi, j), (t.accent, t.text));
 }
 
 /// Draws a drag preview where it belongs on the canvas (uploaded once per new preview).
@@ -498,49 +359,6 @@ fn draw_preview(painter: &egui::Painter, to_screen: &dyn Fn([f32; 2]) -> Pos2, p
     let r = p.rect;
     let rect = egui::Rect::from_two_pos(to_screen([r.x0 as f32, r.y0 as f32]), to_screen([r.x1 as f32, r.y1 as f32]));
     painter.image(tex.id(), rect, egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)), Color32::WHITE);
-}
-
-/// The light disc (front within the inner ring, behind out to the outer one) and the sun on it.
-fn draw_light(painter: &egui::Painter, scene: &Scene3d, (w, h): (u32, u32), to_screen: &dyn Fn([f32; 2]) -> Pos2) {
-    let (c, r) = light::disc(scene, w, h);
-    let centre = to_screen(c.to_array());
-    let radius = (to_screen([c.x + r, c.y]) - centre).length();
-    let shade = Color32::from_black_alpha(90);
-    let sun_color = Color32::from_rgb(255, 200, 60);
-    painter.circle_stroke(centre, radius, Stroke::new(3.0, shade));
-    painter.circle_stroke(centre, radius, Stroke::new(1.5, Color32::from_white_alpha(170)));
-    painter.circle_stroke(centre, radius * 2.0, Stroke::new(1.0, Color32::from_white_alpha(70)));
-    let (p, behind) = light::handle(scene, w, h);
-    let sun = to_screen(p);
-    painter.line_segment([centre, sun], Stroke::new(1.5, Color32::from_white_alpha(150)));
-    painter.circle_filled(centre, 3.0, Color32::from_white_alpha(170));
-    for k in 0..8 {
-        let a = k as f32 * std::f32::consts::TAU / 8.0;
-        let d = egui::vec2(a.cos(), a.sin());
-        painter.line_segment([sun + d * 12.0, sun + d * 17.0], Stroke::new(2.0, sun_color));
-    }
-    painter.circle_filled(sun, 10.0, shade);
-    if behind {
-        painter.circle_stroke(sun, 8.0, Stroke::new(2.5, sun_color));
-    } else {
-        painter.circle_filled(sun, 8.0, sun_color);
-    }
-}
-
-/// Light colour swatches: hex, name.
-const LIGHT_SWATCHES: [(&str, &str); 7] = [
-    ("#ffffff", "White"),
-    ("#ffe2b8", "Warm"),
-    ("#ffb36b", "Sunset"),
-    ("#ff8a5c", "Firelight"),
-    ("#d6e6ff", "Cool"),
-    ("#9fb8ff", "Moonlight"),
-    ("#c9a0ff", "Neon violet"),
-];
-
-fn hex(c: [f32; 3]) -> String {
-    let b = c.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
-    format!("#{:02x}{:02x}{:02x}", b[0], b[1], b[2])
 }
 
 /// The options bar's Light menu: presets, direction, strength, colour, ambient, shadow.
@@ -594,9 +412,9 @@ fn light_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: LayerId, scene:
     }
     // Light colour: swatches and an inline picker (a colour popup would close the menu).
     ui.label(tl!("Light colour"));
-    let current = hex(look.light_color);
+    let current = pose_ui::hex(look.light_color);
     ui.horizontal_wrapped(|ui| {
-        for (h, tip) in LIGHT_SWATCHES {
+        for (h, tip) in pose_ui::LIGHT_SWATCHES {
             let c = Color32::from_hex(h).unwrap_or(Color32::WHITE);
             let (rect, r) = ui.allocate_exact_size(egui::vec2(22.0, 22.0), egui::Sense::click());
             ui.painter().rect_filled(rect, 4.0, c);
@@ -620,7 +438,7 @@ fn light_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: LayerId, scene:
             bump = true;
         }
         if r.inner {
-            change = Some(json!({"lightColor": hex(hsva.to_srgb().map(|v| f32::from(v) / 255.0))}));
+            change = Some(json!({"lightColor": pose_ui::hex(hsva.to_srgb().map(|v| f32::from(v) / 255.0))}));
         }
     }
     if let Some(mut c) = change {
@@ -798,30 +616,12 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: Tool) -> bo
 
 // ----------------------------------------------------------------------------- 3D panel
 
-const THUMB: (u32, u32) = (96, 128);
+use pose_ui::THUMB;
 /// Pose thumbnails rendered per frame (each takes a few milliseconds).
 const THUMBS_PER_FRAME: usize = 3;
 
 #[derive(Clone, Default)]
 struct Thumbs(std::collections::HashMap<String, egui::TextureHandle>);
-
-fn thumb_image(id: &str) -> egui::ColorImage {
-    let (w, h) = THUMB;
-    let mut scene = Scene3d { figures: vec![s3d::new_figure(Body3d::Male, Some(id))], ..Scene3d::default() };
-    scene.look.floor_shadow = false;
-    s3d::frame(&mut scene, w, h, 0.92);
-    let r = s3d::render::render(&scene, w, h, s3d::Quality::Final);
-    let mut px = vec![Color32::TRANSPARENT; (w * h) as usize];
-    let rw = r.rect.width() as usize;
-    for (k, p) in r.rgba.iter().enumerate() {
-        let (x, y) = (r.rect.x0 as usize + k % rw.max(1), r.rect.y0 as usize + k / rw.max(1));
-        if let Some(o) = px.get_mut(y * w as usize + x) {
-            let c = |v: f32| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
-            *o = Color32::from_rgba_unmultiplied(c(p[0]), c(p[1]), c(p[2]), c(p[3]));
-        }
-    }
-    egui::ColorImage::new([w as usize, h as usize], px)
-}
 
 /// The 3D panel: tabs for the pose library, hand poses, matching to a photo and new figures.
 /// One section at a time, so the pose grid gets the panel's whole height.
@@ -1041,7 +841,7 @@ fn pose_grid(app: &mut PhotocraftApp, ui: &mut egui::Ui, target: Option<(LayerId
                     ui.painter().rect_filled(rect, t.radius_sm, if hovered { t.hover } else { t.field });
                     if !thumbs.0.contains_key(&e.id) && budget > 0 {
                         budget -= 1;
-                        let tex = ctx.load_texture(format!("pose-{}", e.id), thumb_image(&e.id), egui::TextureOptions::LINEAR);
+                        let tex = ctx.load_texture(format!("pose-{}", e.id), pose_ui::thumb_image(&e.id), egui::TextureOptions::LINEAR);
                         thumbs.0.insert(e.id.clone(), tex);
                     }
                     if let Some(tex) = thumbs.0.get(&e.id) {
@@ -1070,6 +870,7 @@ fn pose_grid(app: &mut PhotocraftApp, ui: &mut egui::Ui, target: Option<(LayerId
 #[cfg(test)]
 mod tests {
     use super::*;
+    use photocraft_scene3d::pose;
 
     fn app_with_figure() -> PhotocraftApp {
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), crate::Services::default());
@@ -1209,7 +1010,7 @@ mod tests {
 
     #[test]
     fn a_thumbnail_shows_the_figure() {
-        let img = thumb_image("Walking");
+        let img = pose_ui::thumb_image("Walking");
         assert!(img.pixels.iter().filter(|p| p.a() > 200).count() > 500);
     }
 
