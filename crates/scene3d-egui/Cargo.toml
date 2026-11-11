@@ -1,0 +1,15 @@
+[package]
+name = "photocraft-scene3d-egui"
+description = "Posing 3D figures with a pen or mouse: the Object tool's drags, handles and overlays, shared by PIRA and PIRA Pose"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+photocraft-doc = { workspace = true }
+photocraft-scene3d = { workspace = true }
+egui = { workspace = true }

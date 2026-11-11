@@ -18,6 +18,10 @@ models, poses, names or icons.
 - **Commands** (`crates/engine/src/cmd/scene3d_cmds.rs`): Layer › New › 3D Figure…,
   `scene3d.applyPose / mirrorPose / flipPose / placeOnFloor / figure / camera / look /
   addFigure / removeFigure / set / get / poses`, Layer › Rasterize › 3D Layer.
+- **Shared with PIRA Pose**: the Object tool's drags, handles, overlays and pose thumbnails are
+  in `crates/scene3d-egui`, which PIRA Pose (`apps/pira-pose`, the posing on its own for Android
+  and Windows) uses too. Change posing there, or in `crates/scene3d`, and both apps get it. Menus
+  and panels are each app's own (see `apps/pira-pose/README.md`).
 - **Object tool** (toolbar, under Move): drag a part to swing it in the canvas plane, with Twist
   (or ⌥) to turn it about its bone; drag the hips to slide the figure (Twist: turn it); drag empty
   canvas to orbit the camera, ⇧ to pan, ⌘ to dolly. The options bar has the drag modes, camera
