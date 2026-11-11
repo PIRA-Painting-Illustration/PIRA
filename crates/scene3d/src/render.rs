@@ -112,6 +112,8 @@ struct Lights {
     tint: Vec3,
     fill: Vec3,
     view: Vec3,
+    /// The second light, when on: its direction and its colour times its strength (linear).
+    second: Option<(Vec3, Vec3)>,
 }
 
 /// Renders `scene` for a canvas of `width` × `height` pixels.
@@ -283,7 +285,12 @@ fn lights(scene: &Scene3d, view: &View) -> Lights {
     let (_, _, fwd) = view.axes();
     let strength = crate::finite_or(look.light_strength, 1.0).clamp(0.0, 2.0);
     let tint = Vec3::from_array(look.light_color.map(|c| to_linear(crate::finite_or(c, 1.0).clamp(0.0, 1.0)))) * strength;
-    Lights { key, tint, fill, view: -fwd }
+    let second = look.light2.then(|| {
+        let dir = crate::light::direction_of(scene, crate::light::Which::Second);
+        let strength = crate::finite_or(look.light2_strength, 0.6).clamp(0.0, 2.0);
+        (dir, Vec3::from_array(look.light2_color.map(|c| to_linear(crate::finite_or(c, 1.0).clamp(0.0, 1.0)))) * strength)
+    });
+    Lights { key, tint, fill, view: -fwd, second }
 }
 
 /// Where a point's shadow falls on the floor at height `floor_y`, lit from direction `key`.
@@ -396,7 +403,17 @@ fn shade(look: &Look3d, l: &Lights, n: Vec3, ball: bool) -> [u8; 3] {
             // A light from behind catches the silhouette edges on its side (rim light).
             let behind = (-l.key.dot(l.view)).max(0.0);
             let back_rim = l.tint * (edge.powf(1.5) * n.dot(l.key).max(0.0) * behind * 1.4);
-            lin * (key + Vec3::splat(fill) + sky) + spec + back_rim + Vec3::splat(rim)
+            // The second light: diffuse, highlight and rim like the main one (no shadow).
+            let (key2, spec2) = match l.second {
+                Some((dir, tint)) => {
+                    let lit = n.dot(dir).max(0.0);
+                    let h2 = (dir + l.view).normalize_or(Vec3::Y);
+                    let behind2 = (-dir.dot(l.view)).max(0.0);
+                    (tint * (lit * 0.9), tint * (n.dot(h2).max(0.0).powf(40.0) * 0.18 + edge.powf(1.5) * lit * behind2 * 1.4))
+                }
+                None => (Vec3::ZERO, Vec3::ZERO),
+            };
+            lin * (key + key2 + Vec3::splat(fill) + sky) + spec + spec2 + back_rim + Vec3::splat(rim)
         }
         Shading3d::Toon => {
             let d = n.dot(l.key);
@@ -409,7 +426,9 @@ fn shade(look: &Look3d, l: &Lights, n: Vec3, ball: bool) -> [u8; 3] {
             };
             // The lit bands take the light's colour and strength; the darkest stays ambient.
             let lit = Vec3::splat(1.0).lerp(l.tint, if d > -0.15 { 1.0 } else { 0.0 });
-            lin * lit * (tone * (1.0 - ambient * 0.5) + ambient * 0.5)
+            // The second light adds one flat band where it falls.
+            let band2 = l.second.filter(|(dir, _)| n.dot(*dir) > 0.3).map_or(Vec3::ZERO, |(_, tint)| tint * 0.35);
+            lin * (lit * (tone * (1.0 - ambient * 0.5) + ambient * 0.5) + band2)
         }
     };
     out.to_array().map(to_srgb8)
@@ -550,6 +569,24 @@ mod tests {
             let r = render(&s, 300, 400, Quality::Draft);
             let dark = r.rgba.iter().filter(|p| p[3] > 0.99 && p[0] < 0.1).count();
             assert!(dark > 100, "{shading:?}: {dark} outline pixels");
+        }
+    }
+
+    #[test]
+    fn a_second_light_brightens_the_side_it_comes_from() {
+        let brightness = |r: &Rendered| r.rgba.iter().filter(|p| p[3] > 0.99).map(|p| p[0] + p[1] + p[2]).sum::<f32>();
+        for shading in [Shading3d::Shaded, Shading3d::Toon] {
+            let mut s = scene();
+            s.look.shading = shading;
+            s.look.floor_shadow = false;
+            let off = render(&s, 300, 400, Quality::Draft);
+            s.look.light2 = true;
+            assert!(crate::light::apply_preset_to(&mut s, "left", crate::light::Which::Second));
+            let on = render(&s, 300, 400, Quality::Draft);
+            assert!(brightness(&on) > brightness(&off) * 1.03, "{shading:?}");
+            // Off again: exactly as before.
+            s.look.light2 = false;
+            assert_eq!(render(&s, 300, 400, Quality::Draft).rgba, off.rgba, "{shading:?}");
         }
     }
 

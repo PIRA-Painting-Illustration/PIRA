@@ -42,7 +42,7 @@ places: `apps/pira-pose/src/photo.rs` and `crates/engine/src/cmd/scene3d_cmds/ph
   in PIRA.
 - **3D panel:** Poses (the library, including the CMU motion-capture poses), Hands, Match photo
   (open a photo; the photo becomes the canvas), Figures.
-- **Look and Light** as in PIRA.
+- **Look and Light** as in PIRA, including the optional second light (a fill or rim light).
 - **Files:** `.pirapose` scenes (a bare `Scene3d` JSON from PIRA's `scene3d.get` opens too) and
   PNG export (transparent, or over the photo). On Android the scene is autosaved.
 
