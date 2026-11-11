@@ -119,6 +119,8 @@ pub struct App {
     status: Option<(String, Instant)>,
     show_panel: bool,
     light_picker: bool,
+    /// Which light a Light-mode drag away from both suns places (the Light menu's choice).
+    light_target: light::Which,
     canvas: (u32, u32),
     framed: bool,
     autosave: Option<PathBuf>,
@@ -172,6 +174,7 @@ impl App {
             status: was_restored.then(|| ("Restored your last session".to_string(), Instant::now())),
             show_panel: true,
             light_picker: false,
+            light_target: light::Which::Main,
             canvas: (1200, 1600),
             framed: was_restored,
             autosave,
@@ -755,8 +758,15 @@ impl App {
     /// The options bar's Light menu: presets, direction, strength, colour, ambient, shadow.
     fn light_menu(&mut self, ui: &mut egui::Ui) {
         ui.set_min_width(240.0);
-        if ui.selectable_label(self.mode == DragMode::Light, "Place the light on the canvas").clicked() {
+        let placing = self.mode == DragMode::Light;
+        if ui.selectable_label(placing && self.light_target == light::Which::Main, "Place the light on the canvas").clicked() {
             self.mode = DragMode::Light;
+            self.light_target = light::Which::Main;
+        }
+        if self.scene.look.light2 && ui.selectable_label(placing && self.light_target == light::Which::Second, "Place the second light on the canvas").clicked()
+        {
+            self.mode = DragMode::Light;
+            self.light_target = light::Which::Second;
         }
         ui.separator();
         ui.label("Light from");
@@ -829,6 +839,16 @@ impl App {
         self.light_picker = picker;
         if self.scene != before {
             if start || !self.history.can_undo() {
+                self.history.push(before);
+            }
+            self.changed();
+        }
+        // The second light (shared with PIRA's Light menu).
+        ui.separator();
+        let before = self.scene.clone();
+        let e = pose_ui::second_light_ui(ui, &mut self.scene, &|s| s);
+        if e.changed {
+            if e.started || !self.history.can_undo() {
                 self.history.push(before);
             }
             self.changed();
@@ -1175,7 +1195,8 @@ impl App {
                 DragMode::Orbit => Some(DragKind::Orbit),
                 DragMode::Pan => Some(DragKind::Pan),
                 DragMode::Zoom => Some(DragKind::Dolly),
-                DragMode::Light => Some(DragKind::Light),
+                // The sun under the pen, else the light picked in the Light menu.
+                DragMode::Light => Some(pose_ui::light_drag_at(&self.scene, self.canvas, at, reach, self.light_target)),
             }
         };
         let twist = self.twist || mods.alt;
@@ -1191,7 +1212,7 @@ impl App {
         };
         let mut d = Drag { kind, before, last: at, moved: false };
         // The light jumps to the pen straight away.
-        if d.kind == DragKind::Light && pose_ui::step(&mut self.scene, &d.kind, self.canvas, at, at) {
+        if matches!(d.kind, DragKind::Light | DragKind::Light2) && pose_ui::step(&mut self.scene, &d.kind, self.canvas, at, at) {
             d.moved = true;
             self.generation += 1;
         }

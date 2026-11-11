@@ -159,6 +159,16 @@ pub struct Look3d {
     pub ambient: f32,
     /// A soft contact shadow under each figure.
     pub floor_shadow: bool,
+    /// A second light (off by default): a fill or rim light beside the main one. Its direction
+    /// is measured like the main light's (and turns with the camera unless `light_fixed`); it
+    /// casts no floor shadow.
+    pub light2: bool,
+    pub light2_yaw: f32,
+    pub light2_pitch: f32,
+    /// Second light brightness (0–2).
+    pub light2_strength: f32,
+    /// Second light colour (sRGB, 0–1).
+    pub light2_color: [f32; 3],
 }
 
 impl Default for Look3d {
@@ -175,6 +185,12 @@ impl Default for Look3d {
             light_color: [1.0, 1.0, 1.0],
             ambient: 0.35,
             floor_shadow: true,
+            // Off; when switched on, a cool light from behind on the other side (a rim light).
+            light2: false,
+            light2_yaw: -2.4,
+            light2_pitch: 0.35,
+            light2_strength: 0.6,
+            light2_color: [0.84, 0.9, 1.0],
         }
     }
 }

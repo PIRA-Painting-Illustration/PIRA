@@ -350,28 +350,40 @@ fn look(s: &mut Session, p: &Value) -> Result<Value> {
     let (body_color, outline_color) = (rgb("bodyColor")?, rgb("outlineColor")?);
     let shadow = o.get("floorShadow").and_then(Value::as_bool);
     let (strength, light_color) = (num("lightStrength", 0.0, 2.0)?, rgb("lightColor")?);
+    let light2 = match o.get("light2") {
+        None | Some(Value::Null) => None,
+        Some(v) => Some(v.as_bool().ok_or_else(|| bad(CMD, "`light2` must be true or false"))?),
+    };
+    let (light2_yaw, light2_pitch) = (num("light2Yaw", -360.0, 360.0)?, num("light2Pitch", -85.0, 85.0)?);
+    let (light2_strength, light2_color) = (num("light2Strength", 0.0, 2.0)?, rgb("light2Color")?);
     let fixed = match o.get("lightFixed") {
         None | Some(Value::Null) => None,
         Some(v) => Some(v.as_bool().ok_or_else(|| bad(CMD, "`lightFixed` must be true or false"))?),
     };
-    let preset = match o.get("lightPreset") {
-        None | Some(Value::Null) => None,
-        Some(v) => {
-            let names = s3d::light::PRESETS.map(|p| p.0).join(", ");
-            Some(
-                v.as_str()
-                    .filter(|id| s3d::light::PRESETS.iter().any(|p| p.0 == *id))
-                    .ok_or_else(|| bad(CMD, format!("`lightPreset` must be one of {names}")))?
-                    .to_string(),
-            )
+    let light_preset = |key: &str| -> Result<Option<String>> {
+        match o.get(key) {
+            None | Some(Value::Null) => Ok(None),
+            Some(v) => {
+                let names = s3d::light::PRESETS.map(|p| p.0).join(", ");
+                Ok(Some(
+                    v.as_str()
+                        .filter(|id| s3d::light::PRESETS.iter().any(|p| p.0 == *id))
+                        .ok_or_else(|| bad(CMD, format!("`{key}` must be one of {names}")))?
+                        .to_string(),
+                ))
+            }
         }
     };
+    let (preset, preset2) = (light_preset("lightPreset")?, light_preset("light2Preset")?);
     with_scene(s, p, CMD, "3D Look", |scene, _, _| {
         if let Some(v) = fixed {
             s3d::light::set_fixed(scene, v);
         }
         if let Some(id) = &preset {
             s3d::light::apply_preset(scene, id);
+        }
+        if let Some(id) = &preset2 {
+            s3d::light::apply_preset_to(scene, id, s3d::light::Which::Second);
         }
         let l = &mut scene.look;
         if let Some(v) = strength {
@@ -403,6 +415,21 @@ fn look(s: &mut Session, p: &Value) -> Result<Value> {
         }
         if let Some(v) = shadow {
             l.floor_shadow = v;
+        }
+        if let Some(v) = light2 {
+            l.light2 = v;
+        }
+        if let Some(v) = light2_yaw {
+            l.light2_yaw = v.to_radians();
+        }
+        if let Some(v) = light2_pitch {
+            l.light2_pitch = v.to_radians();
+        }
+        if let Some(v) = light2_strength {
+            l.light2_strength = v;
+        }
+        if let Some(v) = light2_color {
+            l.light2_color = v;
         }
         Ok(())
     })
@@ -504,7 +531,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "scene3d.look",
             "3D Look",
             [],
-            r##"{"layer":id?,"shading":"shaded|toon|flat|silhouette"?,"outline":0..64? (px),"outlineColor":"#rrggbb"?,"bodyColor":"#rrggbb"?,"lightYaw":degrees?,"lightPitch":degrees?,"lightFixed":bool? (true: stays in the scene; false: turns with the camera),"lightStrength":0..2?,"lightColor":"#rrggbb"?,"lightPreset":"upperLeft|upperRight|front|left|right|top|below|rimLeft|rimRight"?,"ambient":0..1?,"floorShadow":bool?}"##,
+            r##"{"layer":id?,"shading":"shaded|toon|flat|silhouette"?,"outline":0..64? (px),"outlineColor":"#rrggbb"?,"bodyColor":"#rrggbb"?,"lightYaw":degrees?,"lightPitch":degrees?,"lightFixed":bool? (true: stays in the scene; false: turns with the camera),"lightStrength":0..2?,"lightColor":"#rrggbb"?,"lightPreset":"upperLeft|upperRight|front|left|right|top|below|rimLeft|rimRight"?,"ambient":0..1?,"floorShadow":bool?,"light2":bool? (a second light, no shadow),"light2Yaw":degrees?,"light2Pitch":degrees?,"light2Strength":0..2?,"light2Color":"#rrggbb"?,"light2Preset":same ids as lightPreset?}"##,
             is_scene3d,
             look
         ),
@@ -662,6 +689,28 @@ mod tests {
         assert!(s3d::light::direction(&scene(&s)).distance(dir) < 1e-4, "a fixed light stays when the camera moves");
         assert!(s.execute("scene3d.look", json!({"lightPreset": "sideways"})).is_err());
         assert!(s.execute("scene3d.look", json!({"lightFixed": "yes"})).is_err());
+    }
+
+    #[test]
+    fn a_second_light_switches_on_aims_and_tints_in_one_step() {
+        let mut s = session();
+        s.execute(NEW, json!({})).unwrap();
+        let before = scene(&s).look;
+        assert!(!before.light2, "off in a new layer");
+        s.execute("scene3d.look", json!({"light2": true, "light2Preset": "rimRight", "light2Strength": 1.2, "light2Color": "#9fb8ff"})).unwrap();
+        let look = scene(&s).look;
+        assert!(look.light2);
+        assert!((look.light2_strength - 1.2).abs() < 1e-6);
+        assert!((look.light2_color[2] - 1.0).abs() < 1e-3);
+        assert_eq!((look.light_yaw, look.light_pitch), (before.light_yaw, before.light_pitch), "the main light stays");
+        s.execute("scene3d.look", json!({"light2Yaw": 30.0, "light2Pitch": 10.0})).unwrap();
+        assert!((scene(&s).look.light2_yaw - 30f32.to_radians()).abs() < 1e-5);
+        s.execute("edit.undo", json!({})).unwrap();
+        s.execute("edit.undo", json!({})).unwrap();
+        assert!(!scene(&s).look.light2, "each change is one undo step");
+        for bad_params in [json!({"light2": "on"}), json!({"light2Preset": "sideways"}), json!({"light2Color": "blue"})] {
+            assert!(s.execute("scene3d.look", bad_params.clone()).is_err(), "{bad_params}");
+        }
     }
 
     #[test]

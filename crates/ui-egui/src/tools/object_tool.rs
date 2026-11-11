@@ -94,6 +94,9 @@ pub struct ObjectToolUi {
     /// The Light menu's colour picker is open (inline: a popup would close the menu).
     #[serde(skip)]
     light_picker: bool,
+    /// Which light a Light-mode drag away from both suns places (the menu's choice).
+    #[serde(skip)]
+    light_target: light::Which,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -237,7 +240,8 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
                     DragMode::Orbit => Some(DragKind::Orbit),
                     DragMode::Pan => Some(DragKind::Pan),
                     DragMode::Zoom => Some(DragKind::Dolly),
-                    DragMode::Light => Some(DragKind::Light),
+                    // The sun under the pen, else the light picked in the Light menu.
+                    DragMode::Light => Some(pose_ui::light_drag_at(&scene, size, f32p([x, y]), 24.0 / app.current_zoom().max(0.01), ui.light_target)),
                 }
             };
             let twist = ui.twist || mods.alt;
@@ -255,7 +259,7 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
             let key = format!("object-tool-{}", app.ui.object_tool.drags);
             let mut d = ObjectDrag { layer, kind, scene, size, last: [x, y], moved: false, key, hidden: false, preview: None };
             // The light jumps to the pen straight away.
-            if d.kind == DragKind::Light && step(&mut d, [x, y], [x, y]) {
+            if matches!(d.kind, DragKind::Light | DragKind::Light2) && step(&mut d, [x, y], [x, y]) {
                 d.moved = true;
                 show_preview(app, &mut d);
             }
@@ -372,8 +376,15 @@ fn light_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: LayerId, scene:
         Some(("scene3d.look", p))
     };
     ui.set_min_width(240.0);
-    if ui.selectable_label(app.ui.object_tool.mode == DragMode::Light, tl!("Place the light on the canvas")).clicked() {
+    let placing = app.ui.object_tool.mode == DragMode::Light;
+    let target = app.ui.object_tool.light_target;
+    if ui.selectable_label(placing && target == light::Which::Main, tl!("Place the light on the canvas")).clicked() {
         app.ui.object_tool.mode = DragMode::Light;
+        app.ui.object_tool.light_target = light::Which::Main;
+    }
+    if look.light2 && ui.selectable_label(placing && target == light::Which::Second, tl!("Place the second light on the canvas")).clicked() {
+        app.ui.object_tool.mode = DragMode::Light;
+        app.ui.object_tool.light_target = light::Which::Second;
     }
     ui.separator();
     ui.label(tl!("Light from"));
@@ -449,6 +460,27 @@ fn light_menu(app: &mut PhotocraftApp, ui: &mut egui::Ui, layer: LayerId, scene:
     }
     if bump {
         app.ui.object_tool.light_edits += 1;
+    }
+    // The second light (shared with PIRA Pose): edited on a copy, sent as one command.
+    ui.separator();
+    let mut edited = scene.clone();
+    let e = pose_ui::second_light_ui(ui, &mut edited, &|s| crate::i18n::t(s));
+    if e.started {
+        app.ui.object_tool.light_edits += 1;
+    }
+    if e.changed {
+        let l = &edited.look;
+        let mut p = json!({
+            "light2": l.light2,
+            "light2Yaw": l.light2_yaw.to_degrees(),
+            "light2Pitch": l.light2_pitch.to_degrees(),
+            "light2Strength": l.light2_strength,
+            "light2Color": pose_ui::hex(l.light2_color),
+        });
+        if let Some(o) = p.as_object_mut() {
+            o.insert("coalesce".into(), Value::String(format!("object-light-{}", app.ui.object_tool.light_edits)));
+        }
+        *cmd = set(p);
     }
     ui.separator();
     let fixed = look.light_fixed;

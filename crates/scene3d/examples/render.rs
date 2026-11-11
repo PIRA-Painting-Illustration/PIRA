@@ -1,4 +1,4 @@
-//! Renders a sample 3D layer to a PPM file over grey: `cargo run --release -p photocraft-scene3d --example render -- out.ppm [pose] [shading] [outline] [light preset] [strength] [r,g,b]`.
+//! Renders a sample 3D layer to a PPM file over grey: `cargo run --release -p photocraft-scene3d --example render -- out.ppm [pose] [shading] [outline] [light preset] [strength] [r,g,b] [second light preset] [r,g,b]`.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
 use photocraft_doc::{Body3d, Scene3d, Shading3d};
@@ -25,6 +25,15 @@ fn main() {
     if let Some(c) = args.get(7) {
         let v: Vec<f32> = c.split(',').filter_map(|x| x.parse().ok()).collect();
         s.look.light_color = [v[0], v[1], v[2]];
+    }
+    if let Some(id) = args.get(8) {
+        s.look.light2 = true;
+        assert!(photocraft_scene3d::light::apply_preset_to(&mut s, id, photocraft_scene3d::light::Which::Second), "unknown light preset {id}");
+    }
+    if let Some(c) = args.get(9) {
+        let v: Vec<f32> = c.split(',').filter_map(|x| x.parse().ok()).collect();
+        s.look.light2_color = [v[0], v[1], v[2]];
+        s.look.light2_strength = 1.0;
     }
     let (w, h) = (900u32, 1200u32);
     frame(&mut s, w, h, 0.85);

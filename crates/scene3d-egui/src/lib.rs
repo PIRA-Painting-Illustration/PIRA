@@ -35,6 +35,8 @@ pub enum DragKind {
     Dolly,
     /// Place the main light: the sun goes under the pen.
     Light,
+    /// Place the second light (`Look3d::light2`) the same way.
+    Light2,
     /// A photo-match joint (its landmark index) being dragged onto the photo's joint.
     PhotoPoint(usize),
     /// A figure's joint (figure, joint) being dragged to a spot (Joints).
@@ -91,6 +93,11 @@ pub fn step(scene: &mut Scene3d, kind: &DragKind, (w, h): (u32, u32), a: [f32; 2
             light::set_direction(scene, dir);
             true
         }
+        DragKind::Light2 => {
+            let dir = light::from_screen(scene, w, h, b);
+            light::set_direction_of(scene, dir, light::Which::Second);
+            true
+        }
         DragKind::PhotoPoint(_) => false,
         DragKind::Reach(f, j) => pose::reach(scene, w, h, f, j, b),
     }
@@ -122,6 +129,29 @@ pub fn photo_handle_at(points: &[glam::Vec2], at: [f32; 2], reach: f32) -> Optio
         .filter(|(_, d)| *d <= reach)
         .min_by(|a, b| a.1.total_cmp(&b.1))
         .map(|(i, _)| i)
+}
+
+/// In Light mode, which light a drag starting at `at` places: the sun under the pen (within
+/// `reach`), else `default`. The second light only counts while it is on.
+pub fn light_drag_at(scene: &Scene3d, (w, h): (u32, u32), at: [f32; 2], reach: f32, default: light::Which) -> DragKind {
+    let at = Pos2::new(at[0], at[1]);
+    let dist = |which| {
+        let (p, _) = light::handle_of(scene, w, h, which);
+        Pos2::new(p[0], p[1]).distance(at)
+    };
+    let main = dist(light::Which::Main);
+    let second = if scene.look.light2 { dist(light::Which::Second) } else { f32::INFINITY };
+    let which = if main.min(second) <= reach {
+        if second < main { light::Which::Second } else { light::Which::Main }
+    } else if scene.look.light2 {
+        default
+    } else {
+        light::Which::Main
+    };
+    match which {
+        light::Which::Main => DragKind::Light,
+        light::Which::Second => DragKind::Light2,
+    }
 }
 
 /// The joints that get a small white dot in Pose mode.
@@ -230,7 +260,8 @@ pub fn draw_photo_points(
     }
 }
 
-/// The light disc (front within the inner ring, behind out to the outer one) and the sun on it.
+/// The light disc (front within the inner ring, behind out to the outer one) and the sun on it;
+/// with the second light on, its sun too (a smaller one in its own colour).
 pub fn draw_light(painter: &egui::Painter, scene: &Scene3d, (w, h): (u32, u32), to_screen: &dyn Fn([f32; 2]) -> Pos2) {
     let (c, r) = light::disc(scene, w, h);
     let centre = to_screen(c.to_array());
@@ -255,6 +286,91 @@ pub fn draw_light(painter: &egui::Painter, scene: &Scene3d, (w, h): (u32, u32), 
     } else {
         painter.circle_filled(sun, 8.0, sun_color);
     }
+    if scene.look.light2 {
+        let (p2, behind2) = light::handle_of(scene, w, h, light::Which::Second);
+        let sun2 = to_screen(p2);
+        let c2 = scene.look.light2_color.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+        let color2 = Color32::from_rgb(c2[0], c2[1], c2[2]);
+        painter.line_segment([centre, sun2], Stroke::new(1.0, Color32::from_white_alpha(110)));
+        for k in 0..6 {
+            let a = k as f32 * std::f32::consts::TAU / 6.0 + 0.3;
+            let d = Vec2::new(a.cos(), a.sin());
+            painter.line_segment([sun2 + d * 9.0, sun2 + d * 13.0], Stroke::new(1.5, color2));
+        }
+        painter.circle_filled(sun2, 8.0, shade);
+        if behind2 {
+            painter.circle_stroke(sun2, 6.0, Stroke::new(2.0, color2));
+        } else {
+            painter.circle_filled(sun2, 6.0, color2);
+        }
+        painter.text(sun2 + Vec2::new(11.0, 8.0), egui::Align2::LEFT_TOP, "2", egui::FontId::proportional(11.0), Color32::from_white_alpha(200));
+    }
+}
+
+/// What [`second_light_ui`] did this frame.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct LightEdit {
+    /// The scene's look changed.
+    pub changed: bool,
+    /// A new edit began (a click, or the start of a slider drag): a new undo step.
+    pub started: bool,
+}
+
+/// The Light menu's second-light section: on/off, where it comes from, direction, height,
+/// strength and colour. Edits `scene.look` in place; `t` translates the labels.
+pub fn second_light_ui(ui: &mut egui::Ui, scene: &mut Scene3d, t: &dyn Fn(&'static str) -> &'static str) -> LightEdit {
+    let before = scene.look.clone();
+    let mut started = false;
+    let mut on = scene.look.light2;
+    if ui.checkbox(&mut on, t("Second light")).on_hover_text(t("A fill or rim light beside the main one (it casts no shadow)")).changed() {
+        scene.look.light2 = on;
+        started = true;
+    }
+    if scene.look.light2 {
+        ui.label(t("Second light from"));
+        ui.horizontal_wrapped(|ui| {
+            for (id, label, _) in light::PRESETS {
+                if ui.button(t(label)).clicked() {
+                    light::apply_preset_to(scene, id, light::Which::Second);
+                    started = true;
+                }
+            }
+        });
+        let look = &mut scene.look;
+        let mut slider = |ui: &mut egui::Ui, label: &'static str, v: &mut f32, range: std::ops::RangeInclusive<f32>, suffix: &str| {
+            let r = ui.add(egui::Slider::new(v, range).text(t(label)).suffix(suffix));
+            if r.drag_started() || r.gained_focus() || (r.changed() && !r.dragged()) {
+                started = true;
+            }
+        };
+        let mut yaw = (look.light2_yaw.to_degrees() + 180.0).rem_euclid(360.0) - 180.0;
+        let mut pitch = look.light2_pitch.to_degrees();
+        let (y0, p0) = (yaw, pitch);
+        slider(ui, "Direction", &mut yaw, -180.0..=180.0, "°");
+        slider(ui, "Height", &mut pitch, -85.0..=85.0, "°");
+        if yaw != y0 {
+            look.light2_yaw = yaw.to_radians();
+        }
+        if pitch != p0 {
+            look.light2_pitch = pitch.to_radians();
+        }
+        slider(ui, "Strength", &mut look.light2_strength, 0.0..=2.0, "");
+        let current = hex(look.light2_color);
+        ui.horizontal_wrapped(|ui| {
+            for (h, tip) in LIGHT_SWATCHES {
+                let c = Color32::from_hex(h).unwrap_or(Color32::WHITE);
+                let (rect, r) = ui.allocate_exact_size(Vec2::splat(ui.spacing().interact_size.y.max(22.0)), egui::Sense::click());
+                ui.painter().rect_filled(rect, 4.0, c);
+                let edge = if current == h { Stroke::new(2.0, ui.visuals().selection.stroke.color) } else { Stroke::new(1.0, Color32::from_black_alpha(90)) };
+                ui.painter().rect_stroke(rect, 4.0, edge, egui::StrokeKind::Inside);
+                if r.on_hover_text(t(tip)).clicked() {
+                    look.light2_color = [c.r(), c.g(), c.b()].map(|v| f32::from(v) / 255.0);
+                    started = true;
+                }
+            }
+        });
+    }
+    LightEdit { changed: scene.look != before, started }
 }
 
 /// Light colour swatches: hex, name.
@@ -354,6 +470,25 @@ mod tests {
         let (p, _) = pose::joint_px(&s, 900, 1200, 0, j).unwrap();
         assert_eq!(joint_handle_at(&s, (900, 1200), [p[0] + 3.0, p[1]], 20.0), Some((0, j)));
         assert_eq!(joint_handle_at(&s, (900, 1200), [1.0, 1.0], 20.0), None);
+    }
+
+    #[test]
+    fn light_mode_picks_the_sun_under_the_pen() {
+        let mut s = scene();
+        let size = (900, 1200);
+        // Second light off: always the main light.
+        assert_eq!(light_drag_at(&s, size, [1.0, 1.0], 20.0, light::Which::Second), DragKind::Light);
+        s.look.light2 = true;
+        light::apply_preset_to(&mut s, "rimRight", light::Which::Second);
+        let (p2, _) = light::handle_of(&s, size.0, size.1, light::Which::Second);
+        let (p1, _) = light::handle_of(&s, size.0, size.1, light::Which::Main);
+        assert_eq!(light_drag_at(&s, size, p2, 20.0, light::Which::Main), DragKind::Light2);
+        assert_eq!(light_drag_at(&s, size, p1, 20.0, light::Which::Second), DragKind::Light);
+        // Away from both suns: the light chosen in the menu.
+        assert_eq!(light_drag_at(&s, size, [1.0, 1.0], 20.0, light::Which::Second), DragKind::Light2);
+        let main = s.look.light_yaw;
+        assert!(step(&mut s, &DragKind::Light2, size, p2, [p1[0] - 50.0, p1[1]]));
+        assert_eq!(s.look.light_yaw, main, "only the second light moves");
     }
 
     #[test]

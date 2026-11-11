@@ -32,6 +32,12 @@ models, poses, names or icons.
   for direction, height, strength and ambient, a light colour, the floor shadow, and whether the
   light turns with the camera (the default) or stays fixed in the scene as you orbit
   (`scene3d.look` `lightPreset / lightYaw / lightPitch / lightStrength / lightColor / lightFixed`).
+- **Second light** (Light menu, off by default): a fill or rim light with its own direction
+  (presets or sliders), strength and colour. It shades like the main light but casts no floor
+  shadow, and turns with the camera or stays fixed along with the main light. In Light mode its
+  smaller sun (marked 2) can be dragged too; a drag away from both suns places the light picked
+  in the menu (`scene3d.look` `light2 / light2Preset / light2Yaw / light2Pitch / light2Strength /
+  light2Color`). Shared with PIRA Pose (`crates/scene3d-egui`).
 - **3D panel** (the icon under Brushes): new male or female figure, add one to the layer, hand
   poses for either or both hands, and the pose library by category or search: 11 built-in poses
   plus 1,072 motion-capture poses from the CMU Graphics Lab database (see `ATTRIBUTION.md`; not to
