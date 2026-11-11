@@ -322,7 +322,7 @@ pub fn second_light_ui(ui: &mut egui::Ui, scene: &mut Scene3d, t: &dyn Fn(&'stat
     let before = scene.look.clone();
     let mut started = false;
     let mut on = scene.look.light2;
-    if ui.checkbox(&mut on, t("Second light")).on_hover_text(t("A fill or rim light beside the main one (it casts no shadow)")).changed() {
+    if ui.checkbox(&mut on, t("Second light")).on_hover_text(t("A fill or rim light beside the main one, with its own lighter floor shadow")).changed() {
         scene.look.light2 = on;
         started = true;
     }

@@ -160,8 +160,8 @@ pub struct Look3d {
     /// A soft contact shadow under each figure.
     pub floor_shadow: bool,
     /// A second light (off by default): a fill or rim light beside the main one. Its direction
-    /// is measured like the main light's (and turns with the camera unless `light_fixed`); it
-    /// casts no floor shadow.
+    /// is measured like the main light's (and turns with the camera unless `light_fixed`). With
+    /// `floor_shadow` it casts its own floor shadow, lighter as it is weaker than the main light.
     pub light2: bool,
     pub light2_yaw: f32,
     pub light2_pitch: f32,
