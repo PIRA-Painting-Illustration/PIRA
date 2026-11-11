@@ -29,7 +29,6 @@ const TOUCH: bool = cfg!(target_os = "android");
 /// About a fingertip (or a comfortable mouse target) on screen, in points.
 const REACH: f32 = if TOUCH { 26.0 } else { 16.0 };
 const ACCENT: Color32 = Color32::from_rgb(92, 160, 255);
-const PAPER: Color32 = Color32::from_gray(222);
 
 /// What a plain drag does.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -79,6 +78,8 @@ struct MatchJob {
 
 pub struct App {
     pub scene: Scene3d,
+    /// The canvas colour behind the figures (sRGB, 0–1), saved with the scene.
+    pub background: [f32; 3],
     history: History<Scene3d>,
     pub mode: DragMode,
     pub twist: bool,
@@ -137,8 +138,10 @@ impl App {
     pub fn with_files(files: Box<dyn Files>, autosave: Option<PathBuf>) -> App {
         let restored = autosave.as_ref().and_then(|p| std::fs::read(p).ok()).and_then(|b| scene::from_bytes(&b).ok());
         let was_restored = restored.is_some();
+        let (restored, background) = restored.map_or((None, scene::DEFAULT_BACKGROUND), |(s, bg)| (Some(s), bg));
         App {
             scene: restored.unwrap_or_else(starting_scene),
+            background,
             history: History::default(),
             mode: DragMode::Pose,
             twist: false,
@@ -286,6 +289,7 @@ impl App {
         s3d::frame(&mut self.scene, w, h, 0.82);
         self.selected = None;
         self.photo_match = None;
+        self.background = scene::DEFAULT_BACKGROUND;
         self.doc = None;
         self.doc_name = "Untitled".into();
         self.modified = false;
@@ -296,12 +300,21 @@ impl App {
     fn save(&mut self, save_as: bool) {
         let name = format!("{}.{FILE_EXTENSION}", self.doc_name);
         let to = if save_as { None } else { self.doc.clone() };
-        self.files.save(Purpose::Save, &name, scene::to_bytes(&self.scene), to.as_ref());
+        self.files.save(Purpose::Save, &name, scene::to_bytes(&self.scene, self.background), to.as_ref());
     }
 
-    fn export_png(&mut self, with_photo: bool) {
+    fn export_png(&mut self, under: Under) {
         let size = self.canvas;
-        let photo = if with_photo { self.photo.as_ref().map(|p| p.rgba.as_slice()) } else { None };
+        let fill;
+        let photo = match under {
+            Under::Nothing => None,
+            Under::Background => {
+                let [r, g, b] = self.background.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+                fill = [r, g, b, 255].repeat(size.0 as usize * size.1 as usize);
+                Some(fill.as_slice())
+            }
+            Under::Photo => self.photo.as_ref().map(|p| p.rgba.as_slice()),
+        };
         let rgba = view::flatten(&self.scene, size, photo);
         let Some(img) = image::RgbaImage::from_raw(size.0, size.1, rgba) else { return };
         let mut png = std::io::Cursor::new(Vec::new());
@@ -326,8 +339,9 @@ impl App {
                 Err(e) => self.say(e),
             },
             _ => match scene::from_bytes(bytes) {
-                Ok(s) => {
+                Ok((s, background)) => {
                     self.history.push(std::mem::replace(&mut self.scene, s));
+                    self.background = background;
                     self.selected = None;
                     self.photo_match = None;
                     self.doc = location;
@@ -364,7 +378,7 @@ impl App {
             return;
         }
         let tmp = path.with_extension("tmp");
-        match std::fs::write(&tmp, scene::to_bytes(&self.scene)).and_then(|()| std::fs::rename(&tmp, &path)) {
+        match std::fs::write(&tmp, scene::to_bytes(&self.scene, self.background)).and_then(|()| std::fs::rename(&tmp, &path)) {
             Ok(()) => self.autosaved = (self.generation, Instant::now()),
             Err(e) => {
                 log::warn!("autosave: {e}");
@@ -566,12 +580,16 @@ impl App {
                     ui.close();
                 }
                 ui.separator();
-                if ui.button("Export PNG…").on_hover_text("The figures on a transparent background, at the canvas size").clicked() {
-                    self.export_png(false);
+                if ui.button("Export PNG…").on_hover_text("The figures on the background colour, at the canvas size").clicked() {
+                    self.export_png(Under::Background);
+                    ui.close();
+                }
+                if ui.button("Export PNG, transparent…").on_hover_text("The figures alone, on a transparent background").clicked() {
+                    self.export_png(Under::Nothing);
                     ui.close();
                 }
                 if ui.add_enabled(self.photo.is_some(), egui::Button::new("Export PNG with photo…")).clicked() {
-                    self.export_png(true);
+                    self.export_png(Under::Photo);
                     ui.close();
                 }
             });
@@ -732,6 +750,8 @@ impl App {
                     self.changed();
                 }
             });
+            ui.separator();
+            self.background_ui(ui);
         });
         ui.separator();
         // Show or hide the panels (they dock, tab and float: drag a panel by its tab).
@@ -747,6 +767,22 @@ impl App {
         if ui.add_enabled(self.history.can_redo(), egui::Button::new("Redo")).clicked() {
             self.redo();
         }
+    }
+
+    /// The canvas colour: a colour button, and back to neutral grey.
+    fn background_ui(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.label("Background");
+            let mut c = self.background.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+            if ui.color_edit_button_srgb(&mut c).changed() {
+                self.background = c.map(|v| f32::from(v) / 255.0);
+                self.changed();
+            }
+            if ui.add_enabled(self.background != scene::DEFAULT_BACKGROUND, egui::Button::new("Neutral grey")).clicked() {
+                self.background = scene::DEFAULT_BACKGROUND;
+                self.changed();
+            }
+        });
     }
 
     /// The Light panel: presets, direction, strength, colour, ambient, shadow, the second light.
@@ -855,6 +891,8 @@ impl App {
         if ui.selectable_label(shadow, "Floor shadow").clicked() {
             self.edit(|s, _| s.look.floor_shadow = !shadow);
         }
+        ui.separator();
+        self.background_ui(ui);
     }
 
     // ---- 3D panel ---------------------------------------------------------------------------
@@ -1333,16 +1371,17 @@ impl App {
         // Draw: paper or photo, the figures, then the handles.
         let painter = ui.painter_at(area);
         let canvas_rect = Rect::from_min_max(xf.to_screen([0.0, 0.0]), xf.to_screen([size.0 as f32, size.1 as f32]));
+        let background = srgb(self.background);
         match &self.photo {
             Some(p) => {
                 let tex = self.photo_tex.get_or_insert_with(|| {
                     ui.ctx().load_texture("photo", egui::ColorImage::from_rgba_unmultiplied(p.size, &p.rgba), egui::TextureOptions::LINEAR)
                 });
-                painter.rect_filled(canvas_rect, 0.0, Color32::WHITE);
+                painter.rect_filled(canvas_rect, 0.0, background);
                 painter.image(tex.id(), canvas_rect, Rect::from_min_max(Pos2::ZERO, Pos2::new(1.0, 1.0)), Color32::WHITE.gamma_multiply(self.photo_opacity));
             }
             None => {
-                painter.rect_filled(canvas_rect, 0.0, PAPER);
+                painter.rect_filled(canvas_rect, 0.0, background);
             }
         }
         let dragging = self.drag.is_some() || self.gesture || any_down;
@@ -1358,7 +1397,10 @@ impl App {
         } else {
             "Drag a part to pose it · drag empty space to orbit · Shift: pan · Ctrl or scroll: zoom · Alt: twist"
         };
-        painter.text(area.left_bottom() + Vec2::new(10.0, -10.0), Align2::LEFT_BOTTOM, hint, FontId::proportional(12.0), Color32::from_gray(110));
+        // Readable on any background: dark text on a light one, light on a dark one.
+        let light_bg = self.background[0] * 0.3 + self.background[1] * 0.59 + self.background[2] * 0.11 > 0.45;
+        let hint_color = if light_bg { Color32::from_black_alpha(150) } else { Color32::from_white_alpha(170) };
+        painter.text(area.left_bottom() + Vec2::new(10.0, -10.0), Align2::LEFT_BOTTOM, hint, FontId::proportional(12.0), hint_color);
         if let Some((text, _)) = &self.status {
             let pos = area.center_top() + Vec2::new(0.0, 14.0);
             let galley = painter.layout_no_wrap(text.clone(), FontId::proportional(15.0), Color32::WHITE);
@@ -1399,6 +1441,19 @@ impl App {
             pose_ui::draw_selected(painter, scene, (w, h), &to_screen, sel, (ACCENT, Color32::from_gray(30)));
         }
     }
+}
+
+/// What goes under the figures in an exported PNG.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Under {
+    Nothing,
+    Background,
+    Photo,
+}
+
+fn srgb(c: [f32; 3]) -> Color32 {
+    let [r, g, b] = c.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+    Color32::from_rgb(r, g, b)
 }
 
 /// The dock's view of the app: each panel's body.
@@ -1517,9 +1572,12 @@ mod tests {
         let b = App::with_files(Box::<Nowhere>::default(), Some(path));
         assert_eq!(b.scene, a.scene);
         let mut c = app();
-        c.take_file(Purpose::Open, "y.pirapose", &scene::to_bytes(&a.scene), None);
+        c.take_file(Purpose::Open, "y.pirapose", &scene::to_bytes(&a.scene, [0.1, 0.2, 0.3]), None);
         assert_eq!(c.scene.figures.len(), 2);
         assert_eq!(c.doc_name, "y");
+        assert_eq!(c.background, [0.1, 0.2, 0.3], "the background comes with the scene");
+        c.new_scene();
+        assert_eq!(c.background, scene::DEFAULT_BACKGROUND, "a new scene is on neutral grey");
         let _ = std::fs::remove_dir_all(dir);
     }
 
