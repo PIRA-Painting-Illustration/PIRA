@@ -42,6 +42,7 @@ const PANELS: &[(&str, &str, Group)] = &[
     ("paths", "Paths", Group::Layers),
     ("brushes", "Brushes", Group::Brushes),
     ("materials3d", "3D", Group::Brushes),
+    ("light3d", "3D Light", Group::Brushes),
 ];
 
 /// PhotoCraft's wording of craft-ui's docking labels, translated through `tl!`. The others keep
@@ -386,7 +387,7 @@ const PIRA_ICONS_WIDTH: f32 = 48.0;
 pub(crate) fn pira_workspace(app: &PhotocraftApp) -> Workspace {
     let group = |panels: &[&str]| craft_ui::docking::Group::new(panels.iter().map(|p| (*p).to_owned()).collect(), 0);
     let icons = |groups: Vec<craft_ui::docking::Group<String>>| Column { iconic: true, iconic_width: Some(PIRA_ICONS_WIDTH), ..Column::new(groups, 260.0) };
-    let start = Node::Dock { side: Side::Start, columns: vec![icons(vec![group(&["brushes"]), group(&["materials3d"])])] };
+    let start = Node::Dock { side: Side::Start, columns: vec![icons(vec![group(&["brushes"]), group(&["materials3d"]), group(&["light3d"])])] };
     let end = Node::Dock {
         side: Side::End,
         // The first column is the one against the window edge.
@@ -1345,7 +1346,7 @@ fn in_dock_column(layout: &Layout<String>, panel: &str) -> bool {
     layout.root.iter().flat_map(tree_groups).any(|group| group.dock && group.panels.iter().any(|id| id == panel))
 }
 
-fn group_members(layout: &Layout<String>, panel: &str) -> Vec<String> {
+pub(crate) fn group_members(layout: &Layout<String>, panel: &str) -> Vec<String> {
     layout.root.iter().chain(layout.floating.iter().map(|window| &window.root)).find_map(|root| tree_group(root, panel)).unwrap_or_default()
 }
 
@@ -1627,6 +1628,7 @@ fn panel_icon(id: &str) -> Option<&'static str> {
         "paths" => "spline",
         "brushes" => "brush",
         "materials3d" => "figure-3d",
+        "light3d" => "sun",
         "character" | "paragraph" => "type",
         _ => return None,
     })

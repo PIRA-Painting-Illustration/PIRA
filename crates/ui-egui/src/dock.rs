@@ -112,7 +112,7 @@ impl Group {
             Group::Navigator => &["Navigator", "Histogram", "Info"],
             Group::History => &["History", "Actions", "Layer Comps"],
             Group::Layers => &["Layers", "Channels", "Paths"],
-            Group::Brushes => &["Brushes", "3D"],
+            Group::Brushes => &["Brushes", "3D", "3D Light"],
         }
     }
 
