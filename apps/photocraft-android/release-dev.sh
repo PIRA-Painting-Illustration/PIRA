@@ -57,7 +57,7 @@ trap 'rm -f "$NOTES"' EXIT
     echo
     echo "## New in this build"
     if [[ -n "$PREV" ]]; then
-        git log --no-merges --format='- %s' "$PREV..HEAD" | head -30
+        git log --no-merges -30 --format='- %s' "$PREV..HEAD"
     else
         git log --no-merges --format='- %s' -15
     fi
