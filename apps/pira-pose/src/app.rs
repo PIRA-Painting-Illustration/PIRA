@@ -25,6 +25,9 @@ use std::path::PathBuf;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
+mod gravity_ui;
+use gravity_ui::Gravity;
+
 const TOUCH: bool = cfg!(target_os = "android");
 /// About a fingertip (or a comfortable mouse target) on screen, in points.
 const REACH: f32 = if TOUCH { 26.0 } else { 16.0 };
@@ -41,6 +44,8 @@ pub enum DragMode {
     Zoom,
     /// Place the main light: the sun goes where you drag.
     Light,
+    /// Tap a part to pin it for Gravity (or unpin it); empty canvas orbits.
+    Pin,
 }
 
 struct Drag {
@@ -112,6 +117,7 @@ pub struct App {
     pub workspace: craft_ui::docking::Workspace<PanelId>,
     workspace_file: Option<PathBuf>,
     light_picker: bool,
+    gravity: Gravity,
     /// Which light a Light-mode drag away from both suns places (the Light menu's choice).
     light_target: light::Which,
     canvas: (u32, u32),
@@ -170,6 +176,7 @@ impl App {
             workspace: dock::default_workspace(),
             workspace_file: None,
             light_picker: false,
+            gravity: Gravity::new(),
             light_target: light::Which::Main,
             canvas: (1200, 1600),
             framed: was_restored,
@@ -190,8 +197,10 @@ impl App {
         self.generation += 1;
     }
 
-    /// One undo step: `f` edits the scene (it gets the canvas size).
+    /// One undo step: `f` edits the scene (it gets the canvas size). A fall being shown is kept
+    /// first, so the edit starts from the pose on screen.
     pub fn edit(&mut self, f: impl FnOnce(&mut Scene3d, (u32, u32))) {
+        self.keep_fall();
         let before = self.scene.clone();
         f(&mut self.scene, self.canvas);
         if self.scene != before {
@@ -201,6 +210,11 @@ impl App {
     }
 
     pub fn undo(&mut self) {
+        // Undo while a fall shows takes the figure back to before it.
+        if self.gravity.fall.is_some() {
+            self.cancel_fall();
+            return;
+        }
         if let Some(prev) = self.history.undo(self.scene.clone()) {
             self.scene = prev;
             self.drag = None;
@@ -209,6 +223,9 @@ impl App {
     }
 
     pub fn redo(&mut self) {
+        if self.gravity.fall.is_some() {
+            return;
+        }
         if let Some(next) = self.history.redo(self.scene.clone()) {
             self.scene = next;
             self.drag = None;
@@ -474,6 +491,7 @@ impl App {
         self.poll_match(&ctx);
         self.shortcuts(&ctx);
         self.dropped_files(&ctx);
+        self.tick_gravity(&ctx);
 
         let title = format!("{}{} - PIRA Pose", self.doc_name, if self.modified { "*" } else { "" });
         if title != self.title {
@@ -636,6 +654,7 @@ impl App {
             (DragMode::Pan, "Pan", "Pan the camera (Shift)"),
             (DragMode::Zoom, "Zoom", "Dolly the camera (Ctrl)"),
             (DragMode::Light, "Light", "Light: drag to place the sun (inside the ring lights the front, outside lights from behind)"),
+            (DragMode::Pin, "Pin", "Pin: tap a part to pin it for Gravity, tap again to unpin"),
         ];
         for (m, label, tip) in modes {
             if ui.selectable_label(self.mode == m, label).on_hover_text(tip).clicked() {
@@ -763,7 +782,9 @@ impl App {
         });
         ui.separator();
         // Show or hide the panels (they dock, tab and float: drag a panel by its tab).
-        for (panel, tip) in [(PanelId::Light, "The Light panel"), (PanelId::Poses, "The pose library")] {
+        for (panel, tip) in
+            [(PanelId::Light, "The Light panel"), (PanelId::Poses, "The pose library"), (PanelId::Gravity, "Gravity: drop, slump or hang the figure")]
+        {
             let on = dock::shown(&self.workspace.layout, panel);
             if ui.selectable_label(on, panel.label()).on_hover_text(tip).clicked() {
                 self.show_panel(panel, !on);
@@ -1243,6 +1264,25 @@ impl App {
     /// A press on the canvas (canvas pixels): decides what the drag does.
     pub fn press(&mut self, at: [f32; 2], mods: egui::Modifiers, reach: f32) {
         let before = self.scene.clone();
+        // While a fall shows, the canvas only moves the camera.
+        if self.gravity.fall.is_some() {
+            let kind = if mods.shift {
+                DragKind::Pan
+            } else if mods.command || mods.ctrl {
+                DragKind::Dolly
+            } else {
+                match self.mode {
+                    DragMode::Pan => DragKind::Pan,
+                    DragMode::Zoom => DragKind::Dolly,
+                    _ => DragKind::Orbit,
+                }
+            };
+            self.drag = Some(Drag { kind, before, last: at, moved: false });
+            return;
+        }
+        if self.mode == DragMode::Pin && !mods.shift && !mods.command && !mods.ctrl && self.toggle_pin_at(at) {
+            return;
+        }
         if let Some(point) = self.photo_handle_at(at, reach) {
             self.drag = Some(Drag { kind: DragKind::PhotoPoint(point), before, last: at, moved: false });
             return;
@@ -1262,6 +1302,7 @@ impl App {
                 DragMode::Orbit => Some(DragKind::Orbit),
                 DragMode::Pan => Some(DragKind::Pan),
                 DragMode::Zoom => Some(DragKind::Dolly),
+                DragMode::Pin => Some(DragKind::Orbit),
                 // The sun under the pen, else the light picked in the Light menu.
                 DragMode::Light => Some(pose_ui::light_drag_at(&self.scene, self.canvas, at, reach, self.light_target)),
             }
@@ -1312,7 +1353,8 @@ impl App {
             return;
         }
         d.moved |= pose_ui::step(&mut self.scene, &d.kind, self.canvas, d.last, at);
-        if d.moved {
+        // Watching a fall: the camera moves with it, and Keep makes the one undo step.
+        if d.moved && self.gravity.fall.is_none() {
             self.history.push(d.before);
             self.changed();
         }
@@ -1448,6 +1490,7 @@ impl App {
             pose_ui::draw_photo_points(painter, &points, &|i| m.moved.contains_key(&i), held.map(|(i, _)| i), &to_screen);
             return;
         }
+        self.draw_pins(painter, &to_screen);
         if self.mode == DragMode::Light {
             pose_ui::draw_light(painter, scene, (w, h), &to_screen);
             return;
@@ -1501,6 +1544,9 @@ impl craft_ui::docking::DockContent<PanelId> for Panels<'_> {
             PanelId::Light => {
                 egui::ScrollArea::vertical().id_salt("light").auto_shrink([false, true]).show(ui, |ui| self.app.light_menu(ui));
             }
+            PanelId::Gravity => {
+                egui::ScrollArea::vertical().id_salt("gravity").auto_shrink([false, true]).show(ui, |ui| self.app.gravity_panel(ui));
+            }
             PanelId::Canvas => {}
         });
     }
@@ -1539,6 +1585,68 @@ mod tests {
         s3d::frame(&mut a.scene, 900, 1200, 0.82);
         a.framed = true;
         a
+    }
+
+    /// The middle of a part's bone on the canvas, where a tap pins it.
+    fn part_px(a: &App, joint: &str) -> [f32; 2] {
+        let j = pose::joint_index(&a.scene.figures[0], joint).unwrap();
+        let (pivot, tip) = pose::joint_px(&a.scene, 900, 1200, 0, j).unwrap();
+        [(pivot[0] + tip[0]) / 2.0, (pivot[1] + tip[1]) / 2.0]
+    }
+
+    #[test]
+    fn a_pinned_hand_drops_hangs_and_keeps_in_one_undo_step() {
+        let mut a = app();
+        let start = a.scene.clone();
+        // Pin mode: a tap pins the part, a second tap unpins it.
+        a.mode = DragMode::Pin;
+        let at = part_px(&a, "thigh.L");
+        a.press(at, egui::Modifiers::NONE, 20.0);
+        a.release(at);
+        assert_eq!(a.gravity.pins, vec![(0, "thigh.L".to_string())]);
+        a.press(at, egui::Modifiers::NONE, 20.0);
+        a.release(at);
+        assert!(a.gravity.pins.is_empty());
+        a.press(at, egui::Modifiers::NONE, 20.0);
+        a.release(at);
+        assert_eq!(a.scene, start, "pinning changes nothing in the scene");
+        a.drop_figure();
+        assert_eq!(a.mode, DragMode::Pose, "dropping leaves Pin mode");
+        // While it shows, a drag on the figure moves the camera, not the figure.
+        let p = a.gravity.fall.as_mut().unwrap();
+        p.playing = false;
+        p.time = p.fall.seconds();
+        a.show_frame();
+        let fallen = a.scene.figures[0].clone();
+        assert_ne!(fallen, start.figures[0]);
+        let at = part_px(&a, "chest");
+        a.press(at, egui::Modifiers::NONE, 20.0);
+        a.drag_to([at[0] + 80.0, at[1]]);
+        a.release([at[0] + 80.0, at[1]]);
+        assert_eq!(a.scene.figures[0], fallen);
+        assert_ne!(a.scene.camera, start.camera);
+        a.keep_fall();
+        assert!(a.gravity.fall.is_none());
+        a.undo();
+        assert_eq!(a.scene.figures[0], start.figures[0], "one undo step back to standing");
+    }
+
+    #[test]
+    fn cancel_and_undo_put_the_figure_back() {
+        let mut a = app();
+        let start = a.scene.figures[0].clone();
+        a.drop_figure();
+        a.gravity.fall.as_mut().unwrap().time = 1.0;
+        a.show_frame();
+        assert_ne!(a.scene.figures[0], start);
+        a.cancel_fall();
+        assert_eq!(a.scene.figures[0], start);
+        a.drop_figure();
+        a.gravity.fall.as_mut().unwrap().time = 1.0;
+        a.show_frame();
+        a.undo();
+        assert_eq!(a.scene.figures[0], start);
+        assert!(!a.history.can_undo(), "nothing to undo was added");
     }
 
     /// The Look menu's colours are picked in place: a press in the picker changes the colour and

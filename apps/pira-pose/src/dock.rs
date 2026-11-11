@@ -20,6 +20,8 @@ pub enum PanelId {
     Photo,
     Figures,
     Light,
+    /// Let a figure fall, slump or hang.
+    Gravity,
 }
 
 impl PanelId {
@@ -29,7 +31,7 @@ impl PanelId {
         if crate::photo::AVAILABLE {
             v.push(PanelId::Photo);
         }
-        v.extend([PanelId::Figures, PanelId::Light]);
+        v.extend([PanelId::Figures, PanelId::Light, PanelId::Gravity]);
         v
     }
 
@@ -41,6 +43,7 @@ impl PanelId {
             PanelId::Photo => "Match photo",
             PanelId::Figures => "Figures",
             PanelId::Light => "Light",
+            PanelId::Gravity => "Gravity",
         }
     }
 }
@@ -66,7 +69,7 @@ pub fn default_layout() -> Layout<PanelId> {
     if crate::photo::AVAILABLE {
         tabs.push(PanelId::Photo);
     }
-    tabs.push(PanelId::Figures);
+    tabs.extend([PanelId::Figures, PanelId::Gravity]);
     let light = Group { height: Some(380.0), ..Group::new(vec![PanelId::Light], 0) };
     let dock = Node::Dock { side: Side::End, columns: vec![Column::new(vec![Group::new(tabs, 0), light], COLUMN_WIDTH)] };
     let root = Node::Split {
