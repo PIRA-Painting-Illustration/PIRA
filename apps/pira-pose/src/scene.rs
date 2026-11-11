@@ -1,4 +1,5 @@
-//! The `.pirapose` file (a scene of posed figures, as in a PIRA 3D layer) and undo history.
+//! The `.pirapose` file (a scene of posed figures, as in a PIRA 3D layer, and the canvas's
+//! background colour) and undo history.
 
 use photocraft_doc::Scene3d;
 use serde::{Deserialize, Serialize};
@@ -7,32 +8,43 @@ pub const FILE_EXTENSION: &str = "pirapose";
 const FORMAT: &str = "pira-pose";
 const VERSION: u32 = 1;
 
+/// The canvas colour a new scene gets: a neutral mid grey (sRGB #808080).
+pub const DEFAULT_BACKGROUND: [f32; 3] = [128.0 / 255.0; 3];
+
 #[derive(Serialize, Deserialize)]
 struct File {
     format: String,
     version: u32,
     scene: Scene3d,
+    /// sRGB, 0–1. Files from before it was saved get [`DEFAULT_BACKGROUND`].
+    #[serde(default = "default_background")]
+    background: [f32; 3],
 }
 
-pub fn to_bytes(scene: &Scene3d) -> Vec<u8> {
-    serde_json::to_vec_pretty(&File { format: FORMAT.into(), version: VERSION, scene: scene.clone() }).unwrap_or_default()
+fn default_background() -> [f32; 3] {
+    DEFAULT_BACKGROUND
 }
 
-/// A `.pirapose` file, or a bare scene (as PIRA's `scene3d.get` gives it).
-pub fn from_bytes(bytes: &[u8]) -> Result<Scene3d, String> {
-    let scene = match serde_json::from_slice::<File>(bytes) {
+pub fn to_bytes(scene: &Scene3d, background: [f32; 3]) -> Vec<u8> {
+    serde_json::to_vec_pretty(&File { format: FORMAT.into(), version: VERSION, scene: scene.clone(), background }).unwrap_or_default()
+}
+
+/// A `.pirapose` file (its scene and background), or a bare scene as PIRA's `scene3d.get` gives
+/// it (on the default background).
+pub fn from_bytes(bytes: &[u8]) -> Result<(Scene3d, [f32; 3]), String> {
+    let (scene, background) = match serde_json::from_slice::<File>(bytes) {
         Ok(f) if f.format == FORMAT => {
             if f.version > VERSION {
                 return Err(format!("this scene needs a newer PIRA Pose (file version {})", f.version));
             }
-            f.scene
+            (f.scene, f.background.map(|c| if c.is_finite() { c.clamp(0.0, 1.0) } else { 0.5 }))
         }
-        _ => serde_json::from_slice::<Scene3d>(bytes).map_err(|_| "not a PIRA Pose scene".to_string())?,
+        _ => (serde_json::from_slice::<Scene3d>(bytes).map_err(|_| "not a PIRA Pose scene".to_string())?, DEFAULT_BACKGROUND),
     };
     if scene.figures.len() > 64 {
         return Err("a scene holds at most 64 figures".into());
     }
-    Ok(scene)
+    Ok((scene, background))
 }
 
 /// Undo and redo: whole-scene snapshots (scenes are small).
@@ -89,9 +101,13 @@ mod tests {
     #[test]
     fn scenes_round_trip_through_the_file() {
         let scene = Scene3d { figures: vec![s3d::new_figure(Body3d::Female, Some("Walking")), s3d::new_figure(Body3d::Male, None)], ..Scene3d::default() };
-        assert_eq!(from_bytes(&to_bytes(&scene)).unwrap(), scene);
-        // A bare scene (from PIRA) opens too.
-        assert_eq!(from_bytes(&serde_json::to_vec(&scene).unwrap()).unwrap(), scene);
+        let bg = [0.2, 0.3, 0.4];
+        assert_eq!(from_bytes(&to_bytes(&scene, bg)).unwrap(), (scene.clone(), bg));
+        // A bare scene (from PIRA) opens too, on neutral grey.
+        assert_eq!(from_bytes(&serde_json::to_vec(&scene).unwrap()).unwrap(), (scene.clone(), DEFAULT_BACKGROUND));
+        // A file saved before the background was: neutral grey.
+        let old = format!("{{\"format\":\"pira-pose\",\"version\":1,\"scene\":{}}}", serde_json::to_string(&scene).unwrap());
+        assert_eq!(from_bytes(old.as_bytes()).unwrap().1, DEFAULT_BACKGROUND);
         assert!(from_bytes(b"{\"format\":\"pira-pose\",\"version\":99,\"scene\":{}}").is_err());
     }
 
