@@ -106,7 +106,8 @@ fn keyboard_shortcuts_lists_the_stamps_with_layer() {
     let is_layer = |i: usize| items[i].2.first().map(String::as_str) == Some("Layer");
     let first = (0..items.len()).find(|i| is_layer(*i)).unwrap();
     let last = (0..items.len()).rev().find(|i| is_layer(*i)).unwrap();
-    assert!((first..=last).all(is_layer), "one Layer section");
+    let outside: Vec<_> = (first..=last).filter(|i| !is_layer(*i)).map(|i| (&items[i].0, &items[i].2)).collect();
+    assert!(outside.is_empty(), "one Layer section, but these sit inside it: {outside:?}");
     assert!(v <= last && d <= last);
 }
 

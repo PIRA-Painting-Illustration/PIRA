@@ -289,7 +289,26 @@ fn opening_a_document_changes_state_not_structure() {
     let flips: Vec<&String> = ka.iter().filter(|(id, k)| kb.get(*id).is_some_and(|o| o != *k)).map(|(id, _)| id).collect();
     assert!(flips.is_empty(), "items that change kind: {flips:?}");
     let (no_doc, one_doc) = (layout(false).bar, layout(true).bar);
-    assert_eq!(structure_key(&no_doc), structure_key(&one_doc));
+    let flat = |bar: &MenuBar| {
+        fn walk(nodes: &[Node], out: &mut Vec<String>) {
+            for n in nodes {
+                out.extend(ids(std::slice::from_ref(n)));
+                if let Node::Submenu { children, .. } = n {
+                    walk(children, out);
+                }
+            }
+        }
+        let mut out = Vec::new();
+        for m in &bar.menus {
+            out.push(format!("#{}", m.title));
+            walk(&m.children, &mut out);
+        }
+        out
+    };
+    let (fa, fb) = (flat(&no_doc), flat(&one_doc));
+    let only_a: Vec<_> = fa.iter().filter(|x| !fb.contains(x)).collect();
+    let only_b: Vec<_> = fb.iter().filter(|x| !fa.contains(x)).collect();
+    assert_eq!(structure_key(&no_doc), structure_key(&one_doc), "without a document only: {only_a:?}; with one only: {only_b:?}");
     assert_ne!(window_key(&no_doc), window_key(&one_doc), "the Window menu is rebuilt for its new row");
 }
 
