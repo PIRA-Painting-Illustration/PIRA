@@ -1519,6 +1519,7 @@ fn paint_primary_overlays(app: &mut PhotocraftApp, ui: &mut egui::Ui, view: &mut
     crate::gradient_ui::draw_overlay(app, painter, xf);
     crate::slice_ui::draw_overlay(app, painter, xf);
     crate::frame_tool::draw_overlay(app, painter, xf);
+    crate::object_tool::tick_gravity(app, painter.ctx());
     crate::object_tool::draw_overlay(app, painter, xf);
     crate::frame_tool::task_bar(app, ui, xf);
     // The Crop tool's contextual task bar under its frame (#10890), on the frame's own tile only:
