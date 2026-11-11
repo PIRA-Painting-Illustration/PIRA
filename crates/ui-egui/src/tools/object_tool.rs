@@ -623,16 +623,10 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: Tool) -> bo
             }
         }
     });
-    let light_btn = ui.button(tl!("Light")).on_hover_text(tl!("Light settings (stays open until you click Light again or close it)"));
-    egui::Popup::from_toggle_button_response(&light_btn).close_behavior(egui::PopupCloseBehavior::IgnoreClicks).show(|ui| {
-        ui.horizontal(|ui| {
-            if crate::icons::button(ui, "x", 20.0, false, tl!("Close")).clicked() {
-                ui.close();
-            }
-            ui.strong(tl!("Light"));
-        });
-        light_menu(app, ui, layer, &scene, &mut cmd);
-    });
+    let light_btn = ui.button(tl!("Light")).on_hover_text(tl!("The 3D Light panel: drag its tab to move it, dock it or float it"));
+    if light_btn.clicked() {
+        toggle_light_panel(app);
+    }
     if ui.button(tl!("Poses")).on_hover_text(tl!("Open the 3D panel: poses, hands, match to photo and new figures")).clicked() {
         let _ = app.run("window.panel.activate", json!({"panel": "materials3d"}));
     }
@@ -644,6 +638,36 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: Tool) -> bo
         status(app, r);
     }
     true
+}
+
+/// Light opens the 3D Light panel, or closes it when it is showing, wherever it was last docked
+/// or floated: by default an icon under the 3D panel's. A workspace saved before the panel
+/// existed gets it there too, as a group of its own below the 3D panel.
+fn toggle_light_panel(app: &mut PhotocraftApp) {
+    let placed = app.ui.docking.as_ref().is_none_or(|w| w.layout.contains(&"light3d".to_string()) || w.hidden.iter().any(|(p, _)| p == "light3d"));
+    let beside_3d = app.ui.docking.as_ref().is_some_and(|w| w.layout.contains(&"materials3d".to_string()));
+    let r = app.run("window.toggle.light3d", json!({})).and_then(|v| {
+        if placed || !beside_3d {
+            return Ok(v);
+        }
+        app.run("window.panel.move", json!({"panel": "light3d", "anchor": "materials3d", "zone": "below"}))
+    });
+    status(app, r);
+}
+
+/// The 3D Light panel: the light settings of the active 3D layer. It scrolls, so a second
+/// light's settings never run off the screen.
+pub fn light_panel(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
+    let Some((layer, scene, _)) = active_scene(app) else {
+        ui.weak(tl!("Select a 3D layer to light it."));
+        return;
+    };
+    let mut cmd: Option<(&str, Value)> = None;
+    light_menu(app, ui, layer, &scene, &mut cmd);
+    if let Some((id, p)) = cmd {
+        let r = app.run(id, p);
+        status(app, r);
+    }
 }
 
 // ----------------------------------------------------------------------------- 3D panel
@@ -914,6 +938,39 @@ mod tests {
 
     fn scene(app: &PhotocraftApp) -> Scene3d {
         active_scene(app).unwrap().1
+    }
+
+    #[test]
+    fn light_opens_and_closes_its_own_panel_under_the_3d_one() {
+        let mut app = app_with_figure();
+        crate::panel_docking::use_pira_workspace(&mut app);
+        let showing = |app: &PhotocraftApp| app.ui.docking.as_ref().unwrap().layout.contains(&"light3d".to_owned());
+        let own_icon = |app: &PhotocraftApp| crate::panel_docking::group_members(&app.ui.docking.as_ref().unwrap().layout, "light3d") == ["light3d"];
+        assert!(showing(&app) && own_icon(&app), "an icon in PIRA's layout");
+        toggle_light_panel(&mut app);
+        assert!(!showing(&app), "a click on Light closes it");
+        toggle_light_panel(&mut app);
+        assert!(showing(&app) && own_icon(&app), "and the next one opens it again: {}", app.ui.status);
+        // A workspace saved before the panel existed gets it under the 3D panel, not as a Brushes tab.
+        app.run("window.panel.close", json!({"panel": "light3d"})).unwrap();
+        app.ui.docking.as_mut().unwrap().hidden.retain(|(p, _)| p != "light3d");
+        toggle_light_panel(&mut app);
+        assert!(showing(&app) && own_icon(&app), "{:?}", app.ui.docking.as_ref().unwrap().layout);
+        // It floats and docks like any panel, and comes back where it was left.
+        toggle_light_panel(&mut app);
+        app.run("window.panel.float", json!({"panel": "light3d", "x": 600, "y": 200})).unwrap();
+        toggle_light_panel(&mut app);
+        toggle_light_panel(&mut app);
+        assert!(app.ui.docking.as_ref().unwrap().layout.floating.iter().any(|w| w.contains(&"light3d".to_owned())));
+        // The panel draws with and without a 3D layer.
+        let ctx = egui::Context::default();
+        PhotocraftApp::setup_context(&ctx, Default::default());
+        for _ in 0..2 {
+            let _ = ctx.run_ui(egui::RawInput::default(), |ui| {
+                egui::CentralPanel::default().show(ui, |ui| light_panel(&mut app, ui));
+            });
+            app.run("layer.new.layer", json!({})).unwrap();
+        }
     }
 
     #[test]
