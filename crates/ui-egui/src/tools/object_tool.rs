@@ -36,6 +36,9 @@ use crate::canvas::{ToolEvent, ViewXform};
 use crate::state::Tool;
 use crate::theme::Tokens;
 
+mod gravity;
+pub use gravity::{cancel_fall, drop_figure, keep_fall, tick as tick_gravity};
+
 /// What a plain drag does.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DragMode {
@@ -48,6 +51,8 @@ pub enum DragMode {
     /// Place the main light: the sun goes where you drag (the disc's rim is side-on, beyond it is
     /// behind the figures).
     Light,
+    /// Tap a part to pin it (or unpin it) for Gravity.
+    Pin,
 }
 
 /// The 3D panel's tabs.
@@ -59,6 +64,7 @@ pub enum PanelTab {
     Hands,
     Photo,
     Figures,
+    Gravity,
 }
 
 /// Object tool and 3D panel state (serde: readable and settable through the control channel).
@@ -97,6 +103,9 @@ pub struct ObjectToolUi {
     /// Which light a Light-mode drag away from both suns places (the menu's choice).
     #[serde(skip)]
     light_target: light::Which,
+    /// 3D panel › Gravity: its settings, pins and the fall being shown.
+    #[serde(skip)]
+    pub gravity: gravity::GravityUi,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -203,6 +212,15 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
                 app.ui.status = tl!("Select a 3D layer to pose (Layer › New › 3D Figure…)").to_string();
                 return true;
             };
+            // While a fall shows, the canvas waits for Keep or Cancel.
+            if gravity::showing(app) {
+                app.ui.status = tl!("Keep or cancel the fall in the 3D panel's Gravity tab first").to_string();
+                return true;
+            }
+            if app.ui.object_tool.mode == DragMode::Pin && !(mods.shift || mods.command || mods.ctrl) {
+                gravity::toggle_pin_at(app, layer, &scene, size, f32p([x, y]));
+                return true;
+            }
             // A photo-match joint under the pen is dragged onto the photo.
             if let Some(point) = photo_handle_at(app, layer, [x, y]) {
                 app.ui.object_tool.drags += 1;
@@ -236,7 +254,7 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
                 Some(DragKind::Dolly)
             } else {
                 match ui.mode {
-                    DragMode::Pose => None,
+                    DragMode::Pose | DragMode::Pin => None,
                     DragMode::Orbit => Some(DragKind::Orbit),
                     DragMode::Pan => Some(DragKind::Pan),
                     DragMode::Zoom => Some(DragKind::Dolly),
@@ -303,10 +321,15 @@ pub fn pointer(app: &mut PhotocraftApp, ev: ToolEvent, mods: egui::Modifiers) ->
 
 /// The selected part (its bone and pivot) and dots on the main joints of the active 3D layer.
 pub fn draw_overlay(app: &PhotocraftApp, painter: &egui::Painter, xf: &ViewXform) {
-    if app.ui.tool != Tool::Object {
+    let Some((layer, scene, (w, h))) = active_scene(app) else { return };
+    // A fall plays over its layer whichever tool is out; the pins show with the Object tool.
+    let shown = gravity::showing(app);
+    if shown || app.ui.tool == Tool::Object {
+        gravity::draw(app, painter, &|p: [f32; 2]| xf.to_screen(p[0], p[1]), layer, &scene, (w, h));
+    }
+    if app.ui.tool != Tool::Object || shown {
         return;
     }
-    let Some((layer, scene, (w, h))) = active_scene(app) else { return };
     // A pose drag shows its own copy of the scene; a photo-joint drag refits through the engine.
     let scene = app.ui.object_tool.drag.as_ref().filter(|d| d.layer == layer && !matches!(d.kind, DragKind::PhotoPoint(_))).map_or(scene, |d| d.scene.clone());
     let t = Tokens::get(painter.ctx());
@@ -508,6 +531,7 @@ pub fn options_bar(app: &mut PhotocraftApp, ui: &mut egui::Ui, tool: Tool) -> bo
         (DragMode::Pan, "hand", tl!("Pan the camera (⇧)")),
         (DragMode::Zoom, "zoom-in", tl!("Dolly the camera (⌘)")),
         (DragMode::Light, "sun", tl!("Light: drag to place the sun (inside the ring lights the front, outside lights from behind)")),
+        (DragMode::Pin, "pin", tl!("Pin: tap parts to pin them for Gravity (3D panel)")),
     ];
     for (m, icon, tip) in modes {
         if crate::icons::button(ui, icon, 26.0, app.ui.object_tool.mode == m, tip).clicked() {
@@ -690,6 +714,7 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
         tabs.push((PanelTab::Photo, "Match photo"));
     }
     tabs.push((PanelTab::Figures, "Figures"));
+    tabs.push((PanelTab::Gravity, "Gravity"));
     if !tabs.iter().any(|(t, _)| *t == app.ui.object_tool.tab) {
         app.ui.object_tool.tab = PanelTab::Poses;
     }
@@ -837,6 +862,7 @@ pub fn materials(app: &mut PhotocraftApp, ui: &mut egui::Ui) {
                 });
             }
         }
+        PanelTab::Gravity => gravity::panel(app, ui, target),
     }
     if let Some((id, p)) = cmd {
         let r = app.run(id, p);
@@ -966,9 +992,10 @@ mod tests {
         let ctx = egui::Context::default();
         PhotocraftApp::setup_context(&ctx, Default::default());
         for _ in 0..2 {
-            let _ = ctx.run_ui(egui::RawInput::default(), |ui| {
+            ctx.run_ui(egui::RawInput::default(), |ui| {
                 egui::CentralPanel::default().show(ui, |ui| light_panel(&mut app, ui));
-            });
+            })
+            .drop_without_applying_deltas();
             app.run("layer.new.layer", json!({})).unwrap();
         }
     }
@@ -1072,6 +1099,78 @@ mod tests {
         assert!(app.ui.object_tool.drag.is_none());
     }
 
+    fn cache_tiles(app: &PhotocraftApp) -> usize {
+        let st = app.session.active().unwrap();
+        match &st.doc.layer(st.active_layer.unwrap()).unwrap().content {
+            LayerContent::Scene3d(sc) => sc.cache.as_ref().map_or(0, |c| c.tile_count()),
+            _ => 0,
+        }
+    }
+
+    /// Plays a fall to its end, as the canvas would frame by frame.
+    fn play_out(app: &mut PhotocraftApp) {
+        let ctx = egui::Context::default();
+        for _ in 0..2000 {
+            if !app.ui.object_tool.gravity.fall.as_ref().is_some_and(|p| p.playing) {
+                break;
+            }
+            app.ui.object_tool.gravity.fall.as_mut().unwrap().time += 0.1;
+            tick_gravity(app, &ctx);
+        }
+    }
+
+    #[test]
+    fn a_pinned_part_drops_and_keeps_in_one_undo_step() {
+        let mut app = app_with_figure();
+        let before = scene(&app);
+        let layer = active_scene(&app).unwrap().0;
+        // Pin mode: a tap on the left thigh pins it.
+        app.ui.object_tool.mode = DragMode::Pin;
+        let thigh = pose::joint_index(&before.figures[0], "thigh.L").unwrap();
+        let (a, b) = pose::joint_px(&before, 600, 800, 0, thigh).unwrap();
+        let (x, y) = (f64::from(a[0] + b[0]) / 2.0, f64::from(a[1] + b[1]) / 2.0);
+        let mods = egui::Modifiers::NONE;
+        pointer(&mut app, ToolEvent::Down { x, y, pressure: 1.0 }, mods);
+        pointer(&mut app, ToolEvent::Up { x, y }, mods);
+        assert_eq!(app.ui.object_tool.gravity.pins, vec![(layer.0, 0, "thigh.L".to_string())]);
+        assert_eq!(scene(&app), before, "pinning changes nothing in the scene");
+        drop_figure(&mut app, layer, 0);
+        assert!(app.ui.object_tool.gravity.fall.is_some());
+        assert_eq!(cache_tiles(&app), 0, "the layer's image is hidden while the fall plays over it");
+        // The canvas waits while it plays.
+        pointer(&mut app, ToolEvent::Down { x, y, pressure: 1.0 }, mods);
+        pointer(&mut app, ToolEvent::Up { x, y }, mods);
+        assert_eq!(app.ui.object_tool.gravity.pins.len(), 1);
+        play_out(&mut app);
+        keep_fall(&mut app);
+        let after = scene(&app);
+        assert_ne!(after.figures, before.figures, "it fell");
+        assert!(cache_tiles(&app) > 0, "kept: rendered again");
+        app.run("edit.undo", json!({})).unwrap();
+        assert_eq!(scene(&app).figures, before.figures, "one undo step");
+        assert!(cache_tiles(&app) > 0);
+    }
+
+    #[test]
+    fn cancel_or_undo_puts_the_figure_back() {
+        let mut app = app_with_figure();
+        let before = scene(&app);
+        let layer = active_scene(&app).unwrap().0;
+        drop_figure(&mut app, layer, 0);
+        play_out(&mut app);
+        cancel_fall(&mut app);
+        assert!(app.ui.object_tool.gravity.fall.is_none());
+        assert_eq!(scene(&app), before);
+        assert!(cache_tiles(&app) > 0);
+        // An undo while a fall shows ends it, the figure as it was.
+        drop_figure(&mut app, layer, 0);
+        app.run("edit.undo", json!({})).unwrap();
+        tick_gravity(&mut app, &egui::Context::default());
+        assert!(app.ui.object_tool.gravity.fall.is_none());
+        assert_eq!(scene(&app), before);
+        assert!(cache_tiles(&app) > 0);
+    }
+
     #[test]
     fn light_mode_puts_the_sun_under_the_pen_in_one_undo_step() {
         let mut app = app_with_figure();
@@ -1112,7 +1211,7 @@ mod tests {
             if !with_figure {
                 app.run("layer.new.layer", json!({})).unwrap();
             }
-            for tab in [PanelTab::Poses, PanelTab::Hands, PanelTab::Photo, PanelTab::Figures] {
+            for tab in [PanelTab::Poses, PanelTab::Hands, PanelTab::Photo, PanelTab::Figures, PanelTab::Gravity] {
                 app.ui.object_tool.tab = tab;
                 ctx.run_ui(egui::RawInput::default(), |ui| {
                     egui::CentralPanel::default().show(ui, |ui| materials(&mut app, ui));
