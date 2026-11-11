@@ -737,21 +737,29 @@ impl App {
                 }
             }
             ui.separator();
-            ui.horizontal(|ui| {
-                ui.label("Body colour");
-                let mut c = self.scene.look.body_color.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+            // The colours open as sub-menus with the picker inside: a colour button's own popup
+            // would count as a click outside the menu and close it.
+            ui.menu_button("Body colour", |ui| {
                 let before = self.scene.clone();
-                if ui.color_edit_button_srgb(&mut c).changed() {
-                    self.scene.look.body_color = c.map(|v| f32::from(v) / 255.0);
-                    // One undo step per pointer press in the picker.
-                    if ui.input(|i| i.pointer.any_pressed()) || !self.history.can_undo() {
+                if let Some((c, start)) = inline_color(ui, self.scene.look.body_color) {
+                    self.scene.look.body_color = c;
+                    // One undo step per press in the picker.
+                    if start || !self.history.can_undo() {
                         self.history.push(before);
                     }
                     self.changed();
                 }
             });
-            ui.separator();
-            self.background_ui(ui);
+            ui.menu_button("Background", |ui| {
+                if let Some((c, _)) = inline_color(ui, self.background) {
+                    self.background = c;
+                    self.changed();
+                }
+                if ui.add_enabled(self.background != scene::DEFAULT_BACKGROUND, egui::Button::new("Neutral grey")).clicked() {
+                    self.background = scene::DEFAULT_BACKGROUND;
+                    self.changed();
+                }
+            });
         });
         ui.separator();
         // Show or hide the panels (they dock, tab and float: drag a panel by its tab).
@@ -768,7 +776,19 @@ impl App {
             self.redo();
         }
     }
+}
 
+/// An sRGB colour picker drawn in place (no popup), for menus. The new colour when it changed,
+/// and whether this frame's press started the change (for one undo step per press).
+fn inline_color(ui: &mut egui::Ui, current: [f32; 3]) -> Option<([f32; 3], bool)> {
+    let rgb = current.map(|v| (v.clamp(0.0, 1.0) * 255.0 + 0.5) as u8);
+    let mut hsva = egui::ecolor::Hsva::from_srgb(rgb);
+    let pressed = ui.input(|i| i.pointer.any_pressed());
+    let r = ui.scope(|ui| egui::color_picker::color_picker_hsva_2d(ui, &mut hsva, egui::color_picker::Alpha::Opaque));
+    r.inner.then(|| (hsva.to_srgb().map(|v| f32::from(v) / 255.0), pressed && r.response.contains_pointer()))
+}
+
+impl App {
     /// The canvas colour: a colour button, and back to neutral grey.
     fn background_ui(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
@@ -1519,6 +1539,30 @@ mod tests {
         s3d::frame(&mut a.scene, 900, 1200, 0.82);
         a.framed = true;
         a
+    }
+
+    /// The Look menu's colours are picked in place: a press in the picker changes the colour and
+    /// starts one undo step, with no popup that would close the menu.
+    #[test]
+    fn the_menu_colour_picker_works_in_place() {
+        let ctx = egui::Context::default();
+        let frame = |events: Vec<egui::Event>| {
+            let mut out = (egui::Rect::NOTHING, None);
+            let _ = ctx.run_ui(egui::RawInput { events, ..Default::default() }, |ui| {
+                let r = ui.scope(|ui| inline_color(ui, [0.80, 0.64, 0.47]));
+                out = (r.response.rect, r.inner);
+            });
+            out
+        };
+        let (rect, none) = frame(Vec::new());
+        assert!(none.is_none() && rect.width() > 50.0, "{rect:?}");
+        // The saturation-value square, at the bottom (the top row only shows the colour).
+        let at = egui::pos2(rect.left() + rect.width() * 0.2, rect.bottom() - 20.0);
+        let press = egui::Event::PointerButton { pos: at, button: egui::PointerButton::Primary, pressed: true, modifiers: egui::Modifiers::NONE };
+        let (_, picked) = frame(vec![egui::Event::PointerMoved(at), press]);
+        let (c, start) = picked.expect("the press picks a colour");
+        assert!(start, "and starts an undo step");
+        assert_ne!(c, [0.80, 0.64, 0.47]);
     }
 
     #[test]
