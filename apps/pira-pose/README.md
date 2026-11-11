@@ -43,6 +43,11 @@ places: `apps/pira-pose/src/photo.rs` and `crates/engine/src/cmd/scene3d_cmds/ph
 - **3D panel:** Poses (the library, including the CMU motion-capture poses), Hands, Match photo
   (open a photo; the photo becomes the canvas), Figures.
 - **Look and Light** as in PIRA, including the optional second light (a fill or rim light).
+- **Panels** (Poses, Hands, Match photo, Figures, Light) dock as in PIRA, with craft-ui's docking
+  (`src/dock.rs`). Drag a panel by its tab onto another group to tab it, beside or under a group,
+  to the left or right edge for a new dock column, or out to float. Window shows and hides panels
+  and resets the arrangement. The layout is saved (`%APPDATA%\PIRA Pose\workspace.json` on
+  Windows, the app's storage on Android).
 - **Files:** `.pirapose` scenes (a bare `Scene3d` JSON from PIRA's `scene3d.get` opens too) and
   PNG export (transparent, or over the photo). On Android the scene is autosaved.
 

@@ -41,8 +41,13 @@ fn run(android: AndroidApp) -> Result<(), String> {
         create.instance_descriptor.backends = eframe::wgpu::Backends::VULKAN | eframe::wgpu::Backends::GL;
     }
     let autosave = files_dir.join(format!("autosave.{}", crate::scene::FILE_EXTENSION));
-    eframe::run_native("PIRA Pose", options, Box::new(move |cc| Ok(Box::new(crate::Shell(crate::App::new(cc, Box::new(bridge), Some(autosave)))))))
-        .map_err(|e| e.to_string())
+    let workspace = files_dir.join("workspace.json");
+    eframe::run_native(
+        "PIRA Pose",
+        options,
+        Box::new(move |cc| Ok(Box::new(crate::Shell(crate::App::new(cc, Box::new(bridge), Some(autosave), Some(workspace)))))),
+    )
+    .map_err(|e| e.to_string())
 }
 
 #[derive(Deserialize, Default)]
