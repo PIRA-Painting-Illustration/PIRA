@@ -67,6 +67,8 @@ pub const TABLE: &[(&str, Class)] = &[
     ("plugins", Class::Layer(4)),
     ("engine", Class::Layer(5)),
     ("ui-egui", Class::Layer(6)),
+    // The Object tool's drags, handles and overlays: shared by ui-egui and PIRA Pose.
+    ("scene3d-egui", Class::Layer(6)),
     ("automation", Class::Layer(6)),
     ("platform", Class::Layer(6)),
     ("testkit", Class::Testkit),
@@ -76,14 +78,17 @@ pub const TABLE: &[(&str, Class)] = &[
     ("web", Class::Exempt),
     ("web-boot", Class::Exempt),
     ("android", Class::Exempt),
+    // PIRA Pose: the 3D layer's posing as an app of its own (apps/pira-pose).
+    ("pira-pose", Class::Exempt),
     ("xtask", Class::Exempt),
 ];
 
 /// Explicit orderings *within* a layer (earlier may be used by later).
 /// The L0 foundation is a small chain: `raster` builds on `color` and
 /// `geom`, which the §3 diagram draws on one line. The GPU backend (`gpu`)
-/// reuses the CPU reference (`compose`) for LUTs and parity tests.
-pub const INTRA_LAYER_ORDER: &[&[&str]] = &[&["geom", "cms", "color", "raster"], &["compose", "gpu"]];
+/// reuses the CPU reference (`compose`) for LUTs and parity tests. The UI uses the Object tool's
+/// shared posing widgets (`scene3d-egui`).
+pub const INTRA_LAYER_ORDER: &[&[&str]] = &[&["geom", "cms", "color", "raster"], &["compose", "gpu"], &["scene3d-egui", "ui-egui"]];
 
 fn intra_layer_allowed(from: &str, to: &str) -> bool {
     let (from, to) = (short_name(from), short_name(to));
