@@ -680,7 +680,13 @@ fn press_drag_release_runs_a_menu_item() {
     h.event(egui::Event::PointerButton { pos: title, button: PointerButton::Primary, pressed: true, modifiers: Modifiers::NONE });
     h.run_steps(2);
     assert!(Nav::current(&h.ctx).rows.first().is_some_and(|r| !r.is_empty()), "the menu opens on the press");
-    let item = h.get_by_label_contains("Rulers").rect().center();
+    // View also has Special Rulers.
+    let item = h
+        .query_all_by_label_contains("Rulers")
+        .find(|n| !format!("{n:?}").contains("Special"))
+        .expect("the Rulers item")
+        .rect()
+        .center();
     for k in 1..=8 {
         h.event(egui::Event::PointerMoved(title + (item - title) * (k as f32 / 8.0)));
         h.run_steps(1);
