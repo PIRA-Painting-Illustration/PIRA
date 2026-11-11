@@ -37,6 +37,9 @@ const MAX_SAMPLES: u64 = 16_000_000;
 const DRAFT_PIXELS: u64 = 600_000;
 const BAND: usize = 32;
 const SHADOW_ALPHA: f32 = 0.28;
+/// Shadow mask bits: where the main light's shadow falls, and the second light's.
+const SHADOW_MAIN: u8 = 1;
+const SHADOW_SECOND: u8 = 2;
 
 #[derive(Clone, Copy)]
 struct Sample {
@@ -124,8 +127,10 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
     let lights = lights(scene, &view);
     let outline = if look.outline_px.is_finite() { look.outline_px.clamp(0.0, 64.0) } else { 0.0 };
 
-    // Project every figure (and its floor shadow).
-    let mut tris_px: Vec<(Tri, bool)> = Vec::new();
+    // Project every figure (and its floor shadows: the main light's, and the second light's
+    // when it is on).
+    let mut tris_px: Vec<(Tri, u8)> = Vec::new();
+    let key2 = lights.second.filter(|_| look.floor_shadow).map(|(dir, _)| dir);
     let mut lo = Vec2::splat(f32::MAX);
     let mut hi = Vec2::splat(f32::MIN);
     for (fi, fig) in scene.figures.iter().enumerate().take(250) {
@@ -136,7 +141,9 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
         let (skel, mesh) = model(fig.body);
         let joints = figure_joints(skel, fig);
         let floor_y = crate::finite_or(fig.position[1], 0.0);
-        let verts: Vec<Option<(crate::camera::Projected, Vec3, Option<Vec2>)>> = mesh
+        let on_floor = |world: Vec3, key: Vec3| shadow_point(world, floor_y, key).and_then(|s| view.project(s)).map(|s| s.px);
+        #[allow(clippy::type_complexity)]
+        let verts: Vec<Option<(crate::camera::Projected, Vec3, Option<Vec2>, Option<Vec2>)>> = mesh
             .vertices
             .iter()
             .map(|v| {
@@ -144,8 +151,9 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
                 let world = m.transform_point3(Vec3::from_array(v.pos));
                 let n = m.transform_vector3(Vec3::from_array(v.normal)).normalize_or(Vec3::Y);
                 let p = view.project(world)?;
-                let shadow = look.floor_shadow.then(|| shadow_point(world, floor_y, lights.key)).flatten().and_then(|s| view.project(s)).map(|s| s.px);
-                Some((p, n, shadow))
+                let shadow = look.floor_shadow.then(|| on_floor(world, lights.key)).flatten();
+                let shadow2 = key2.and_then(|k| on_floor(world, k));
+                Some((p, n, shadow, shadow2))
             })
             .collect();
         for t in mesh.indices.as_chunks::<3>().0 {
@@ -166,14 +174,16 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
                     y0: 0,
                     y1: 0,
                 },
-                false,
+                0,
             ));
-            if let (Some(sa), Some(sb), Some(sc)) = (a.2, b.2, c.2) {
-                for q in [sa, sb, sc] {
-                    lo = lo.min(q);
-                    hi = hi.max(q);
+            for (bit, shadows) in [(SHADOW_MAIN, [a.2, b.2, c.2]), (SHADOW_SECOND, [a.3, b.3, c.3])] {
+                if let [Some(sa), Some(sb), Some(sc)] = shadows {
+                    for q in [sa, sb, sc] {
+                        lo = lo.min(q);
+                        hi = hi.max(q);
+                    }
+                    tris_px.push((Tri { p: [sa, sb, sc], inv_w: [1.0; 3], depth: [0.0; 3], n: [Vec3::Y; 3], ball: false, id, y0: 0, y1: 0 }, bit));
                 }
-                tris_px.push((Tri { p: [sa, sb, sc], inv_w: [1.0; 3], depth: [0.0; 3], n: [Vec3::Y; 3], ball: false, id, y0: 0, y1: 0 }, true));
             }
         }
     }
@@ -208,9 +218,9 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
     // Into sample space, binned by band.
     let bands = h.div_ceil(BAND);
     let mut solid: Vec<Vec<usize>> = vec![Vec::new(); bands];
-    let mut shadow: Vec<Vec<usize>> = vec![Vec::new(); bands];
+    let mut shadow: Vec<Vec<(usize, u8)>> = vec![Vec::new(); bands];
     let mut tris: Vec<Tri> = Vec::with_capacity(tris_px.len());
-    for (mut t, is_shadow) in tris_px {
+    for (mut t, bit) in tris_px {
         t.p = t.p.map(|p| grid.sample_at(p));
         let ymin = t.p.iter().fold(f32::MAX, |m, p| m.min(p.y)).floor().max(0.0);
         let ymax = t.p.iter().fold(f32::MIN, |m, p| m.max(p.y)).ceil().min(h as f32);
@@ -220,10 +230,13 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
         t.y0 = ymin as usize;
         t.y1 = ymax as usize;
         let k = tris.len();
-        let into = if is_shadow { &mut shadow } else { &mut solid };
         for b in (t.y0 / BAND)..=((t.y1.saturating_sub(1)) / BAND).min(bands - 1) {
-            if let Some(v) = into.get_mut(b) {
-                v.push(k);
+            if bit == 0 {
+                if let Some(v) = solid.get_mut(b) {
+                    v.push(k);
+                }
+            } else if let Some(v) = shadow.get_mut(b) {
+                v.push((k, bit));
             }
         }
         tris.push(t);
@@ -242,9 +255,9 @@ pub fn render(scene: &Scene3d, width: u32, height: u32, quality: Quality) -> Ren
     });
     if look.floor_shadow {
         for_each_band(&mut shade_mask, w * BAND, |b, chunk| {
-            for &k in shadow.get(b).map_or(&[][..], |v| v) {
+            for &(k, bit) in shadow.get(b).map_or(&[][..], |v| v) {
                 if let Some(t) = tris.get(k) {
-                    raster_cover(t, chunk, w, b * BAND);
+                    raster_cover(t, chunk, w, b * BAND, bit);
                 }
             }
         });
@@ -355,11 +368,12 @@ fn raster_solid(t: &Tri, band: &mut [Sample], w: usize, y_base: usize, look: &Lo
     });
 }
 
-fn raster_cover(t: &Tri, band: &mut [u8], w: usize, y_base: usize) {
+/// Marks the samples `t` covers with `bit` (which light's shadow it is).
+fn raster_cover(t: &Tri, band: &mut [u8], w: usize, y_base: usize, bit: u8) {
     let rows = band.len() / w.max(1);
     scan(t, w, rows, y_base, |x, y, _| {
         if let Some(s) = band.get_mut(y * w + x) {
-            *s = 1;
+            *s |= bit;
         }
     });
 }
@@ -403,7 +417,8 @@ fn shade(look: &Look3d, l: &Lights, n: Vec3, ball: bool) -> [u8; 3] {
             // A light from behind catches the silhouette edges on its side (rim light).
             let behind = (-l.key.dot(l.view)).max(0.0);
             let back_rim = l.tint * (edge.powf(1.5) * n.dot(l.key).max(0.0) * behind * 1.4);
-            // The second light: diffuse, highlight and rim like the main one (no shadow).
+            // The second light: diffuse, highlight and rim like the main one (its floor shadow is
+            // drawn with the main one's).
             let (key2, spec2) = match l.second {
                 Some((dir, tint)) => {
                     let lit = n.dot(dir).max(0.0);
@@ -493,14 +508,25 @@ fn outline_mask(s: &[Sample], w: usize, h: usize, radius: f32) -> Vec<u8> {
 fn resolve(bbox: Rect, g: &Grid, s: &[Sample], shadow: &[u8], ring: &[u8], look: &Look3d) -> Rendered {
     let (pw, ph) = (bbox.width() as usize, bbox.height() as usize);
     let oc = color(look.outline_color);
+    // The second light's shadow is as dark as that light is strong next to the main one (at
+    // most as dark as the main shadow); where both fall they deepen each other.
+    let ratio = crate::finite_or(look.light2_strength, 0.6).clamp(0.0, 2.0) / crate::finite_or(look.light_strength, 1.0).clamp(0.25, 2.0);
+    let alpha2 = SHADOW_ALPHA * ratio.clamp(0.0, 1.0);
+    let shadow_alpha = |m: u8| {
+        let a1 = if m & SHADOW_MAIN != 0 { SHADOW_ALPHA } else { 0.0 };
+        let a2 = if m & SHADOW_SECOND != 0 { alpha2 } else { 0.0 };
+        1.0 - (1.0 - a1) * (1.0 - a2)
+    };
     let sample = |i: usize| -> [f32; 4] {
         if ring.get(i).copied() == Some(1) {
             return [oc.x, oc.y, oc.z, 1.0];
         }
         match s.get(i) {
             Some(p) if p.id != 0 => [p.rgb[0] as f32 / 255.0, p.rgb[1] as f32 / 255.0, p.rgb[2] as f32 / 255.0, 1.0],
-            _ if shadow.get(i).copied() == Some(1) => [0.0, 0.0, 0.0, SHADOW_ALPHA],
-            _ => [0.0; 4],
+            _ => match shadow.get(i).copied() {
+                Some(m) if m != 0 => [0.0, 0.0, 0.0, shadow_alpha(m)],
+                _ => [0.0; 4],
+            },
         }
     };
     let mut rgba = vec![[0.0f32; 4]; pw * ph];
@@ -588,6 +614,24 @@ mod tests {
             s.look.light2 = false;
             assert_eq!(render(&s, 300, 400, Quality::Draft).rgba, off.rgba, "{shading:?}");
         }
+    }
+
+    #[test]
+    fn the_second_light_casts_its_own_lighter_shadow() {
+        let shadow_pixels = |r: &Rendered| r.rgba.iter().filter(|p| p[3] > 0.05 && p[3] < 0.9).count();
+        let mut s = scene();
+        crate::light::apply_preset(&mut s, "left");
+        let one = render(&s, 300, 400, Quality::Draft);
+        s.look.light2 = true;
+        crate::light::apply_preset_to(&mut s, "right", crate::light::Which::Second);
+        let two = render(&s, 300, 400, Quality::Draft);
+        assert!(shadow_pixels(&two) > shadow_pixels(&one) + 200, "{} vs {}", shadow_pixels(&two), shadow_pixels(&one));
+        // The second shadow is lighter than the main one.
+        let alphas: Vec<f32> = two.rgba.iter().map(|p| p[3]).filter(|a| *a > 0.05 && *a < 0.9).collect();
+        assert!(alphas.iter().any(|a| (*a - SHADOW_ALPHA).abs() < 0.01) && alphas.iter().any(|a| *a < SHADOW_ALPHA - 0.05));
+        // No floor shadow: neither light casts one.
+        s.look.floor_shadow = false;
+        assert_eq!(shadow_pixels(&render(&s, 300, 400, Quality::Draft)), 0);
     }
 
     #[test]

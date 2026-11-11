@@ -33,8 +33,9 @@ models, poses, names or icons.
   light turns with the camera (the default) or stays fixed in the scene as you orbit
   (`scene3d.look` `lightPreset / lightYaw / lightPitch / lightStrength / lightColor / lightFixed`).
 - **Second light** (Light menu, off by default): a fill or rim light with its own direction
-  (presets or sliders), strength and colour. It shades like the main light but casts no floor
-  shadow, and turns with the camera or stays fixed along with the main light. In Light mode its
+  (presets or sliders), strength and colour. It shades like the main light and, with the floor
+  shadow on, casts its own lighter shadow (lighter as it is weaker than the main light); it turns
+  with the camera or stays fixed along with the main light. In Light mode its
   smaller sun (marked 2) can be dragged too; a drag away from both suns places the light picked
   in the menu (`scene3d.look` `light2 / light2Preset / light2Yaw / light2Pitch / light2Strength /
   light2Color`). Shared with PIRA Pose (`crates/scene3d-egui`).

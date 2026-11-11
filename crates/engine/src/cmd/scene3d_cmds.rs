@@ -531,7 +531,7 @@ pub fn specs() -> Vec<CommandSpec> {
             "scene3d.look",
             "3D Look",
             [],
-            r##"{"layer":id?,"shading":"shaded|toon|flat|silhouette"?,"outline":0..64? (px),"outlineColor":"#rrggbb"?,"bodyColor":"#rrggbb"?,"lightYaw":degrees?,"lightPitch":degrees?,"lightFixed":bool? (true: stays in the scene; false: turns with the camera),"lightStrength":0..2?,"lightColor":"#rrggbb"?,"lightPreset":"upperLeft|upperRight|front|left|right|top|below|rimLeft|rimRight"?,"ambient":0..1?,"floorShadow":bool?,"light2":bool? (a second light, no shadow),"light2Yaw":degrees?,"light2Pitch":degrees?,"light2Strength":0..2?,"light2Color":"#rrggbb"?,"light2Preset":same ids as lightPreset?}"##,
+            r##"{"layer":id?,"shading":"shaded|toon|flat|silhouette"?,"outline":0..64? (px),"outlineColor":"#rrggbb"?,"bodyColor":"#rrggbb"?,"lightYaw":degrees?,"lightPitch":degrees?,"lightFixed":bool? (true: stays in the scene; false: turns with the camera),"lightStrength":0..2?,"lightColor":"#rrggbb"?,"lightPreset":"upperLeft|upperRight|front|left|right|top|below|rimLeft|rimRight"?,"ambient":0..1?,"floorShadow":bool?,"light2":bool? (a second light; it casts a lighter floor shadow too),"light2Yaw":degrees?,"light2Pitch":degrees?,"light2Strength":0..2?,"light2Color":"#rrggbb"?,"light2Preset":same ids as lightPreset?}"##,
             is_scene3d,
             look
         ),
