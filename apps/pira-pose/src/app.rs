@@ -11,6 +11,7 @@
 //! The 3D panel has the pose library, hand poses, matching a pose to a photo, and the figures.
 //! With a photo open, the photo is the canvas and the figures are drawn over it.
 
+use crate::dock::{self, PanelId};
 use crate::files::{Event, Files, Location, Purpose};
 use crate::photo::{self, Part, Photo, PhotoMatch};
 use crate::scene::{self, FILE_EXTENSION, History};
@@ -41,16 +42,6 @@ pub enum DragMode {
     Zoom,
     /// Place the main light: the sun goes where you drag.
     Light,
-}
-
-/// The 3D panel's tabs.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum PanelTab {
-    #[default]
-    Poses,
-    Hands,
-    Photo,
-    Figures,
 }
 
 struct Drag {
@@ -97,7 +88,6 @@ pub struct App {
     category: String,
     search: String,
     hands: String,
-    pub tab: PanelTab,
     accurate: bool,
     /// The last body match is being fixed (its joints show on the canvas).
     fixing: bool,
@@ -117,7 +107,9 @@ pub struct App {
     modified: bool,
     generation: u64,
     status: Option<(String, Instant)>,
-    show_panel: bool,
+    /// The panels' arrangement (craft-ui docking), and where it is saved.
+    pub workspace: craft_ui::docking::Workspace<PanelId>,
+    workspace_file: Option<PathBuf>,
     light_picker: bool,
     /// Which light a Light-mode drag away from both suns places (the Light menu's choice).
     light_target: light::Which,
@@ -133,10 +125,11 @@ fn starting_scene() -> Scene3d {
 }
 
 impl App {
-    pub fn new(cc: &eframe::CreationContext, files: Box<dyn Files>, autosave: Option<PathBuf>) -> App {
+    pub fn new(cc: &eframe::CreationContext, files: Box<dyn Files>, autosave: Option<PathBuf>, workspace_file: Option<PathBuf>) -> App {
         style(&cc.egui_ctx);
         let mut app = App::with_files(files, autosave);
-        app.show_panel = cc.egui_ctx.content_rect().width() >= 700.0;
+        app.workspace = dock::load(workspace_file.as_deref());
+        app.workspace_file = workspace_file;
         app
     }
 
@@ -154,7 +147,6 @@ impl App {
             category: library::BASIC.to_string(),
             search: String::new(),
             hands: "both".into(),
-            tab: PanelTab::Poses,
             accurate: false,
             fixing: false,
             drag: None,
@@ -172,7 +164,8 @@ impl App {
             modified: was_restored,
             generation: 0,
             status: was_restored.then(|| ("Restored your last session".to_string(), Instant::now())),
-            show_panel: true,
+            workspace: dock::default_workspace(),
+            workspace_file: None,
             light_picker: false,
             light_target: light::Which::Main,
             canvas: (1200, 1600),
@@ -436,7 +429,7 @@ impl App {
 
     /// The photo match, while the Match photo tab shows it (its joints are draggable).
     fn shown_match(&self) -> Option<&PhotoMatch> {
-        if self.tab != PanelTab::Photo || !self.fixing || self.photo.is_none() {
+        if !dock::in_front(&self.workspace.layout, PanelId::Photo) || !self.fixing || self.photo.is_none() {
             return None;
         }
         self.photo_match.as_ref().filter(|m| m.figure < self.scene.figures.len())
@@ -478,10 +471,7 @@ impl App {
         egui::Panel::top("options").show(ui, |ui| {
             egui::ScrollArea::horizontal().show(ui, |ui| ui.horizontal(|ui| self.options_bar(ui)));
         });
-        if self.show_panel {
-            egui::Panel::right("panel3d").default_size(if TOUCH { 340.0 } else { 320.0 }).resizable(true).show(ui, |ui| self.panel(ui));
-        }
-        egui::CentralPanel::default().frame(egui::Frame::NONE.fill(Color32::from_gray(38))).show(ui, |ui| self.canvas_ui(ui));
+        egui::CentralPanel::default().frame(egui::Frame::NONE.fill(Color32::from_gray(38))).show(ui, |ui| self.dock_ui(ui));
 
         if self.autosave.is_some() && self.autosaved.0 != self.generation {
             self.autosave_now();
@@ -596,7 +586,17 @@ impl App {
                 }
             });
             ui.menu_button("Window", |ui| {
-                if ui.checkbox(&mut self.show_panel, "3D panel").clicked() {
+                for panel in PanelId::all().into_iter().filter(|p| *p != PanelId::Canvas) {
+                    let mut on = dock::shown(&self.workspace.layout, panel);
+                    if ui.checkbox(&mut on, panel.label()).clicked() {
+                        self.show_panel(panel, on);
+                    }
+                }
+                ui.separator();
+                if ui.button("Reset panels").on_hover_text("Put every panel back where it starts").clicked() {
+                    self.workspace.reset(&dock::default_layout());
+                    self.workspace.hidden.clear();
+                    dock::save(self.workspace_file.as_deref(), &self.workspace);
                     ui.close();
                 }
             });
@@ -733,19 +733,13 @@ impl App {
                 }
             });
         });
-        let light_btn = ui.button("Light").on_hover_text("Light settings (stays open until you click Light again or close it)");
-        egui::Popup::from_toggle_button_response(&light_btn).close_behavior(egui::PopupCloseBehavior::IgnoreClicks).show(|ui| {
-            ui.horizontal(|ui| {
-                if ui.small_button("Close").clicked() {
-                    ui.close();
-                }
-                ui.strong("Light");
-            });
-            self.light_menu(ui);
-        });
         ui.separator();
-        if ui.selectable_label(self.show_panel, "Poses").on_hover_text("The 3D panel: poses, hands, match to photo and figures").clicked() {
-            self.show_panel = !self.show_panel;
+        // Show or hide the panels (they dock, tab and float: drag a panel by its tab).
+        for (panel, tip) in [(PanelId::Light, "The Light panel"), (PanelId::Poses, "The pose library")] {
+            let on = dock::shown(&self.workspace.layout, panel);
+            if ui.selectable_label(on, panel.label()).on_hover_text(tip).clicked() {
+                self.show_panel(panel, !on);
+            }
         }
         if ui.add_enabled(self.history.can_undo(), egui::Button::new("Undo")).clicked() {
             self.undo();
@@ -755,9 +749,8 @@ impl App {
         }
     }
 
-    /// The options bar's Light menu: presets, direction, strength, colour, ambient, shadow.
+    /// The Light panel: presets, direction, strength, colour, ambient, shadow, the second light.
     fn light_menu(&mut self, ui: &mut egui::Ui) {
-        ui.set_min_width(240.0);
         let placing = self.mode == DragMode::Light;
         if ui.selectable_label(placing && self.light_target == light::Which::Main, "Place the light on the canvas").clicked() {
             self.mode = DragMode::Light;
@@ -866,49 +859,65 @@ impl App {
 
     // ---- 3D panel ---------------------------------------------------------------------------
 
-    fn panel(&mut self, ui: &mut egui::Ui) {
-        let mut tabs = vec![(PanelTab::Poses, "Poses"), (PanelTab::Hands, "Hands")];
-        if photo::AVAILABLE {
-            tabs.push((PanelTab::Photo, "Match photo"));
+    /// Shows or hides a panel (a shown one comes back where it was, or beside the 3D panels).
+    pub fn show_panel(&mut self, panel: PanelId, on: bool) {
+        let fallback = [PanelId::Poses, PanelId::Figures, PanelId::Light].into_iter().find(|p| *p != panel && dock::shown(&self.workspace.layout, *p));
+        match self.workspace.set_visible(panel, on, fallback, dock::permissions) {
+            Ok(()) => dock::save(self.workspace_file.as_deref(), &self.workspace),
+            Err(e) => log::warn!("panel {panel:?}: {e:?}"),
         }
-        tabs.push((PanelTab::Figures, "Figures"));
+    }
+
+    /// The canvas and the panels, as the user has arranged them.
+    fn dock_ui(&mut self, ui: &mut egui::Ui) {
+        let mut style = craft_ui::docking::DockStyle::from_ui(ui);
+        style.new_dock_zones = true;
+        if TOUCH {
+            style.tab_height = 40.0;
+        }
+        let layout = self.workspace.layout.clone();
+        let output = craft_ui::docking::DockArea::new(egui::Id::unique("pira-pose-dock")).show_customized(
+            ui,
+            &layout,
+            &style,
+            |p| p.label().to_string(),
+            dock::permissions,
+            dock::limits,
+            &mut Panels { app: self },
+        );
+        if let Some(e) = output.error {
+            log::warn!("panel layout: {e:?}; back to the default");
+            self.workspace = dock::default_workspace();
+        }
+        if !output.actions.is_empty() {
+            match self.workspace.apply_all(output.actions, dock::permissions) {
+                Ok(_) => dock::save(self.workspace_file.as_deref(), &self.workspace),
+                Err(e) => log::warn!("panel move refused: {e:?}"),
+            }
+        }
+    }
+
+    fn hands_panel(&mut self, ui: &mut egui::Ui) {
         ui.horizontal_wrapped(|ui| {
-            for (tab, label) in tabs {
-                if ui.selectable_label(self.tab == tab, label).clicked() {
-                    self.tab = tab;
+            ui.label("Pose");
+            for (id, label) in [("both", "Both hands"), ("left", "Left"), ("right", "Right")] {
+                if ui.selectable_label(self.hands == id, label).clicked() {
+                    self.hands = id.to_string();
                 }
             }
         });
         ui.add_space(6.0);
-        match self.tab {
-            PanelTab::Poses => self.pose_grid(ui),
-            PanelTab::Hands => {
-                ui.horizontal_wrapped(|ui| {
-                    ui.label("Pose");
-                    for (id, label) in [("both", "Both hands"), ("left", "Left"), ("right", "Right")] {
-                        if ui.selectable_label(self.hands == id, label).clicked() {
-                            self.hands = id.to_string();
-                        }
-                    }
-                });
-                ui.add_space(6.0);
-                let sides = pose::Sides::from_id(&self.hands).unwrap_or(pose::Sides::Both);
-                let mut picked = None;
-                ui.horizontal_wrapped(|ui| {
-                    for e in library::entries().iter().filter(|e| e.hands_only) {
-                        if ui.button(e.name.as_str()).clicked() {
-                            picked = Some(e.id.clone());
-                        }
-                    }
-                });
-                if let Some(id) = picked {
-                    self.apply_pose(&id, sides);
+        let sides = pose::Sides::from_id(&self.hands).unwrap_or(pose::Sides::Both);
+        let mut picked = None;
+        ui.horizontal_wrapped(|ui| {
+            for e in library::entries().iter().filter(|e| e.hands_only) {
+                if ui.button(e.name.as_str()).clicked() {
+                    picked = Some(e.id.clone());
                 }
             }
-            PanelTab::Photo => {
-                egui::ScrollArea::vertical().id_salt("match-photo").auto_shrink([false, true]).show(ui, |ui| self.photo_tab(ui));
-            }
-            PanelTab::Figures => self.figures_tab(ui),
+        });
+        if let Some(id) = picked {
+            self.apply_pose(&id, sides);
         }
     }
 
@@ -1389,6 +1398,40 @@ impl App {
         if let Some(sel) = self.selected {
             pose_ui::draw_selected(painter, scene, (w, h), &to_screen, sel, (ACCENT, Color32::from_gray(30)));
         }
+    }
+}
+
+/// The dock's view of the app: each panel's body.
+struct Panels<'a> {
+    app: &'a mut App,
+}
+
+impl craft_ui::docking::DockContent<PanelId> for Panels<'_> {
+    fn body(&mut self, ui: &mut egui::Ui, panel: &PanelId) {
+        if *panel == PanelId::Canvas {
+            self.app.canvas_ui(ui);
+            return;
+        }
+        egui::Frame::NONE.inner_margin(egui::Margin::same(8)).show(ui, |ui| match panel {
+            PanelId::Poses => self.app.pose_grid(ui),
+            PanelId::Hands => {
+                egui::ScrollArea::vertical().id_salt("hands").auto_shrink([false, true]).show(ui, |ui| self.app.hands_panel(ui));
+            }
+            PanelId::Photo => {
+                egui::ScrollArea::vertical().id_salt("match-photo").auto_shrink([false, true]).show(ui, |ui| self.app.photo_tab(ui));
+            }
+            PanelId::Figures => {
+                egui::ScrollArea::vertical().id_salt("figures").auto_shrink([false, true]).show(ui, |ui| self.app.figures_tab(ui));
+            }
+            PanelId::Light => {
+                egui::ScrollArea::vertical().id_salt("light").auto_shrink([false, true]).show(ui, |ui| self.app.light_menu(ui));
+            }
+            PanelId::Canvas => {}
+        });
+    }
+
+    fn logical_label(&self, panel: &PanelId) -> String {
+        panel.label().to_string()
     }
 }
 

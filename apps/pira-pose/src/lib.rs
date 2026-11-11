@@ -6,6 +6,7 @@
 //! reaches both apps.
 
 pub mod app;
+pub mod dock;
 pub mod files;
 pub mod photo;
 pub mod scene;
@@ -24,7 +25,7 @@ pub fn run_desktop() -> eframe::Result {
         renderer: eframe::Renderer::Wgpu,
         ..Default::default()
     };
-    eframe::run_native("PIRA Pose", options, Box::new(|cc| Ok(Box::new(Shell(App::new(cc, Box::<files::Desktop>::default(), None))))))
+    eframe::run_native("PIRA Pose", options, Box::new(|cc| Ok(Box::new(Shell(App::new(cc, Box::<files::Desktop>::default(), None, dock::desktop_file()))))))
 }
 
 /// eframe's app trait, kept apart so the app can be built without a window in tests.
