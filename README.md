@@ -12,7 +12,7 @@ to pen **pressure and tilt** as soon as it's installed; there are no settings to
 You don't need an account, a subscription or an internet connection to draw, save or export.
 
 > [!NOTE]
-> Working name, early prototype, [PIRA-Painting-Illustration/PIRA](https://github.com/PIRA-Painting-Illustration/PIRA) on GitHub (private). PIRA is an independent project. It contains
+> Early prototype, [PIRA-Painting-Illustration/PIRA](https://github.com/PIRA-Painting-Illustration/PIRA) on GitHub (private). PIRA is an independent project. It contains
 > software derived from [PhotoCraft](https://github.com/storytold/photocraft) by ArtCraft
 > contributors (MIT OR Apache-2.0), through the PhotoCraft Android port. It is not made or
 > supported by the PhotoCraft developers or ArtCraft, and it is not affiliated with Clip Studio
