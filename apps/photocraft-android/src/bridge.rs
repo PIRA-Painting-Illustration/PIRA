@@ -204,6 +204,7 @@ pub fn mime_for(name: &str) -> &'static str {
         Some("txt") => "text/plain",
         Some("json") => "application/json",
         Some("zip") => "application/zip",
+        Some("mp4") => "video/mp4",
         _ => "application/octet-stream",
     }
 }
@@ -316,5 +317,6 @@ mod tests {
         assert_eq!(mime_for("doc.psd"), "image/vnd.adobe.photoshop");
         assert_eq!(mime_for("noext"), "application/octet-stream");
         assert_eq!(mime_for("x.pcraft"), "application/octet-stream");
+        assert_eq!(mime_for("Cat timelapse.mp4"), "video/mp4");
     }
 }

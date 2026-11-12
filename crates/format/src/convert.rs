@@ -13,7 +13,7 @@ use photocraft_raster::{Surface, Tile, decode_pixel, encode_pixel};
 
 use crate::manifest::{
     ChannelM, CompAppearanceM, CompStateM, ContentM, DocM, EffectsM, FillCacheM, Hash, LayerCompM, LayerM, MaskM, MetadataM, NamedPathM, PatternM,
-    SmartSourceM, SurfaceM, TileRef, VectorPreviewM,
+    SmartSourceM, SurfaceM, TileRef, TimelapseFrameM, TimelapseM, VectorPreviewM,
 };
 use crate::{FormatError, Result};
 
@@ -286,7 +286,20 @@ pub(crate) fn doc_m(d: &Document, sink: &mut dyn Sink) -> DocM {
         slices: d.slices.clone(),
         perspective_ruler: d.perspective_ruler.clone(),
         pira: d.pira.clone(),
+        timelapse: timelapse_m(&d.timelapse, sink),
     }
+}
+
+/// The log as the manifest holds it: `None` when it neither records nor holds anything, so files
+/// without a timelapse stay as they were.
+fn timelapse_m(log: &photocraft_doc::TimelapseLog, sink: &mut dyn Sink) -> Option<TimelapseM> {
+    let recording = log.recording();
+    let frames = log.frames();
+    if !recording && frames.is_empty() {
+        return None;
+    }
+    let frames = frames.iter().map(|f| TimelapseFrameM { width: f.width, height: f.height, jpeg: sink.blob(&f.jpeg) }).collect();
+    Some(TimelapseM { recording, frames })
 }
 
 fn effects_m(e: &Effects, sink: &mut dyn Sink) -> EffectsM {
@@ -726,7 +739,24 @@ impl Loader<'_> {
                 pira.rulers.retain(|r| r.shape.ok(f64::from(m.size.width), f64::from(m.size.height)));
                 pira
             },
+            timelapse: self.timelapse(m.timelapse.as_ref()),
         })
+    }
+
+    /// The timelapse log. A snapshot that can't be read (missing, over the load limits, or of an
+    /// impossible size) is left out rather than refusing the document: the painting matters more
+    /// than its history.
+    fn timelapse(&mut self, m: Option<&TimelapseM>) -> photocraft_doc::TimelapseLog {
+        let Some(m) = m else { return photocraft_doc::TimelapseLog::default() };
+        let side = 4 * photocraft_doc::timelapse::FRAME_SIDE;
+        let frames = m
+            .frames
+            .iter()
+            .filter(|f| (1..=side).contains(&f.width) && (1..=side).contains(&f.height))
+            .take(photocraft_doc::timelapse::MAX_FRAMES)
+            .filter_map(|f| self.fetch.blob(&f.jpeg).ok().map(|jpeg| photocraft_doc::TimelapseFrame { width: f.width, height: f.height, jpeg }))
+            .collect();
+        photocraft_doc::TimelapseLog::from_parts(m.recording, frames)
     }
 
     fn channel(&mut self, c: &ChannelM) -> Result<AlphaChannel> {

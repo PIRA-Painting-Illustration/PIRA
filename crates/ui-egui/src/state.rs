@@ -495,6 +495,9 @@ pub struct UiState {
     /// Object tool and 3D panel (see `object_tool`).
     #[serde(default)]
     pub object_tool: crate::object_tool::ObjectToolUi,
+    /// File › Timelapse › Export Timelapse's window, while it is open.
+    #[serde(skip)]
+    pub timelapse_export: Option<crate::timelapse_ui::ExportDialog>,
     /// The contextual task bar as drawn in the last frame: its screen rect `[x0, y0, x1, y1]` in
     /// points, `None` while no bar shows (`ui.inspect` › `taskBar`).
     #[serde(skip)]
@@ -681,6 +684,7 @@ impl Default for UiState {
             slices: Default::default(),
             frame_tool: Default::default(),
             object_tool: Default::default(),
+            timelapse_export: None,
             task_bar_shown: None,
             artboard_tool: Default::default(),
             shell: Default::default(),

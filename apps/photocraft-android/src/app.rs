@@ -56,6 +56,8 @@ fn run(android: AndroidApp) -> Result<(), String> {
             photocraft_text::fonts::add_font_dir(crate::fonts::fonts_dir(&files_dir));
             let mut services = crate::services::services(bridge.clone(), &files_dir);
             services.inbox = Some(inbox.clone());
+            // File › Timelapse › Export Timelapse: the system's H.264 encoder.
+            services.video_encoder = Some(crate::video_encoder::factory());
             // The Shortcut Pad (Window › Shortcut Pad) and updates (Help › Check for Updates…):
             // their menu rows go to the app's menus.
             // PIRA's studio layout (menu row, command bar, two tool columns, Layers on the right

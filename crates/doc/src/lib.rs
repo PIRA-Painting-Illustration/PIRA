@@ -22,6 +22,7 @@ pub mod scene3d;
 pub mod slices;
 pub mod text;
 pub mod text_styles;
+pub mod timelapse;
 pub mod variables;
 pub mod vector;
 pub mod video;
@@ -49,6 +50,7 @@ pub use scene3d::{Body3d, Camera3d, Figure3d, Look3d, Scene3d, Scene3dLayer, Sha
 use serde::{Deserialize, Serialize};
 pub use slices::{Slice, SliceKind, SliceOrigin, Slices};
 pub use text_styles::TextStyles;
+pub use timelapse::{TimelapseFrame, TimelapseLog};
 pub use variables::{DataSet, DataValue, PixelAlign, PixelMethod, VarKind, VariableDef, Variables};
 pub use vector::{
     ClippingPath, FillRule, Knot, LineCap, LineJoin, LiveShape, NamedPath, Path, PathOp, ShapeLayer, ShapeStroke, StrokeAlign, Subpath, VectorMask,
@@ -966,6 +968,9 @@ pub struct Document {
     pub file_encoding: FileEncoding,
     /// PIRA's own settings (a comic page's trim and safe area, …).
     pub pira: PiraDoc,
+    /// File › Timelapse: the snapshots of how the canvas was painted. Shared by every version of
+    /// the document in its history (see [`timelapse`]).
+    pub timelapse: TimelapseLog,
 }
 
 /// The encoder settings a document's file was opened or saved with: what File › Save and the
@@ -1048,6 +1053,7 @@ impl Document {
             timeline: None,
             file_encoding: FileEncoding::default(),
             pira: PiraDoc::default(),
+            timelapse: TimelapseLog::default(),
         }
     }
 

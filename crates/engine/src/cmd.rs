@@ -155,6 +155,7 @@ pub mod stamp_cmds;
 pub mod style_asl_cmds;
 pub mod swatch_cmds;
 pub mod symmetry_cmds;
+pub mod timelapse_cmds;
 pub(super) mod timeline_cmds;
 pub mod transform_cmds;
 pub(super) mod trap_cmds;
@@ -272,7 +273,7 @@ fn build() -> Vec<CommandSpec> {
             "New…",
             ["File"],
             Some("Cmd+N"),
-            r##"{"width":1..300000=1920,"height":1..300000=1080 (pixel counts are rounded),"mode":"rgb|gray|grayscale|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|backgroundColor|transparent|#rrggbb"="white","backgroundColor":[r,g,b]? (0..1; defaults to toolbox colour),"resolution":1..30000=72 (ppi),"name":str,"artboard":bool=false (one artboard over the canvas, its background the chosen one, holding an empty Layer 1; no Background layer),"profile":"working"|built-in id|path to an .icc file="working" (the colour profile it is tagged with; it must suit the mode),"comicPage":{"bleed":px,"safe":px}? (a comic page: the canvas is the trim size plus the bleed; guides mark the trim and the safe area inside it)}"##,
+            r##"{"width":1..300000=1920,"height":1..300000=1080 (pixel counts are rounded),"mode":"rgb|gray|grayscale|cmyk|lab"="rgb","depth":8|16|32=8,"background":"white|black|backgroundColor|transparent|#rrggbb"="white","backgroundColor":[r,g,b]? (0..1; defaults to toolbox colour),"resolution":1..30000=72 (ppi),"name":str,"artboard":bool=false (one artboard over the canvas, its background the chosen one, holding an empty Layer 1; no Background layer),"profile":"working"|built-in id|path to an .icc file="working" (the colour profile it is tagged with; it must suit the mode),"comicPage":{"bleed":px,"safe":px}? (a comic page: the canvas is the trim size plus the bleed; guides mark the trim and the safe area inside it),"timelapse":bool=false (File › Timelapse › Record Timelapse from the first stroke),"drawingLayer":bool=false (an empty Layer 1, active, above the Background layer, ready to paint on)}"##,
             always,
             |s, p| {
                 use crate::document_preset_cmds::{MAX_DIMENSION, MAX_RESOLUTION, background_color, color_mode, sample_type};
@@ -307,7 +308,13 @@ fn build() -> Vec<CommandSpec> {
                 let mut doc = if p.get("artboard").and_then(Value::as_bool).unwrap_or(false) {
                     crate::artboard_cmds::new_artboard_document(name, Size::new(w, h), mode, depth, background)
                 } else if let Some(c) = background {
-                    Document::with_background(name, Size::new(w, h), mode, depth, c)
+                    let mut d = Document::with_background(name, Size::new(w, h), mode, depth, c);
+                    // The New dialog's documents: the Background stays as it is and painting
+                    // starts on an empty layer above it (the top layer opens active).
+                    if p.get("drawingLayer").and_then(Value::as_bool).unwrap_or(false) {
+                        d.layers.push(Layer::raster("Layer 1", d.pixel_format()));
+                    }
+                    d
                 } else {
                     let mut d = Document::new(name, Size::new(w, h), mode, depth);
                     d.layers.push(Layer::raster("Layer 1", d.pixel_format()));
@@ -333,6 +340,9 @@ fn build() -> Vec<CommandSpec> {
                         });
                     }
                     doc.icc_profile = Some(prof.to_bytes());
+                }
+                if p.get("timelapse").and_then(Value::as_bool).unwrap_or(false) {
+                    doc.timelapse.set_recording(true);
                 }
                 let i = s.add_document(doc, None);
                 Ok(json!({ "document": i }))
@@ -1455,6 +1465,7 @@ fn build() -> Vec<CommandSpec> {
     v.extend(crate::frame_cmds::specs());
     v.extend(crate::migrate_cmds::specs());
     v.extend(crate::trap_cmds::specs());
+    v.extend(crate::timelapse_cmds::specs());
     v.extend(crate::timeline_cmds::specs());
     v.extend(crate::video_cmds::specs());
     v.extend(crate::jobs::specs());
@@ -1541,5 +1552,28 @@ mod parse_hex_tests {
         let g = 15.0 / 255.0;
         assert_eq!(parse_hex("#0f0f0f"), Some([g, g, g, 1.0]));
         assert_eq!(parse_hex("#0f0f0fff"), Some([g, g, g, 1.0]));
+    }
+}
+
+#[cfg(test)]
+mod new_document_tests {
+    use super::*;
+
+    #[test]
+    fn a_drawing_layer_opens_empty_and_active_above_the_background() {
+        let mut s = Session::new();
+        s.execute("file.new", json!({"width": 8, "height": 8, "drawingLayer": true})).unwrap();
+        let st = s.active().unwrap();
+        assert_eq!(st.doc.layers.len(), 2);
+        assert!(st.doc.is_background(st.doc.layers[0].id), "the Background stays at the bottom");
+        let top = &st.doc.layers[1];
+        assert_eq!((top.name.as_str(), st.active_layer), ("Layer 1", Some(top.id)));
+        assert_eq!(top.content, Layer::raster("x", st.doc.pixel_format()).content, "nothing on it yet");
+        assert!(!st.is_dirty(), "a fresh document, not an edit");
+        // Transparent already opens on an empty Layer 1, and the default stays one layer.
+        s.execute("file.new", json!({"width": 8, "height": 8, "background": "transparent", "drawingLayer": true})).unwrap();
+        assert_eq!(s.active().unwrap().doc.layers.len(), 1);
+        s.execute("file.new", json!({"width": 8, "height": 8})).unwrap();
+        assert_eq!(s.active().unwrap().doc.layers.len(), 1);
     }
 }

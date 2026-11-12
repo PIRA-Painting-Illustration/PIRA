@@ -23,6 +23,7 @@ mod fidelity;
 mod format;
 mod image;
 mod lab;
+pub mod mp4;
 mod options;
 pub mod orientation;
 pub mod resolution;

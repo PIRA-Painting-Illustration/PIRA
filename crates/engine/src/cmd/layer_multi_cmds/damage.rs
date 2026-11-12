@@ -255,6 +255,8 @@ fn doc_pixels_equal(a: &Document, b: &Document) -> bool {
         timeline: _,
         file_encoding: _,
         pira: _,
+        // The timelapse log records how the canvas was painted; it draws nothing.
+        timelapse: _,
     } = a;
     *size == b.size
         && resolution_dpi.to_bits() == b.resolution_dpi.to_bits()
@@ -410,6 +412,8 @@ pub fn selection_only_change(a: &Document, b: &Document) -> bool {
         timeline,
         file_encoding,
         pira,
+        // The timelapse log records how the canvas was painted; it draws nothing.
+        timelapse: _,
     } = a;
     // The ignored fields above are the pixel ones `pixels_equal_with` already compares.
     pixels_equal_with(a, b, video_frames_equal)

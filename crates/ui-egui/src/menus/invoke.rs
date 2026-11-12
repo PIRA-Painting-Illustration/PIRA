@@ -540,6 +540,7 @@ fn open_path(app: &mut PhotocraftApp, path: &str) -> Result<Value, String> {
 fn invoke_export_command(app: &mut PhotocraftApp, id: &str, params: &Value) -> Result<Option<Result<Value, String>>, String> {
     let result = match id {
         "file.export.exportAs" => Some(Ok(json!({"dialog": crate::export_dialog::open(app)?}))),
+        "file.timelapse.export" => Some(crate::timelapse_ui::open(app)),
         "file.export.quickExportAsPng" => Some(crate::export_dialog::quick_export_png(app)),
         "file.export.renderVideo" if params.get("dir").is_none() => {
             #[cfg(target_arch = "wasm32")]

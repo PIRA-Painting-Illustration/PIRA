@@ -123,6 +123,9 @@ const MODE_CHECKS: [&str; 11] = ["rgb", "grayscale", "cmyk", "lab", "multichanne
 
 /// Is a UI-level panel toggle currently on (for checkmarks)?
 pub(crate) fn checked(app: &PhotocraftApp, id: &str) -> Option<bool> {
+    if id == "file.timelapse.record" {
+        return Some(app.session.active().is_some_and(|st| st.doc.timelapse.recording()));
+    }
     if let Some(checked) = crate::panel_docking::checked(app, id) {
         return Some(checked);
     }
