@@ -4,7 +4,7 @@ The tile sits at (148, 123) in a 3000 px canvas; its painted strokes are lifted 
 navy, placed on a disc of the same navy extended past the tile, and ringed with a thin
 teal-violet-rose rim. Then run from_logo.py to make every icon size.
 
-    python tools/pira-icon/round_from_tile.py "piralogo 2.png" assets/app-icon/pira-logo-round.png
+    python tools/pira-icon/round_from_tile.py "piralogo 3.png" assets/app-icon/pira-logo-round.png
 """
 import math
 import sys

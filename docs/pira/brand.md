@@ -6,7 +6,10 @@ Secondary lines: "Art Without Limits", "Create Freely. Share Openly."
 The logo is drawn by the project owner: `assets/app-icon/pira-logo-round.png`, a painted feather
 "P" on a dark disc. `brand-concept.webp` is an AI-generated concept
 board for direction only: it is not the logo and none of its artwork ships in the app. Every app icon
-size is made from the logo with `tools/pira-icon/from_logo.py`.
+size is made from the logo with `tools/pira-icon/from_logo.py`, and PIRA Pose's icon (the logo with
+the figure badge, `pira-pose-badge.png`) with `tools/pira-icon/pose_from_logo.py`. The disc comes
+from the owner's painted tile ("piralogo 3") with `round_from_tile.py`; the lockups in
+`assets/brand/` from `tools/pira-wordmark/chrome_set.py`.
 
 ## Palette
 
