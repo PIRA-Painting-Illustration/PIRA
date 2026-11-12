@@ -3,7 +3,7 @@
 **Integrated business plan, product requirements, engineering strategy, and community marketplace blueprint**  
 **Status:** Proposal / discovery baseline; not an implemented product  
 **Version:** 0.1 • **Date:** October 29, 2026  
-**Working name:** PIRA — Painting, Illustration & Raster Art (provisional; perform trademark and name clearance before publication). Earlier drafts used "PIRA".  
+**Name:** PIRA — Painting, Illustration & Raster Art.  
 **Project origin:** Independently branded application inspired by and potentially derived from ArtCraft PhotoCraft (`storytold/photocraft`).
 
 > **Decision in one sentence:** Build a free, offline-first, tablet-native professional painting app on a reusable Rust document/rendering core, and operate an optional, separately hosted brush-and-assets community with free and paid offerings. **The marketplace must never be required to paint.**

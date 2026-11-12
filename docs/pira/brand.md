@@ -1,4 +1,4 @@
-# PIRA brand (working)
+# PIRA brand
 
 **PIRA — Painting, Illustration & Raster Art.** Tagline: *Painting, Illustration & Raster Art.*
 Secondary lines: "Art Without Limits", "Create Freely. Share Openly."
