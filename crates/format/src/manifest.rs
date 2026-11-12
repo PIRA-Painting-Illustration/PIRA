@@ -98,6 +98,26 @@ pub struct DocM {
     /// PIRA's own document settings (missing in older files = none set).
     #[serde(default, skip_serializing_if = "photocraft_doc::PiraDoc::is_default")]
     pub pira: photocraft_doc::PiraDoc,
+    /// File › Timelapse: whether the canvas records, and its snapshots (absent: not recording and
+    /// nothing recorded).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub timelapse: Option<TimelapseM>,
+}
+
+/// A document's timelapse log: one JPEG blob per snapshot, oldest first.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TimelapseM {
+    #[serde(default)]
+    pub recording: bool,
+    #[serde(default)]
+    pub frames: Vec<TimelapseFrameM>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TimelapseFrameM {
+    pub width: u32,
+    pub height: u32,
+    pub jpeg: Hash,
 }
 
 /// Reads [`DocM::perspective_ruler`]: any point that isn't `[x, y]` (or a list that isn't one of

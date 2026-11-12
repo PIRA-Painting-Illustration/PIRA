@@ -1227,7 +1227,12 @@ pub fn confirm(app: &mut PhotocraftApp, id: u64) -> Result<Value, String> {
     let d = app.ui.close_dialog(id).ok_or_else(|| format!("no dialog {id}"))?;
     match d.kind {
         DialogKind::NewDocument => {
-            let r = app.run("file.new", crate::new_doc_ui::command_params(&d.fields));
+            let mut params = crate::new_doc_ui::command_params(&d.fields);
+            // Painting starts on an empty layer above the Background, not on the Background.
+            if let Some(o) = params.as_object_mut() {
+                o.insert("drawingLayer".into(), json!(true));
+            }
+            let r = app.run("file.new", params);
             if let Some(i) = app.session.active_index() {
                 app.ui.views[i].fit_pending = true;
             }

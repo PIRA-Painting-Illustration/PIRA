@@ -74,6 +74,11 @@ pub struct DocState {
     /// type layer keeps such a name although it looks like a copy's ("Title copy 2"), while a
     /// name Duplicate Layer made still follows the text (#9023). Kept for the session only.
     pub(crate) typed_names: std::collections::HashMap<LayerId, String>,
+    /// File › Timelapse: the revision the last snapshot was taken at, when it was taken, and
+    /// whether one is being taken now (`timelapse_cmds`).
+    pub(crate) timelapse_seen: u64,
+    pub(crate) timelapse_at: Option<web_time::Instant>,
+    pub(crate) timelapse_busy: Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl DocState {
@@ -134,6 +139,9 @@ impl DocState {
             save_snapshot: None,
             source_snapshot: None,
             typed_names: Default::default(),
+            timelapse_seen: 0,
+            timelapse_at: None,
+            timelapse_busy: Default::default(),
         }
     }
     /// The selected layers in bottom-to-top document order, always including the active layer.

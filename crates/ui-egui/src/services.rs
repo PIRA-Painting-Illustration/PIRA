@@ -479,6 +479,9 @@ pub struct Services {
     pub automation_authorize: Option<fn(&str, &serde_json::Value) -> photocraft_engine::Result<()>>,
     /// Encode an RGBA8 image as PNG (used for screenshots and `ui.render`).
     pub encode_png: Option<EncodePngFn>,
+    /// File › Timelapse › Export Timelapse: makes a video encoder (the platform's own H.264
+    /// encoder). `None` where the platform has none wired up: the export says so.
+    pub video_encoder: Option<photocraft_engine::timelapse_cmds::VideoEncoderFactory>,
     /// Open a URL in the system browser (native). Falls back to `ctx.open_url` (web) when unset.
     pub open_url: Option<OpenUrlFn>,
     /// Preferences ▸ General ▸ Beep When Done: the platform's default beep, played when a

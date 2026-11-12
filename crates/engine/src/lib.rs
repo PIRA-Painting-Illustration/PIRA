@@ -157,6 +157,7 @@ pub use cmd::stamp_cmds;
 pub use cmd::style_asl_cmds;
 pub use cmd::swatch_cmds;
 pub use cmd::symmetry_cmds;
+pub use cmd::timelapse_cmds;
 use cmd::timeline_cmds;
 pub use cmd::transform_cmds;
 use cmd::trap_cmds;

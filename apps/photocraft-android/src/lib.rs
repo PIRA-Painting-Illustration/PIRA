@@ -30,6 +30,7 @@ pub mod services;
 pub mod settings;
 pub mod touch;
 pub mod updates;
+pub mod video_encoder;
 
 #[cfg(target_os = "android")]
 mod app;

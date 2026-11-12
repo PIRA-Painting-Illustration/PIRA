@@ -35,6 +35,8 @@ pub static CATALOG: &[(&[&str], &str, Option<&str>, &str)] = &[
     (&["File", "Export"], "Paths to Illustrator…", None, "file.export.pathsToIllustrator"),
     (&["File", "Export"], "Render Video…", None, "file.export.renderVideo"),
     (&["File", "Generate"], "Image Assets", None, "file.generate.imageAssets"),
+    (&["File", "Timelapse"], "Record Timelapse", None, "file.timelapse.record"),
+    (&["File", "Timelapse"], "Export Timelapse…", None, "file.timelapse.export"),
     (&["File"], "---", None, "---"),
     (&["File"], "Place Embedded…", None, "file.placeEmbedded"),
     (&["File"], "Place Linked…", None, "file.placeLinked"),

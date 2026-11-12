@@ -90,6 +90,7 @@ pub(crate) fn validate_new_params(s: &Session, p: &Value) -> Result<()> {
             }
             "name" => (value.is_string(), "a string".into()),
             "artboard" => (value.is_boolean(), "true or false".into()),
+            "timelapse" | "drawingLayer" => (value.is_boolean(), "true or false".into()),
             "profile" => (value.as_str().is_some_and(|v| !v.is_empty()), "working, a built-in profile id or an .icc path".into()),
             "comicPage" => (comic_page(p).is_some(), "{\"bleed\": px, \"safe\": px}, together under a quarter of the smaller side".into()),
             _ => return Err(bad(cmd, format!("unknown parameter `{key}`"))),
