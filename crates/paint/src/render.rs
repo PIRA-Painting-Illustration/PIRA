@@ -48,10 +48,13 @@ pub const COV_TILE: i32 = 64;
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const DEFAULT_PARALLEL_MIN_PIXELS: usize = 256 * 256;
 
-/// The general loop (sampled tips, noise, textures, wet edges) reaches the thread pool at a quarter
-/// of the pixels: at about 9-12 ns a pixel, threads already halve a dab of 16,000 pixels or more.
+/// The general loop (sampled tips, noise, textures, wet edges) reaches the thread pool only at four
+/// times the pixels (512 × 512 by default). A stroke runs its dabs one after another with other
+/// work between them, so the pool's threads fall asleep and every parallel dab pays about 1.5 ms
+/// to wake them: more than a 200 px dab takes on one thread (about 10 ns a pixel). Splitting at
+/// 16,000 pixels made sampled brushes (Oil Paint, bristles) lag from about 120 px.
 #[cfg(not(target_arch = "wasm32"))]
-const GENERAL_LOOP_COST: usize = 4;
+const GENERAL_LOOP_SERIAL_FACTOR: usize = 4;
 
 /// The threshold in use: [`DEFAULT_PARALLEL_MIN_PIXELS`] (tests move it).
 #[cfg(not(target_arch = "wasm32"))]
@@ -390,7 +393,7 @@ impl BrushContext {
         // plain loop over an inlined row (a closure called from several sites cost a small dab a
         // tenth of its time).
         #[cfg(not(target_arch = "wasm32"))]
-        if parallel(out.len().saturating_mul(GENERAL_LOOP_COST)) {
+        if parallel(out.len() / GENERAL_LOOP_SERIAL_FACTOR) {
             use rayon::prelude::*;
             if let Some(dp) = depth.as_deref_mut() {
                 out.par_chunks_exact_mut(w).zip(dp.par_chunks_exact_mut(w)).enumerate().for_each(|(yy, (row, drow))| tip.row(yy, row, Some(drow)));
