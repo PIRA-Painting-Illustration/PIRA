@@ -80,3 +80,16 @@ fn an_export_runs_on_a_worker_and_writes_the_file() {
     assert_eq!(w[0], ("/tmp/cat timelapse.mp4".to_string(), format!("{frames} frames").into_bytes()));
     assert!(a.ui.status.contains("cat timelapse.mp4") && !a.ui.status_error, "{}", a.ui.status);
 }
+
+#[test]
+fn both_timelapse_menu_items_can_be_chosen_on_a_recording_canvas() {
+    // Export is a shell command the engine doesn't know; asking the engine greyed it out.
+    let (app, _) = app(true);
+    let items = crate::menus::menu_items(&app);
+    for id in ["file.timelapse.record", "file.timelapse.export"] {
+        let it = items.iter().find(|i| i.id == id).unwrap_or_else(|| panic!("{id} in the menus"));
+        assert!(it.enabled, "{id} is available");
+    }
+    let record = items.iter().find(|i| i.id == "file.timelapse.record").unwrap();
+    assert_eq!(record.checked, Some(true), "Record shows its checkmark");
+}

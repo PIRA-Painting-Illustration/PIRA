@@ -440,7 +440,7 @@ pub fn options_button(o: &mut ToolOptions, ui: &mut egui::Ui) {
         // Check mark, then the entry's icon (the overlays have one, #10889), then the label.
         let item = |ui: &mut egui::Ui, on: bool, icon: Option<&str>, label: &str, key: Option<&str>| {
             let mut atoms = egui::Atoms::default();
-            atoms.push_right(format!("{} ", if on { "✔" } else { "  " }));
+            atoms.push_right(format!("{} ", if on { "✓" } else { "  " }));
             if let Some(name) = icon {
                 atoms.push_right(crate::icons::image(name, 14.0, crate::theme::Tokens::get(ui.ctx()).icon));
             }

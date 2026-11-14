@@ -103,6 +103,7 @@ mod smart_svg_ui;
 #[path = "smart_svg_ui/browser.rs"]
 mod smart_svg_ui;
 mod text;
+pub mod render_video_file;
 pub mod timelapse_ui;
 mod tools;
 
