@@ -213,7 +213,7 @@ pub fn mnemonic_text(ui: &Ui, prefix: &str, label: &str, mnemonic: Option<char>,
 }
 
 /// The checkmark menu rows draw in their gutter.
-pub const CHECK_MARK: &str = "✔ ";
+pub const CHECK_MARK: &str = "✓ ";
 
 /// Width of the checkmark column every menu row reserves (#5705): the width of [`CHECK_MARK`] in
 /// the button font, so checked, unchecked and plain rows (and submenu headers) all start their
@@ -224,7 +224,7 @@ pub fn check_gutter(ui: &Ui) -> f32 {
 }
 
 /// A menu row's text (#5705): the label behind a fixed-width checkmark column ([`check_gutter`]),
-/// with ✔ in the column when `checked`, and the mnemonic underlined when given (as
+/// with ✓ in the column when `checked`, and the mnemonic underlined when given (as
 /// [`mnemonic_text`]).
 pub fn menu_row_text(ui: &Ui, checked: bool, label: &str, mnemonic: Option<char>) -> egui::WidgetText {
     let font = egui::TextStyle::Button.resolve(ui.style());
@@ -470,7 +470,7 @@ mod tests {
         assert_eq!(assign(&["Datei", "Bearbeiten"], &[Some('F'), Some('E')]), [Some('D'), Some('E')]);
         assert_eq!(assign(&["Aa", "Ab", "Ba"], &[Some('A'), Some('A'), Some('A')]), [Some('A'), Some('B'), None]);
         // Only ASCII letters and digits are keys: no mnemonic without one.
-        assert_eq!(assign(&["ファイル", "Zoom 100%", "✔ Rulers"], &[]), [None, Some('Z'), Some('R')]);
+        assert_eq!(assign(&["ファイル", "Zoom 100%", "✓ Rulers"], &[]), [None, Some('Z'), Some('R')]);
     }
 
     #[test]

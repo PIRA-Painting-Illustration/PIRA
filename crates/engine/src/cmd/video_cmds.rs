@@ -719,6 +719,42 @@ pub fn render_video_with(
     Ok(json!({"frames": files.len(), "dir": dir}))
 }
 
+/// Render Video as one MP4, for platforms that save a single file rather than a folder of frames
+/// (Android): every timeline frame composited on white, at most `max_side` pixels on its longer
+/// side, through the platform's video encoder at the timeline's frame rate.
+pub fn render_mp4(
+    s: &Session,
+    max_side: u32,
+    make: &crate::timelapse_cmds::VideoEncoderFactory,
+    mut progress: impl FnMut(usize, usize) -> bool,
+) -> std::result::Result<Vec<u8>, String> {
+    let st = s.active().ok_or("no document open")?;
+    let mut base = (*st.doc).clone();
+    store(&mut base);
+    let frames = base.timeline.as_ref().map_or(1, |t| t.duration).max(1);
+    if frames > crate::timeline_cmds::MAX_DURATION {
+        return Err(format!("the timeline is {frames} frames; Render Video is limited to {} frames", crate::timeline_cmds::MAX_DURATION));
+    }
+    let fps = base.timeline.as_ref().map(|t| t.fps).filter(|f| f.is_finite() && *f > 0.0).unwrap_or(30.0).round().clamp(1.0, 60.0) as u32;
+    let canvas = (base.size.width, base.size.height);
+    let side = canvas.0.max(canvas.1).min(max_side);
+    let (w, h) = crate::timelapse_cmds::output_size(canvas, side, crate::timelapse_cmds::Aspect::Original);
+    let mut enc = make(w, h, fps)?;
+    for f in 0..frames {
+        let mut doc = base.clone();
+        if let Some(t) = &mut doc.timeline {
+            t.current = f;
+        }
+        sync(&mut doc);
+        let (px, fw, fh) = crate::timelapse_cmds::composite_on_white(&doc, side).ok_or("the canvas could not be drawn")?;
+        enc.push_rgba(&crate::timelapse_cmds::fit(&px, fw, fh, w, h))?;
+        if !progress(f + 1, frames) {
+            return Err("cancelled".into());
+        }
+    }
+    enc.finish()
+}
+
 /// One animated GIF frame from straight RGBA pixels, as Save for Web's GIF does (#3061): pixels
 /// under 50 % opacity get the frame's transparent index, the rest are drawn opaque, and the
 /// palette is built from the visible pixels with one entry kept for transparency.

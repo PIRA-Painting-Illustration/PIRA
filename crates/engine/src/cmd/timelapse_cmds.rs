@@ -67,6 +67,18 @@ pub fn snapshot(doc: &Document) -> Option<TimelapseFrame> {
     Some(TimelapseFrame { width: w, height: h, jpeg: Arc::new(jpeg) })
 }
 
+/// The document composited over white at most `side` pixels on its longer side, as opaque RGBA
+/// with its width and height.
+pub fn composite_on_white(doc: &Document, side: u32) -> Option<(Vec<u8>, u32, u32)> {
+    let img = photocraft_compose::thumbnail(doc, side);
+    let (w, h) = (img.width, img.height);
+    if w == 0 || h == 0 {
+        return None;
+    }
+    let rgba = on_white(&img.pixels).as_chunks::<3>().0.iter().flat_map(|p| [p[0], p[1], p[2], 255]).collect();
+    Some((rgba, w, h))
+}
+
 /// Straight-alpha RGBA over white, as RGB.
 fn on_white(rgba: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(rgba.len() / 4 * 3);

@@ -121,7 +121,7 @@ fn the_shortcut_shows_a_layers_tab_closed_from_the_window_menu() {
     use egui_kittest::kittest::Queryable;
     h.get_by_label("Window").click();
     h.run_steps(4);
-    h.get_by_label("✔ Layers F7").click();
+    h.get_by_label("✓ Layers F7").click();
     h.run_steps(4);
     assert!(!h.state().ui.panels.layers, "Window › Layers closed the panel");
     h.state_mut().ui.layer_filter_name = "lin".into();

@@ -547,7 +547,13 @@ fn invoke_export_command(app: &mut PhotocraftApp, id: &str, params: &Value) -> R
             {
                 Some(Err("Render Video to a local directory is unavailable on the web".into()))
             }
-            #[cfg(not(target_arch = "wasm32"))]
+            // Android's pickers save one file, not a folder: an MP4 through the system video
+            // encoder, or an animated GIF when the file is named `.gif`.
+            #[cfg(target_os = "android")]
+            {
+                Some(crate::render_video_file::ask(app))
+            }
+            #[cfg(not(any(target_arch = "wasm32", target_os = "android")))]
             {
                 let document = app.session.active().ok_or("no document")?.doc.id;
                 let mut render_params = params.as_object().cloned().unwrap_or_default();

@@ -103,6 +103,9 @@ pub fn is_enabled(app: &PhotocraftApp, id: &str) -> bool {
         i if (i.starts_with("view.zoom") || i == "view.fitOnScreen" || i == "view.actualPixels") || i == "window.newWindowForDocument" => {
             app.session.active().is_some()
         }
+        // A shell command the engine doesn't know: on with a canvas open; the window explains
+        // when there's nothing recorded yet or no video encoder.
+        "file.timelapse.export" => app.session.active().is_some(),
         "edit.freeTransformCopy" => app.ui.transform.is_none() && app.session.active().and_then(|s| s.active_layer).is_some(),
         "edit.freeTransform"
         | "edit.transform.scale"
