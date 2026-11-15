@@ -1,4 +1,4 @@
-//! Special rulers (the Ruler tool's Special Ruler option), as in Clip Studio Paint: guides that
+//! Special rulers (the Ruler tool's Special Ruler option): guides that
 //! painting strokes snap to.
 //!
 //! - **Straight** and **Curve**: a stroke that starts near the ruler runs along it.

@@ -30,6 +30,6 @@ the UI uses the built-in Inter.
 
 ## Trade dress
 
-Take workflow ideas from painting apps (Clip Studio Paint, Procreate, Krita), never their
+Take workflow ideas from painting apps (Procreate, Krita and the like), never their
 artwork, icons, names, layouts copied one to one, or brush files. Our preset names are generic
 (HB Pencil, Inking Pen, Brush Pen…), not another app's product names.

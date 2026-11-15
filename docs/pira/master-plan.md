@@ -23,7 +23,7 @@ Artists face subscriptions, fragmented brush formats, platform-specific features
 4. **Optional commerce:** creators retain ownership and set prices or offer free downloads; payment infrastructure is not part of the core application runtime.
 
 ### Strategic positioning
-**“Professional painting without a subscription, with an open community of artists and brush makers.”** Competitors/workflow references include Clip Studio Paint, Procreate, Krita, and Infinite Painter. Do not claim feature or performance parity without comparative testing.
+**“Professional painting without a subscription, with an open community of artists and brush makers.”** Competitors/workflow references include Procreate, Krita and Infinite Painter. Do not claim feature or performance parity without comparative testing.
 
 ### First platform
 Android ARM64 drawing tablets, with the Wacom MovinkPad 11 as initial reference hardware; consider desktop Linux/Windows/macOS once architecture and contributor capacity support it. A cross-platform Rust core is an objective, not a guarantee that UI or hardware work is automatically portable.
@@ -41,8 +41,8 @@ An artist can install the app, disconnect from the internet, sketch with pressur
 - Use `Apache-2.0 OR MIT` for original program code unless a dependency/licensing review justifies a different choice. This document is a recommendation; official repository license is adopted at initialization.
 - Keep program source licenses distinct from creator-uploaded assets: the latter can use CC0, CC BY 4.0, or a clearly defined **commercial brush-content license**. Paid brush files need not be open-licensed just because the installer/editor is open source.
 - Supply a factual upstream credit in About/Credits and documentation: “Contains software derived from PhotoCraft by ArtCraft contributors, licensed under MIT OR Apache-2.0,” if code is actually imported.
-- The provisional product name **PIRA** requires trademark and namespace clearance; do not imply any affiliation with Clip Studio Paint or ArtCraft. Develop a distinct interface based on general interaction patterns, not copied proprietary assets or near-identical trade dress.
-- Avoid direct redistribution or reverse engineering of proprietary Clip Studio Paint brush bundles, UI artwork or protected program code without authorization.
+- The provisional product name **PIRA** requires trademark and namespace clearance; do not imply any affiliation with other painting apps or ArtCraft. Develop a distinct interface based on general interaction patterns, not copied proprietary assets or near-identical trade dress.
+- Avoid direct redistribution or reverse engineering of proprietary brush bundles, UI artwork or protected program code without authorization.
 
 **Go/no-go audit:** inspect PhotoCraft engine crate boundaries and API stability; profile Android GPU backend; read upstream NOTICE/ATTRIBUTION; assess Android port provenance; conduct baseline memory/performance tests; choose a pinned upstream snapshot and a periodic integration process. Reusing PhotoCraft should remain a reversible decision: the core must be swappable behind well-defined interfaces.
 
@@ -119,7 +119,7 @@ The project must **not** treat GMV as its revenue, and even 2,000 paid pack tran
 | P-14 | P2 | Advanced paint simulation | Pigment diffusion, wet-on-wet, bristle loading, impasto-like effect where feasible |
 | P-15 | P2 | Desktop distribution | Reuse core; separate native desktop shell and stylus testing |
 
-**Explicitly out of scope for MVP:** cloud project storage, collaborative real-time painting, AI image generation, animation timeline, full Clip Studio Paint parity, social DMs, and automatic import of arbitrary proprietary brush formats.
+**Explicitly out of scope for MVP:** cloud project storage, collaborative real-time painting, AI image generation, animation timeline, parity with commercial painting suites, social DMs, and automatic import of arbitrary proprietary brush formats.
 
 ### Nonfunctional targets (engineering targets, not promised specifications)
 - Reference device: Wacom MovinkPad 11 with Pro Pen 3; verify the actual Android events exposed by the device before committing to tilt or eraser behavior.
@@ -146,7 +146,7 @@ The project must **not** treat GMV as its revenue, and even 2,000 paid pack tran
 - **Brush Studio:** tip shape/grain, size, spacing, scatter, wetness, pressure/tilt/rotation curves, preview stroke, save/version/export; show live sensor telemetry for diagnosing devices.
 - **Community:** a collapsible optional panel with Discover, Free, Paid, My Library, Publish, Report, and Settings. Canvas features remain available without community login.
 
-**Principles:** fast first stroke, no modal interruption during drawing, left/right handed layouts, tool state visible at a glance, no dark patterns, no notifications unless explicitly enabled. Use original icons/color palette; do not reproduce Clip Studio Paint's protected branded visual design.
+**Principles:** fast first stroke, no modal interruption during drawing, left/right handed layouts, tool state visible at a glance, no dark patterns, no notifications unless explicitly enabled. Use original icons/color palette; do not reproduce another app's protected branded visual design.
 
 ### Brush priority
 **Tier 1:** HB/2B/6B graphite, mechanical pencil, fine liner, ink, marker, airbrush, dry gouache.  
@@ -344,7 +344,7 @@ Never assume analytics consent, and do not compromise offline mode to inflate tr
 
 **First irreversible decision to avoid:** committing to a trademark/package name, proprietary brush system, or checkout architecture before a working stylus prototype and licensing review.
 
-**Near-term proof of concept:** A smooth 2B pencil on the MovinkPad 11 that automatically broadens with tilt, a 20-layer test document, robust save/recovery, and a simple brush-pack file loaded entirely offline. Demonstrate these before promising a Clip Studio Paint-class replacement.
+**Near-term proof of concept:** A smooth 2B pencil on the MovinkPad 11 that automatically broadens with tilt, a 20-layer test document, robust save/recovery, and a simple brush-pack file loaded entirely offline. Demonstrate these before promising a replacement for commercial painting suites.
 
 ## 16. Sources and external validation (checked 2026-10-29)
 

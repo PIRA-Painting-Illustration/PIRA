@@ -14,10 +14,12 @@ pub const GITHUB: &str = "https://github.com/storytold/photocraft";
 pub const ISSUES: &str = "https://github.com/PIRA-Painting-Illustration/PIRA/issues";
 /// PIRA's home on GitHub (the start screen's link).
 pub const PIRA_GITHUB: &str = "https://github.com/PIRA-Painting-Illustration/PIRA";
+/// PIRA's website, with the downloads and the user guide (Help › PIRA Website).
+pub const PIRA_WEBSITE: &str = "https://pira-art.com";
 
 /// Help-menu link commands: (id, url). Labels live in `menus::UI_COMMANDS`.
 pub const COMMANDS: &[(&str, &str)] =
-    &[("help.website", PIRA_GITHUB), ("help.artcraftWebsite", ARTCRAFT_WEBSITE), ("help.github", GITHUB), ("help.reportIssue", ISSUES)];
+    &[("help.website", PIRA_WEBSITE), ("help.artcraftWebsite", ARTCRAFT_WEBSITE), ("help.github", GITHUB), ("help.reportIssue", ISSUES)];
 
 pub fn url_for(id: &str) -> Option<&'static str> {
     COMMANDS.iter().find(|c| c.0 == id).map(|c| c.1)
@@ -129,7 +131,7 @@ mod tests {
         let mut app = PhotocraftApp::new(photocraft_engine::Session::new(), Default::default());
         let ctx = egui::Context::default();
         for (id, url) in [
-            ("help.website", "https://github.com/PIRA-Painting-Illustration/PIRA"),
+            ("help.website", "https://pira-art.com"),
             ("help.reportIssue", "https://github.com/PIRA-Painting-Illustration/PIRA/issues"),
             ("help.github", "https://github.com/storytold/photocraft"),
         ] {

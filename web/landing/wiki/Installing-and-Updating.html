@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="The current test build is 0.1.0-7: download it here. Every release on the Releases page has a file for each system.">
+<meta name="description" content="The current version is 0.2.0-beta, a free beta. Every release, with its notes, is on the Releases page.">
 <title>Installing and updating · PIRA wiki</title>
 <link rel="icon" type="image/png" href="../media/logo-64.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Philosopher:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -68,15 +68,16 @@ footer{padding:26px 0 50px;color:var(--muted);font-size:13px;border-top:1px soli
 <ul><li><a href="Troubleshooting-and-FAQ.html">Troubleshooting and FAQ</a></li><li><a href="Credits-and-Licences.html">Credits and licences</a></li></ul></div></details></aside>
 <main><article>
 <h1 id="installing-and-updating">Installing and updating</h1>
-<p>The current test build is <strong>0.1.0-7</strong>: <a href="https://github.com/PIRA-Painting-Illustration/PIRA/releases/tag/android-v0.1.0-7" rel="noopener">download it here</a>. Every release on the <a href="https://github.com/PIRA-Painting-Illustration/PIRA/releases" rel="noopener">Releases page</a> has a file for each system.</p>
-<div class="table"><table><thead><tr><th>System</th><th>File</th><th>How to install</th></tr></thead><tbody><tr><td>Android tablets (64-bit ARM)</td><td><code>pira-&lt;version&gt;-arm64-v8a.apk</code></td><td>Open the APK on the tablet. Android asks to allow installs from that source the first time.</td></tr><tr><td>Windows 10 and 11 (64-bit)</td><td><code>pira-&lt;version&gt;-windows-x64.zip</code></td><td>Unzip it anywhere and run <code>PIRA.exe</code>.</td></tr><tr><td>Linux (x86_64)</td><td><code>pira-&lt;version&gt;-linux-x86_64.tar.gz</code></td><td>Extract it and run <code>./pira</code>.</td></tr></tbody></table></div>
+<p>The current version is <strong>0.2.0-beta</strong>, a free beta. Every release, with its notes, is on the <a href="https://github.com/PIRA-Painting-Illustration/PIRA/releases" rel="noopener">Releases page</a>.</p>
+<div class="table"><table><thead><tr><th>System</th><th>Download</th><th>How to install</th></tr></thead><tbody><tr><td>Android tablets (64-bit ARM, Android 8 or newer)</td><td><a href="https://github.com/PIRA-Painting-Illustration/PIRA/releases/download/v0.2.0-beta/pira-0.2.0-beta-arm64-v8a.apk" rel="noopener">pira-0.2.0-beta-arm64-v8a.apk</a></td><td>Open the APK on the tablet. Android asks to allow installs from that source the first time.</td></tr><tr><td>Windows 10 and 11 (64-bit)</td><td><a href="https://github.com/PIRA-Painting-Illustration/PIRA/releases/download/v0.2.0-beta/pira-0.2.0-beta-windows-x64.zip" rel="noopener">pira-0.2.0-beta-windows-x64.zip</a></td><td>Unzip it anywhere and run <code>PIRA.exe</code>.</td></tr><tr><td>Linux (x86_64)</td><td><a href="https://github.com/PIRA-Painting-Illustration/PIRA/releases/download/v0.2.0-beta/pira-0.2.0-beta-linux-x86_64.tar.gz" rel="noopener">pira-0.2.0-beta-linux-x86_64.tar.gz</a></td><td>Extract it and run <code>./pira</code>.</td></tr></tbody></table></div>
 <p>There's no Mac build.</p>
+<p>PIRA is a beta: keep copies of work that matters, and report problems on <a href="https://github.com/PIRA-Painting-Illustration/PIRA/issues" rel="noopener">GitHub</a>.</p>
 <h2 id="android">Android</h2>
 <ul><li>PIRA is made for pen tablets with a pressure-sensitive stylus. A finger works too, but pressure and tilt need a pen.</li><li>Installing a newer APK over an older one keeps your settings, brushes and files.</li></ul>
 <h2 id="windows-and-linux">Windows and Linux</h2>
 <ul><li>The desktop builds are portable: no installer, and nothing goes into the system folders.</li><li>Windows may warn that the publisher is unknown, because PIRA isn't code-signed yet. Choose <strong>More info › Run anyway</strong>.</li><li>Pen tablets work through the system's pen support, and on Windows also through WinTab (Wacom and similar drivers).</li><li>Settings are kept in <code>%APPDATA%\PIRA</code> on Windows and <code>~/.config/pira</code> on Linux.</li><li><strong>Portable mode:</strong> put an empty file named <code>portable.txt</code> next to <code>PIRA.exe</code> (or <code>pira</code>) and PIRA keeps its settings in a <code>PIRAData</code> folder beside it instead, for a copy on a USB stick.</li></ul>
 <h2 id="updates">Updates</h2>
-<ul><li><strong>Help › Check for Updates…</strong> looks for a newer release and offers to download it.</li><li>Preferences can check automatically at startup.</li><li>On Android the update downloads the new APK and hands it to Android's installer.</li></ul>
+<ul><li><strong>Help › Check for Updates…</strong> looks for a newer release and offers to download it.</li><li>Preferences can check automatically at startup.</li><li>On Android the update downloads the new APK and hands it to Android's installer.</li><li>A beta is offered the next beta and then the full release. A full release is only offered other full releases.</li><li>The check needs no account: it reads PIRA's public releases on GitHub.</li><li><strong>Copies from before 0.2.0-beta</strong> (the 0.1.0 test builds) can't update themselves. Install 0.2.0-beta by hand once, over the top: your settings and files are kept.</li></ul>
 <nav class="pager"><a href="index.html">Previous<b>PIRA wiki</b></a><a href="The-Workspace.html" style="text-align:right">Next<b>The workspace</b></a></nav>
 </article></main>
 </div>

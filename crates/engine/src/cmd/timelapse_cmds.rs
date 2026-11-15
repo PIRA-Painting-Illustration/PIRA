@@ -1,4 +1,4 @@
-//! File › Timelapse, as in Clip Studio Paint: Record Timelapse keeps a snapshot of the canvas
+//! File › Timelapse: Record Timelapse keeps a snapshot of the canvas
 //! after each change (the log lives in the document, [`photocraft_doc::timelapse`]), and Export
 //! Timelapse turns the snapshots into a sped-up video of a chosen length, size and shape.
 //!
@@ -320,8 +320,7 @@ fn decode_rgba(jpeg: &[u8], w: u32, h: u32) -> std::result::Result<Vec<u8>, Stri
     Ok(img.to_rgba8())
 }
 
-/// `src` (`sw` × `sh` RGBA8) scaled to fit inside `w` × `h`, centred on black (Clip Studio Paint
-/// fills the rest of another shape with black too), with bilinear filtering.
+/// `src` (`sw` × `sh` RGBA8) scaled to fit inside `w` × `h`, centred on black, with bilinear filtering.
 pub fn fit(src: &[u8], sw: u32, sh: u32, w: u32, h: u32) -> Vec<u8> {
     let mut out = vec![0u8; (w * h * 4) as usize];
     for p in out.as_chunks_mut::<4>().0 {

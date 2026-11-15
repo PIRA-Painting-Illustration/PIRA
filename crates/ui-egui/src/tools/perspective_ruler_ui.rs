@@ -1,6 +1,5 @@
 //! The perspective ruler on the canvas and in the options bars. The Ruler tool's options bar
-//! adds, shows and clears it (its Perspective option, as Clip Studio Paint makes perspective
-//! rulers with its Ruler tool), and with the Ruler tool the vanishing points drag: the new
+//! adds, shows and clears it (its Perspective option), and with the Ruler tool the vanishing points drag: the new
 //! perspective previews during the drag and is set on release (`view.perspectiveRuler.set`).
 //! Painting tools show a snap switch while there is a ruler; the snapping itself is in
 //! `stroke_constraint::perspective`. On the canvas: the eye level and lines fanning out from

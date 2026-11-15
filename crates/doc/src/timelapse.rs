@@ -1,6 +1,5 @@
 //! File › Timelapse: a canvas's painting history as a series of small JPEG snapshots, one taken
-//! shortly after each change (as Clip Studio Paint's timelapse records each mark), saved inside
-//! the `.pcraft` file and exported as a sped-up video.
+//! shortly after each change, saved inside the `.pcraft` file and exported as a sped-up video.
 //!
 //! The log is not part of what Undo restores: undoing a stroke records the canvas as it is after
 //! the undo, just as the stroke itself was recorded. Every version of a document in its history
@@ -59,8 +58,7 @@ impl TimelapseLog {
         self.lock().recording
     }
 
-    /// Turns recording on or off. Off deletes every snapshot (as in Clip Studio Paint, there is
-    /// no getting them back).
+    /// Turns recording on or off. Off deletes every snapshot, for good.
     pub fn set_recording(&self, on: bool) {
         let mut d = self.lock();
         d.recording = on;

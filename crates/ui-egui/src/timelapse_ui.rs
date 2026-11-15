@@ -1,5 +1,5 @@
 //! File › Timelapse in the app: snapshots of recording canvases taken off the UI thread, and
-//! the Export Timelapse window (length, size and shape, as in Clip Studio Paint), which asks
+//! the Export Timelapse window (length, size and shape), which asks
 //! where to save, renders and encodes on a worker with a progress bar, and writes the `.mp4`.
 //! The engine does the work (`photocraft_engine::timelapse_cmds`); the platform supplies the
 //! video encoder ([`crate::Services::video_encoder`]).

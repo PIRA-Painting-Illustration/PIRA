@@ -1,4 +1,4 @@
-//! PIRA's three drawing tools on the touch bar, split the way Clip Studio Paint splits them: a
+//! PIRA's three drawing tools on the touch bar, split by how they're used: a
 //! Pen for line art, a Pencil for sketching and shading, and a Brush for painting. Each is a
 //! family of PIRA's built-in presets (`presets::PENS`, `PENCILS`, `BRUSHES`) and remembers the
 //! brush it was last using, so one tap goes from inking back to the exact pencil you sketched

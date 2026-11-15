@@ -13,8 +13,7 @@ panels on the right, and the Shortcut Pad on the screen's edge.
 
 ## Tools
 
-The tool column is on the left. Painting tools sit on the **touch bar** as three families, the
-way Clip Studio Paint splits them:
+The tool column is on the left. Painting tools sit on the **touch bar** as three families:
 
 - **Pen:** solid inks with pressure width and steady lines.
 - **Pencil:** paper grain; pressure darkens and tilt shades.

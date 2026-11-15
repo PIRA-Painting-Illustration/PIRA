@@ -14,7 +14,7 @@ Found 2026-11-03. Recheck before working through it:
 
 **Done 2026-11-04:** sections 1–4, apart from the items below, now say PIRA, with their
 translation keys renamed in all catalogs:
-- Help: "PIRA on GitHub" (until the website exists), "Built on PhotoCraft" (upstream credit),
+- Help: "PIRA Website" (pira-art.com), "Built on PhotoCraft" (upstream credit),
   "ArtCraft Website", "Report an Issue…" (PIRA's issues) and "About PIRA". "Join the ArtCraft
   Discord…" is gone: it isn't PIRA's community.
 - Window title, OS app name, Windows .exe details, file-dialog filter, print, rasterize prompt,

@@ -16,17 +16,23 @@ def copyIconForeground = tasks.register('copyLauncherIconForeground', Copy) {
     into(iconRes.map { it.dir('mipmap-xxxhdpi') })
 }
 
-// The app version is the workspace's (Cargo.toml), so the APK never lags behind the engine, plus
-// the Android build number (RELEASE_BUILD, from build.sh) for repeat releases of one version:
-// 0.8.2 build 3 is "0.8.2-3", released as android-v0.8.2-3 (the updater compares these).
-// versionCode must grow with every release Android should accept as an update: 0.8.2-3 → 80203.
-// APP_VERSION (x.y.z) overrides it when the workspace is ahead of the release it's based on
-// (upstream's main already says the next version before it's released).
-def versionSource = System.getenv('APP_VERSION') ? "version = \"${System.getenv('APP_VERSION')}\"" : rootProject.file('../../../Cargo.toml').text
-def cargoVersion = (versionSource =~ /(?m)^version = "(\d+)\.(\d+)\.(\d+)"/)[0]
-def releaseBuild = (System.getenv('RELEASE_BUILD') ?: '0').toInteger()
-def appVersionName = "${cargoVersion[1]}.${cargoVersion[2]}.${cargoVersion[3]}" + (releaseBuild > 0 ? "-${releaseBuild}" : '')
-def appVersionCode = (cargoVersion[1].toInteger() * 10000 + cargoVersion[2].toInteger() * 100 + cargoVersion[3].toInteger()) * 100 + Math.min(releaseBuild, 99)
+// PIRA's version is the PIRA_VERSION file at the repository root ("0.2.0-beta", "0.2.0-beta.2",
+// "0.2.0"), the same one the desktop builds and the release tag (v<version>) use. APP_VERSION
+// overrides it for a one-off build. The updater (Updater.java) compares these names.
+// versionCode must grow with every release Android should accept as an update:
+// (major*10000 + minor*100 + patch)*100, plus the beta number for a beta (1 to 98) or 99 for the
+// release itself, so 0.2.0-beta < 0.2.0-beta.2 < 0.2.0 < 0.2.1-beta.
+def appVersionName = (System.getenv('APP_VERSION') ?: rootProject.file('../../../PIRA_VERSION').text).trim()
+def versionParts = (appVersionName =~ /^(\d+)\.(\d+)\.(\d+)(?:-beta(?:\.(\d+))?)?$/)
+if (!versionParts.matches()) {
+    throw new GradleException("PIRA_VERSION must look like 0.2.0, 0.2.0-beta or 0.2.0-beta.2, not '${appVersionName}'")
+}
+def isBeta = appVersionName.contains('-beta')
+def betaNumber = versionParts[0][4] ? versionParts[0][4].toInteger() : 1
+if (isBeta && (betaNumber < 1 || betaNumber > 98)) {
+    throw new GradleException("A beta number must be 1 to 98, not ${betaNumber}")
+}
+def appVersionCode = (versionParts[0][1].toInteger() * 10000 + versionParts[0][2].toInteger() * 100 + versionParts[0][3].toInteger()) * 100 + (isBeta ? betaNumber : 99)
 
 // Release signing. The key lives outside the repository: a properties file (PIRA_SIGNING, or
 // ~/pira-signing/keystore.properties by default) with storeFile and keyAlias, and the password
@@ -41,17 +47,6 @@ if (signingFile.exists()) {
     throw new GradleException("PIRA_RELEASE=1 but there is no signing key at ${signingFile} (see apps/photocraft-android/README.md, Release signing)")
 }
 def signingPassword = System.getenv('PIRA_KEY_PASSWORD') ?: signingProps.getProperty('password')
-
-// Dev update channel. PIRA's repository is private, so the updater needs a read-only GitHub
-// token to see its releases: PIRA_UPDATE_TOKEN, or the file ~/pira-signing/update-token/token.txt (kept
-// with the signing key, outside the repository). Use a fine-grained token limited to the PIRA
-// repository with Contents: read-only. Without one the APK builds with no update channel.
-// Dev builds only: before going live, delete the releases that carry it and revoke the token.
-def updateTokenFile = file("${System.getProperty('user.home')}/pira-signing/update-token/token.txt")
-def updateToken = (System.getenv('PIRA_UPDATE_TOKEN') ?: (updateTokenFile.exists() ? updateTokenFile.text : '')).trim()
-if (!(updateToken ==~ /[A-Za-z0-9_]*/)) {
-    throw new GradleException("The update token (${updateTokenFile}) has unexpected characters")
-}
 
 android {
     namespace 'ai.storyteller.photocraft'
@@ -68,7 +63,6 @@ android {
         ndk {
             abiFilters 'arm64-v8a'
         }
-        buildConfigField 'String', 'UPDATE_TOKEN', "\"${updateToken}\""
     }
 
     buildFeatures {
@@ -114,7 +108,6 @@ android {
 }
 
 tasks.named('preBuild') { dependsOn copyIcon, copyIconForeground }
-logger.lifecycle(updateToken.isEmpty() ? 'No update token: this APK has no update channel' : 'Update channel: on (token found)')
 logger.lifecycle(signingFile.exists() ? "Signing the release APK with the release key (${signingFile})" : 'Signing the release APK with the DEBUG key: for your own devices only, never publish it')
 
 dependencies {

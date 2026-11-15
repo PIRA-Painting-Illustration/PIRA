@@ -79,7 +79,7 @@ impl ComicPage {
     }
 }
 
-/// A special ruler, as in Clip Studio Paint: a guide painting strokes snap to. It belongs to a
+/// A special ruler: a guide painting strokes snap to. It belongs to a
 /// layer and shows (and snaps) only while that layer is active, or on every layer.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

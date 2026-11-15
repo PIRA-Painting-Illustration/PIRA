@@ -47,6 +47,14 @@ fn scramble(app: &mut PhotocraftApp) {
 
 const ERASER_TIP: [f64; 5] = [13.0, 1.0, 0.25, 0.0, 1.0];
 const DEFAULT_TIP: [f64; 5] = [20.0, 1.0, 0.1, 0.0, 1.0];
+/// The Eraser's own plain tip (`paint_mouse::ERASER_TIP`): a fresh or reset Eraser gets it, not the
+/// live brush's texture or smoothing.
+const PLAIN_ERASER_TIP: [f64; 5] = [30.0, 1.0, 0.1, 0.0, 1.0];
+
+/// The tip a reset gives `tool`.
+fn reset_tip(tool: Tool) -> [f64; 5] {
+    if tool == Tool::Eraser { PLAIN_ERASER_TIP } else { DEFAULT_TIP }
+}
 
 #[test]
 fn reset_tool_gives_the_background_eraser_a_13_px_hard_tip() {
@@ -101,13 +109,13 @@ fn other_tools_and_session_strokes_keep_their_tips() {
         pick(&mut a, tool);
         scramble(&mut a);
         control(&mut a, "ui.menu.invoke", json!({"id": "tool.reset"}));
-        assert_eq!(tip(&mut a), DEFAULT_TIP, "{tool:?}");
+        assert_eq!(tip(&mut a), reset_tip(tool), "{tool:?}");
     }
     let mut app = app();
     assert_eq!(tip(&mut app), DEFAULT_TIP, "what `paint.stroke` / `paint.backgroundEraser` paint with when no `brush` is given");
-    // A first use of another tool still takes the current tip, as before.
+    // The Eraser's first use starts on its own plain tip, not the brush picked before it.
     pick(&mut app, Tool::Pencil);
     scramble(&mut app);
     pick(&mut app, Tool::Eraser);
-    assert_eq!(tip(&mut app)[0], 57.0);
+    assert_eq!(tip(&mut app), PLAIN_ERASER_TIP);
 }

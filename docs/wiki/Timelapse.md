@@ -1,7 +1,6 @@
 # Timelapse
 
-PIRA can record your painting as you go and turn it into a short video, like Clip Studio Paint's
-timelapse.
+PIRA can record your painting as you go and turn it into a short video.
 
 ## Recording
 
@@ -39,4 +38,4 @@ plays at 30 frames a second and ends on the finished picture, held for 2 seconds
 
 - Export uses the tablet's own video encoder, so it's available on **Android**. On Windows and
   Linux, recording works but export isn't available yet.
-- A long recording adds to the `.pcraft` file's size, as it does in Clip Studio Paint.
+- A long recording adds to the `.pcraft` file's size.

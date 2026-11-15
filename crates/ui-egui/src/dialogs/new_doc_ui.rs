@@ -812,8 +812,7 @@ pub fn body(app: &mut crate::PhotocraftApp, ui: &mut egui::Ui, f: &mut Map<Strin
             if widgets::checkbox(ui, &mut artboard, tl!("Artboards")).changed() {
                 f.insert("artboard".into(), json!(artboard));
             }
-            // File › Timelapse › Record Timelapse from the first stroke, as Clip Studio Paint's
-            // New dialog offers.
+            // File › Timelapse › Record Timelapse from the first stroke.
             let mut timelapse = f.get("timelapse").and_then(Value::as_bool).unwrap_or(false);
             if widgets::checkbox(ui, &mut timelapse, tl!("Record timelapse"))
                 .on_hover_text(tl!("Keep a snapshot after each change, to export as a sped-up video (File › Timelapse)"))
