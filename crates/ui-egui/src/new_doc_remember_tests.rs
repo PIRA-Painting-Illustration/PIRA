@@ -100,3 +100,90 @@ fn created_documents_fill_the_recent_category() {
         (&json!(640), &json!(480), &json!("cmyk"), &json!(16), &json!("transparent"), &json!("Next"), &json!("in"))
     );
 }
+
+/// A new canvas starts on the Pencil, whatever tool the last one ended on; a document opened or
+/// switched to keeps the tool in use.
+#[test]
+fn a_new_document_starts_on_the_pencil_and_others_keep_the_tool() {
+    use crate::drawing_kit::{Kit, active, switch};
+    let mut app = app();
+    app.ui.tool = crate::state::Tool::Move;
+    create(&mut app, json!({"width": 64, "height": 64}));
+    assert_eq!(active(&app), Some(Kit::Pencil));
+    // On the Pen, then another document is made the active one (as opening one does).
+    switch(&mut app, Kit::Pen);
+    app.session.execute("file.new", json!({"width": 32, "height": 32})).unwrap();
+    assert_eq!(active(&app), Some(Kit::Pen), "only the New dialog picks the Pencil");
+    create(&mut app, json!({"width": 64, "height": 64}));
+    assert_eq!(active(&app), Some(Kit::Pencil));
+}
+
+#[test]
+fn a_fresh_install_new_document_opens_on_an_active_layer_1() {
+    let mut app = app();
+    crate::pira::first_launch(&mut app);
+    create(&mut app, json!({"width": 5400, "height": 7200, "resolution": 300.0, "timelapse": true, "__preset": "Poster"}));
+    // A frame, as the tablet draws one before the first stroke.
+    let ctx = egui::Context::default();
+    for _ in 0..2 {
+        use eframe::App as _;
+        let input = egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(2200.0, 1440.0))), ..Default::default() };
+        let mut frame = eframe::Frame::_new_kittest();
+        ctx.run_ui(input, |ui| {
+            app.logic(ui.ctx(), &mut frame);
+            app.ui(ui, &mut frame);
+        })
+        .textures_delta
+        .clear();
+    }
+    let st = app.session.active().unwrap();
+    let top = st.doc.layers.last().unwrap();
+    assert_eq!(top.name, "Layer 1");
+    assert_eq!(st.active_layer, Some(top.id));
+    assert_eq!(st.selected_layers(), vec![top.id]);
+}
+
+/// On the tablet: the whole app, PIRA's layout, the New dialog's Create tapped with a finger
+/// (the pen taps the same way). Layer 1 stays the selected layer afterwards.
+#[test]
+fn tapping_create_on_the_tablet_leaves_layer_1_selected() {
+    use egui_kittest::Harness;
+    use egui_kittest::kittest::Queryable as _;
+    let mut app = app();
+    crate::pira::first_launch(&mut app);
+    let mut h = Harness::builder().with_size(egui::vec2(2200.0, 1440.0)).with_step_dt(1.0 / 60.0).build_ui_state(
+        |ui, app: &mut PhotocraftApp| {
+            use eframe::App as _;
+            let mut frame = eframe::Frame::_new_kittest();
+            app.logic(ui.ctx(), &mut frame);
+            app.ui(ui, &mut frame);
+        },
+        app,
+    );
+    PhotocraftApp::setup_context(&h.ctx, crate::theme::ThemeKind::Pira);
+    h.run_steps(4);
+    // Android's saved tool state loads after `first_launch`: a fresh one is the Move tool.
+    h.state_mut().ui.tool = crate::state::Tool::Move;
+    let f = h.state_mut().new_document_fields();
+    h.state_mut().ui.open_dialog(DialogKind::NewDocument, f);
+    h.run_steps(10);
+    for (dx, dy) in [(0.0, 0.0), (-30.0, 0.0), (30.0, 0.0)] {
+        let at = h.get_by_label("Create").rect().center() + egui::vec2(dx, dy);
+        let touch = |phase| egui::Event::Touch { device_id: egui::TouchDeviceId(1), id: egui::TouchId(1), phase, pos: at, force: None };
+        let button = |pressed| egui::Event::PointerButton { pos: at, button: egui::PointerButton::Primary, pressed, modifiers: egui::Modifiers::NONE };
+        h.input_mut().events.extend([egui::Event::PointerMoved(at), touch(egui::TouchPhase::Start), button(true)]);
+        h.step();
+        h.input_mut().events.extend([touch(egui::TouchPhase::End), button(false)]);
+        h.step();
+        h.input_mut().events.push(egui::Event::PointerGone);
+        h.run_steps(4);
+        let st = h.state().session.active().expect("Create made the document");
+        let top = st.doc.layers.last().unwrap();
+        assert_eq!(top.name, "Layer 1");
+        assert_eq!(st.active_layer, Some(top.id), "tap at {at:?}");
+        assert_eq!(st.selected_layers(), vec![top.id], "tap at {at:?}");
+        let f = h.state_mut().new_document_fields();
+        h.state_mut().ui.open_dialog(DialogKind::NewDocument, f);
+        h.run_steps(10);
+    }
+}

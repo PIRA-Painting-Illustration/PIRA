@@ -299,8 +299,13 @@ impl PhotocraftApp {
             panels::title_bar(self, ui);
         }
         // The touch themes cover the brush tools' options with the bar's brush pill and the strip.
+        // Laid out for the tool picked, not a temporary one: while the pen's eraser end or a
+        // held key swaps the tool, the strip and options bar stay as they were, rather than
+        // flashing away and back.
         let touch = theme::Tokens::get(&ctx).touch();
-        let pill = touch && panels::pira_bar::pill_tool(self.ui.tool);
+        let layout_tool = crate::tool_memory::selected(self);
+        let pill = touch && panels::pira_bar::pill_tool(layout_tool);
+        let strip = touch && panels::pira_bar::strip_tool(layout_tool);
         // Home is only the menu bar and the Home content; the saved panel prefs are untouched.
         let home = self.home_screen_up();
         if (((chrome || self.full_screen_toolbar) && self.ui.panels.options_bar) || tabbed_in) && !pill && !home {
@@ -333,7 +338,7 @@ impl PhotocraftApp {
             // between the canvas and the dock, not outside the dock at the window edge.
             panels::dock_panel(self, ui);
             panels::toolbar(self, ui);
-            if pill {
+            if strip {
                 panels::pira_strip(self, ui);
             }
             let t = theme::Tokens::get(&ctx);
@@ -344,7 +349,7 @@ impl PhotocraftApp {
         } else {
             if toolbar_shown {
                 panels::toolbar(self, ui);
-                if pill {
+                if strip {
                     panels::pira_strip(self, ui);
                 }
             }

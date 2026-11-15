@@ -1237,6 +1237,8 @@ pub fn confirm(app: &mut PhotocraftApp, id: u64) -> Result<Value, String> {
                 app.ui.views[i].fit_pending = true;
             }
             if r.is_ok() {
+                // A new canvas starts sketching, whatever tool the last one ended on.
+                crate::pira::select_pencil(app);
                 crate::remember_new_document(app, &d.fields);
                 // File › New › Recent. Best effort: the document exists either way.
                 let _ = app.run("document.recent.add", json!({"settings": crate::new_doc_ui::document_settings(&d.fields)}));

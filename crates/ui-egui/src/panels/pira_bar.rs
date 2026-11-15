@@ -23,6 +23,12 @@ pub(crate) fn pill_tool(tool: Tool) -> bool {
     matches!(tool, Tool::Brush | Tool::Pencil | Tool::Eraser)
 }
 
+/// Tools with the size and opacity strip: the pill tools, and the Mixer Brush (the Brush kit's
+/// paints), which keeps its options bar too, for Wet, Load and Mix.
+pub(crate) fn strip_tool(tool: Tool) -> bool {
+    pill_tool(tool) || tool == Tool::MixerBrush
+}
+
 /// Run a menu command from the bar, reporting a failure in the status bar.
 fn run(app: &mut PhotocraftApp, ctx: &egui::Context, id: &str) {
     if let Err(e) = crate::menus::invoke(app, ctx, id, json!({})) {
@@ -176,5 +182,6 @@ mod tests {
         assert_eq!(size_label(3.24), "3.2");
         assert_eq!(size_label(9.99), "10");
         assert!(pill_tool(Tool::Pencil) && pill_tool(Tool::Eraser) && !pill_tool(Tool::Move));
+        assert!(strip_tool(Tool::MixerBrush) && !pill_tool(Tool::MixerBrush) && !strip_tool(Tool::Move));
     }
 }

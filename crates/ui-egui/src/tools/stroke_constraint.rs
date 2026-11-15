@@ -290,7 +290,12 @@ mod tests {
             if tool == Tool::Eraser {
                 app.run("edit.fill", json!({"contents": "foreground"})).unwrap();
             }
+            // The Eraser starts with its own 30 px tip: give it the Brush's size, so both
+            // strokes cover the same band.
+            let size = app.session.tools.brush.size;
             app.ui.tool = tool;
+            crate::paint_mouse::sync_tool_brush(&mut app);
+            app.session.tools.brush.size = size;
             let shift = egui::Modifiers::SHIFT;
             tool_event(&mut app, ToolEvent::Down { x: 10.0, y: 60.0, pressure: 1.0 }, shift);
             for (x, y) in [(30.0, 63.0), (50.0, 55.0), (80.0, 68.0), (100.0, 52.0)] {
