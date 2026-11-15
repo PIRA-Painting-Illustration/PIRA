@@ -36,8 +36,13 @@ pub const MASK_MODES: [(MaskMode, &str); 10] = [
     (MaskMode::Height, "Height"),
 ];
 
-const PATTERNS: [(PatternStyle, &str); 4] =
-    [(PatternStyle::Paper, "Paper"), (PatternStyle::Canvas, "Canvas"), (PatternStyle::Noise, "Noise"), (PatternStyle::Dots, "Dots")];
+const PATTERNS: [(PatternStyle, &str); 5] = [
+    (PatternStyle::Paper, "Paper"),
+    (PatternStyle::Tooth, "Paper Tooth"),
+    (PatternStyle::Canvas, "Canvas"),
+    (PatternStyle::Noise, "Noise"),
+    (PatternStyle::Dots, "Dots"),
+];
 
 /// Percent slider over a 0..`max` fraction.
 fn pct(ui: &mut egui::Ui, label: &str, v: &mut f32, max: f32) -> bool {

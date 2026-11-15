@@ -40,6 +40,26 @@ fn paper(seed: u32, depth: f32) -> Texture {
     Texture { enabled: true, pattern: Pattern::Procedural { style: PatternStyle::Paper, size: 128, seed }, depth, ..Default::default() }
 }
 
+/// The drawing paper every pencil shares (one sheet, as on a desk).
+const PAPER_SEED: u32 = 7;
+
+/// Graphite on drawing paper: the 1024 px Paper Tooth tile at full size, so it repeats only every
+/// 1024 px, in Linear Height mode: light pressure leaves a faint grey on the tops of the tooth and
+/// pressing harder fills it in toward solid, as a real pencil does (Multiply dimmed every stroke
+/// by the same small tile, so the grain looked printed on and repeated every 64 px). `grain` 0..1
+/// is how coarse the lead is: softer leads keep more tooth showing.
+fn graphite_paper(grain: f32) -> Texture {
+    Texture {
+        enabled: true,
+        pattern: Pattern::Procedural { style: PatternStyle::Tooth, size: 1024, seed: PAPER_SEED },
+        mode: MaskMode::LinearHeight,
+        invert: true,
+        depth: 0.1,
+        contrast: -0.6 + 0.4 * grain.clamp(0.0, 1.0),
+        ..Default::default()
+    }
+}
+
 /// The preset a fresh install starts with (nothing remembered from a previous session).
 pub const FIRST_BRUSH: &str = "2B Pencil";
 
@@ -104,13 +124,13 @@ fn pira_pens(base: &BrushSettings) -> Vec<BrushPreset> {
 /// (Clip Studio's real pencil, mechanical pencil, charcoal and pastel).
 fn pira_pencils(base: &BrushSettings) -> Vec<BrushPreset> {
     let g = |n: &str, b: BrushSettings| preset(PENCILS, n, b);
-    let pencil = |size: f32, hardness: f32, min_size: f32, min_opacity: f32, depth: f32, seed: u32| BrushSettings {
+    let pencil = |size: f32, hardness: f32, min_size: f32, min_opacity: f32, depth: f32, _seed: u32| BrushSettings {
         size,
         hardness,
         spacing: 0.06,
         shape_dynamics: size_dyn(pressure_min(min_size)),
         transfer: transfer(pressure_min(min_opacity), Dynamic::default()),
-        texture: Texture { scale: 0.5, ..paper(seed, depth) },
+        texture: graphite_paper(depth),
         tilt_shading: TiltShading::pencil(),
         smoothing: smooth(0.15),
         ..base.clone()
