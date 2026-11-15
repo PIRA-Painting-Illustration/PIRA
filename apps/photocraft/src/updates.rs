@@ -92,4 +92,11 @@ mod tests {
         assert_eq!(offer(&[("v0.3.0-beta", true), ("v0.2.1", false)], "0.2.0").as_deref(), Some("v0.2.1"));
         assert_eq!(offer(&[("v0.3.0-beta", true)], "0.2.0"), None);
     }
+
+    #[test]
+    fn pira_pose_releases_are_never_offered() {
+        // PIRA Pose ships from the same repo, tagged `pose-v<version>`: not a PIRA version.
+        assert_eq!(offer(&[("pose-v9.0.0", false)], "0.2.0"), None);
+        assert_eq!(offer(&[("pose-v9.0.0", false), ("v0.2.0-beta", true)], "0.1.0-beta").as_deref(), Some("v0.2.0-beta"));
+    }
 }

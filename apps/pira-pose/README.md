@@ -1,6 +1,6 @@
 # PIRA Pose
 
-PIRA's posable 3D mannequins as an app of their own, for Android tablets and Windows. It is the
+PIRA's posable 3D mannequins as an app of their own, for Android tablets, Windows and Linux. It is the
 3D layer (the Object tool and the 3D panel) on a canvas of its own: the same wooden mannequins,
 pose library, look and lighting, and photo matching.
 
@@ -56,7 +56,8 @@ places: `apps/pira-pose/src/photo.rs` and `crates/engine/src/cmd/scene3d_cmds/ph
 
 ## Building
 
-Windows: `pira-pose.exe`, built in WSL with MinGW. The poses and models are built in.
+Windows: `pira-pose.exe`, built in WSL with MinGW; Linux: `pira-pose`, built natively. The poses
+and models are built in.
 
 ```bash
 cargo build --release --target x86_64-pc-windows-gnu -p pira-pose
@@ -74,6 +75,21 @@ Tests: `cargo test -p pira-pose -p photocraft-scene3d-egui`, and
 `cargo test -p photocraft-ui-egui object_tool` for PIRA's side.
 
 PIRA Pose has its own version (`apps/pira-pose/Cargo.toml`), apart from PIRA's.
+
+## Releasing
+
+PIRA Pose is released from PIRA's repo, on the same Releases page, tagged `pose-v<version>`.
+It is never marked "Latest" (that stays PIRA's), and PIRA's updaters ignore `pose-v` tags. From
+one pushed commit:
+
+```bash
+PIRA_RELEASE=1 apps/pira-pose/build-android.sh   # the APK, release-signed
+scripts/pira-pose-desktop-build.sh <dist-dir>    # Linux and Windows, in WSL
+scripts/pira-pose-release.sh <notes.md> <dist-dir>
+```
+
+Copy the APK into the dist folder before any `cargo clean`. Raise the version in `Cargo.toml` for
+each new release.
 
 ## Credits
 
