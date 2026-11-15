@@ -33,11 +33,85 @@ fn fbm(x: f32, y: f32, size: f32, cells: i32, octaves: u32, salt: u64) -> f32 {
     sum / norm
 }
 
+/// Tileable value noise with `px` × `py` lattice cells over the tile: stretched along the axis
+/// with fewer cells.
+fn value_noise2(x: f32, y: f32, px: i32, py: i32, salt: u64) -> f32 {
+    let (x0, y0) = (x.floor(), y.floor());
+    let (tx, ty) = (smooth(x - x0), smooth(y - y0));
+    let (xi, yi) = (x0 as i32, y0 as i32);
+    let h = |i: i32, j: i32| hash2(i.rem_euclid(px), j.rem_euclid(py), salt);
+    let a = h(xi, yi) + (h(xi + 1, yi) - h(xi, yi)) * tx;
+    let b = h(xi, yi + 1) + (h(xi + 1, yi + 1) - h(xi, yi + 1)) * tx;
+    a + (b - a) * ty
+}
+
+/// Blur a tileable `n`×`n` field with the binomial kernel [1 4 6 4 1] / 16 along both axes,
+/// wrapping at the edges so it stays seamless.
+fn blur_wrapped(data: &[f32], n: usize) -> Vec<f32> {
+    const K: [f32; 5] = [1.0 / 16.0, 4.0 / 16.0, 6.0 / 16.0, 4.0 / 16.0, 1.0 / 16.0];
+    let pass = |src: &[f32], horizontal: bool| -> Vec<f32> {
+        let mut out = vec![0.0f32; n * n];
+        for y in 0..n {
+            for x in 0..n {
+                out[y * n + x] = K
+                    .iter()
+                    .enumerate()
+                    .map(|(i, k)| {
+                        let o = i as isize - 2;
+                        let (sx, sy) = if horizontal { ((x as isize + o).rem_euclid(n as isize) as usize, y) } else { (x, (y as isize + o).rem_euclid(n as isize) as usize) };
+                        src[sy * n + sx] * k
+                    })
+                    .sum();
+            }
+        }
+        out
+    };
+    pass(&pass(data, true), false)
+}
+
+/// [`PatternStyle::Tooth`]: drawing paper under graphite. Softened white noise makes the tooth
+/// (grains a pixel or two across with no lattice to show), with rounder bumps a few pixels
+/// across, faint fibres both ways and a slow unevenness so no two areas look alike. The values
+/// are then ranked onto 0..1 evenly: a Height texture fills a share of the tooth equal to how far
+/// the paint reaches, so darkness follows pressure smoothly.
+fn tooth(n: usize, salt: u64) -> Vec<f32> {
+    let s = n as f32;
+    let cells = |px: f32| ((s / px).round() as i32).max(1);
+    let (bump, fibre_long, fibre_short, slow) = (cells(5.0), cells(28.0), cells(2.5), cells(170.0));
+    let white: Vec<f32> = (0..n * n).map(|i| hash2((i % n) as i32, (i / n) as i32, salt ^ 0x55)).collect();
+    let grain = blur_wrapped(&white, n);
+    let mut data = Vec::with_capacity(n * n);
+    for y in 0..n {
+        for x in 0..n {
+            let (fx, fy) = (x as f32 + 0.5, y as f32 + 0.5);
+            let bumps = fbm(fx, fy, s, bump, 2, salt);
+            let across = value_noise2(fx / s * fibre_long as f32, fy / s * fibre_short as f32, fibre_long, fibre_short, salt ^ 0xF1);
+            let down = value_noise2(fx / s * fibre_short as f32, fy / s * fibre_long as f32, fibre_short, fibre_long, salt ^ 0xF2);
+            let uneven = fbm(fx, fy, s, slow, 3, salt ^ 0x51);
+            // The blurred noise has a narrow spread (about a third of white noise's): scale it up.
+            let g = (grain[y * n + x] - 0.5) * 3.0;
+            data.push(g * 0.55 + (bumps - 0.5) * 0.25 + (across + down - 1.0) * 0.08 + (uneven - 0.5) * 0.2);
+        }
+    }
+    // Rank onto 0..1 (ties keep their order, so the result is deterministic).
+    let mut order: Vec<u32> = (0..data.len() as u32).collect();
+    order.sort_by(|&a, &b| data[a as usize].total_cmp(&data[b as usize]));
+    let last = (data.len() - 1).max(1) as f32;
+    let mut out = vec![0.0f32; data.len()];
+    for (rank, &i) in order.iter().enumerate() {
+        out[i as usize] = rank as f32 / last;
+    }
+    out
+}
+
 /// Generate a seamless pattern tile.
 pub fn pattern(style: PatternStyle, size: u32, seed: u32) -> PatternImage {
     let n = size.clamp(8, 1024) as usize;
     let s = n as f32;
     let salt = u64::from(seed) * 0x0100_0000_01B3 + 17;
+    if style == PatternStyle::Tooth {
+        return PatternImage { width: n, height: n, data: tooth(n, salt) };
+    }
     let mut data = vec![0.0f32; n * n];
     for y in 0..n {
         for x in 0..n {
@@ -59,6 +133,7 @@ pub fn pattern(style: PatternStyle, size: u32, seed: u32) -> PatternImage {
                     let top = if (cx + cy) % 2 == 0 { warp } else { weft };
                     (0.25 + 0.65 * top + (hash2(x as i32, y as i32, salt) - 0.5) * 0.15).clamp(0.0, 1.0)
                 }
+                PatternStyle::Tooth => unreachable!("generated above"),
                 PatternStyle::Dots => {
                     let period = 8.0;
                     let (u, v) = ((fx / period).fract() - 0.5, (fy / period).fract() - 0.5);
@@ -267,7 +342,7 @@ mod tests {
 
     #[test]
     fn patterns_are_seamless_and_in_range() {
-        for st in [PatternStyle::Noise, PatternStyle::Paper, PatternStyle::Canvas, PatternStyle::Dots] {
+        for st in [PatternStyle::Noise, PatternStyle::Paper, PatternStyle::Canvas, PatternStyle::Dots, PatternStyle::Tooth] {
             let p = pattern(st, 64, 3);
             assert!(p.data.iter().all(|v| (0.0..=1.0).contains(v)), "{st:?}");
             let var = p.data.iter().map(|v| (v - 0.5).abs()).sum::<f32>() / p.data.len() as f32;

@@ -207,6 +207,10 @@ pub enum PatternStyle {
     Paper,
     /// Halftone-like dots.
     Dots,
+    /// Drawing paper's fine tooth for graphite: small bumps, a little fibre and a faint unevenness,
+    /// its values spread evenly over 0..1 so a Height texture fills it in step with pressure.
+    /// Generate it large (1024): it repeats far less often than a small tile.
+    Tooth,
 }
 
 /// A texture pattern: a procedural generator or an explicit grayscale tile (tiled infinitely).
