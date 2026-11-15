@@ -7,7 +7,11 @@ links between pages (Page.md, Page.md#section) point at the built pages.
 
 The converter covers the Markdown the wiki uses: # and ## headings, paragraphs, - and 1. lists
 (indented lines continue an item), pipe tables, **bold**, *italic*, `code` and [links](url).
-It uses only the standard library. Run it after editing the wiki:
+`{{version}}` in a wiki page is replaced by the PIRA_VERSION file. The script also brings the
+landing page's download links (releases/download/v<version>/pira-<version>-…) and its
+<span class="ver"> labels up to that version, so a release only changes PIRA_VERSION.
+
+It uses only the standard library. Run it after editing the wiki or raising the version:
 
     python3 web/landing/build_wiki.py
 """
@@ -23,6 +27,8 @@ ROOT = Path(__file__).resolve().parents[2]
 WIKI = ROOT / "docs" / "wiki"
 OUT = ROOT / "web" / "landing" / "wiki"
 LOGO = ROOT / "assets" / "app-icon" / "hicolor" / "64x64" / "apps" / "ai.storyteller.photocraft.png"
+LANDING = ROOT / "web" / "landing" / "index.html"
+VERSION = (ROOT / "PIRA_VERSION").read_text(encoding="utf-8").strip()
 
 SKIP = {"README.md", "_Sidebar.md"}
 
@@ -247,7 +253,21 @@ def order() -> list[str]:
     return names + rest
 
 
+def sync_landing() -> None:
+    """Point the landing page's downloads and version labels at VERSION."""
+    page = LANDING.read_text(encoding="utf-8")
+    synced = re.sub(
+        r"releases/download/v[0-9][^/\"]*/pira-[0-9][^\"]*?-(arm64-v8a\.apk|windows-x64\.zip|linux-x86_64\.tar\.gz)",
+        lambda m: f"releases/download/v{VERSION}/pira-{VERSION}-{m.group(1)}",
+        page,
+    )
+    synced = re.sub(r'<span class="ver">[^<]*</span>', f'<span class="ver">{html.escape(VERSION)}</span>', synced)
+    if synced != page:
+        LANDING.write_text(synced, encoding="utf-8", newline="")
+
+
 def main() -> None:
+    sync_landing()
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
@@ -258,7 +278,7 @@ def main() -> None:
     titles = {}
     bodies = {}
     for name in pages:
-        titles[name], bodies[name] = convert((WIKI / name).read_text(encoding="utf-8"))
+        titles[name], bodies[name] = convert((WIKI / name).read_text(encoding="utf-8").replace("{{version}}", VERSION))
     for n, name in enumerate(pages):
         built = page_name(name)
         prev_ = pages[n - 1] if n > 0 else None

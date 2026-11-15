@@ -11,12 +11,16 @@ PIRA is a free painting app for pen tablets that works offline. Pencils, inks an
 to pen **pressure and tilt** as soon as it's installed; there are no settings to turn on first.
 You don't need an account, a subscription or an internet connection to draw, save or export.
 
+**[Download the beta](https://pira-art.com/#download)** for Android tablets, Windows and Linux ·
+[Website](https://pira-art.com) · [Guide](https://pira-art.com/wiki/) ·
+[Releases](https://github.com/PIRA-Painting-Illustration/PIRA/releases) ·
+[Report a problem](https://github.com/PIRA-Painting-Illustration/PIRA/issues)
+
 > [!NOTE]
-> Early prototype, [PIRA-Painting-Illustration/PIRA](https://github.com/PIRA-Painting-Illustration/PIRA) on GitHub (private). PIRA is an independent project. It contains
+> Beta. PIRA is an independent project. It contains
 > software derived from [PhotoCraft](https://github.com/storytold/photocraft) by ArtCraft
 > contributors (MIT OR Apache-2.0), through the PhotoCraft Android port. It is not made or
-> supported by the PhotoCraft developers or ArtCraft, and it is not affiliated with Clip Studio
-> Paint. See [UPSTREAM.md](UPSTREAM.md).
+> supported by the PhotoCraft developers or ArtCraft. See [UPSTREAM.md](UPSTREAM.md).
 
 ## What's different from the port
 
@@ -31,7 +35,8 @@ You don't need an account, a subscription or an internet connection to draw, sav
 | **Own identity** | Android app id `art.pira` (installs beside PhotoCraft), label PIRA, its own logo, no auto-update from PhotoCraft's releases. |
 
 Plan and brand material: [docs/pira/](docs/pira/) (master plan, brand palette, concept art).
-The landing page for GitHub Pages, with the 30-second ad, is in [web/landing/](web/landing/index.html). It is not published yet.
+The website ([pira-art.com](https://pira-art.com), served by GitHub Pages) is [web/landing/](web/landing/index.html),
+with the user guide built from [docs/wiki/](docs/wiki/Home.md).
 
 ## Build (Android, arm64)
 
@@ -39,7 +44,7 @@ From Git Bash with the Android toolchain described in
 [apps/photocraft-android/README.md](apps/photocraft-android/README.md):
 
 ```bash
-APP_VERSION=0.1.0 apps/photocraft-android/build.sh
+apps/photocraft-android/build.sh   # the version is the PIRA_VERSION file
 ```
 
 The APK lands in `$CARGO_TARGET_DIR/android/pira-<version>-arm64-v8a.apk`.

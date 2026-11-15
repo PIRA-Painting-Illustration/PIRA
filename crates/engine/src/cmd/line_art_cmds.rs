@@ -1,4 +1,4 @@
-//! Colouring line art, Clip Studio-style: reference layers (Layer › Reference Layer), what the
+//! Colouring line art: reference layers (Layer › Reference Layer), what the
 //! Paint Bucket and Magic Wand look at to find an area (`sample`: the layer, all layers, or only
 //! the reference layers) with Close Gap and Expand (`closeGap`, `expand`), and Lasso Fill
 //! (`paint.lassoFill`: a Paint Bucket drag).

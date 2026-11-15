@@ -210,31 +210,27 @@ skipped with a message in the status bar.
 The app updates itself from PIRA's GitHub releases (`Updater.java`). At launch (Help ›
 Check for Updates at Startup, on by default) and from Help › Check for Updates…, it reads the
 release list (pre-releases included) and takes the newest release tagged
-`android-v<version>[-<build>]` with an APK attached. When that is newer than the installed
-version (`0.8.2-3` beats `0.8.2-2` and `0.8.2`), a dialog shows the release notes' "New in this
-build" section and offers **Install**, **Later** or **Skip This Version** (a skipped version is
-offered again only by Help › Check for Updates…). Install downloads the APK and hands it to
-Android's package installer. The first time, Android asks to allow PhotoCraft to install apps;
-the install carries on when you come back.
+`v<version>` with an APK attached. When that is newer than the installed version (a beta comes
+before its release: `0.2.0-beta` < `0.2.0-beta.2` < `0.2.0`), a dialog shows the release notes'
+"New in this build" section and offers **Install**, **Later** or **Skip This Version** (a
+skipped version is offered again only by Help › Check for Updates…). Install downloads the APK
+and hands it to Android's package installer. The first time, Android asks to allow PIRA to
+install apps; the install carries on when you come back. The repository is public, so the check
+needs no account or token.
 
-PIRA's repository is private, so the updater needs a token to see its releases. Dev builds
-carry one: a fine-grained GitHub token limited to the PIRA repository with **Contents:
-read-only**, saved in `~/pira-signing/update-token/token.txt` (or `PIRA_UPDATE_TOKEN`). The build bakes it
-in (`BuildConfig.UPDATE_TOKEN`), and the updater sends it only to api.github.com. A build
-without it has no update channel. **Before going live, delete every dev release and revoke the
-token**: anyone with one of those APKs can read the repository until then.
-
-Publishing a dev update: commit and push, then
+The version is the `PIRA_VERSION` file at the repository root, shared with the desktop builds.
+Publishing a release: raise `PIRA_VERSION`, commit and push, build the APK and the desktop
+downloads, then make the release:
 
 ```bash
-apps/photocraft-android/release-dev.sh     # builds android-v0.1.0-<next> and makes the pre-release
+PIRA_RELEASE=1 apps/photocraft-android/build.sh
+scripts/pira-desktop-build.sh                      # on Linux or in WSL
+scripts/pira-release.sh notes.md                   # tags v<version>; a beta is a pre-release
 ```
 
-which picks the next build number, builds the APK, and makes a pre-release at HEAD with the
-commits since the last one as its "New in this build" notes.
-
-The build number goes into the version code (0.8.2-4 → 80204), so each release installs over
-the last. Reset it to 1 when the workspace version changes. Android installs an update only when
+The version goes into the version code ((major·10000 + minor·100 + patch)·100, plus the beta
+number or 99 for the release: 0.2.0-beta → 20001, 0.2.0 → 20099), so each release installs over
+the last. Android installs an update only when
 it is signed with the same key as the installed copy: build every release with the release key
 (see Release signing below), with `PIRA_RELEASE=1` so a missing key stops the build.
 
@@ -282,7 +278,7 @@ password=<the keystore password>
 Or leave `password` out and set `PIRA_KEY_PASSWORD` when building. Release builds:
 
 ```bash
-PIRA_RELEASE=1 RELEASE_BUILD=1 apps/photocraft-android/build.sh
+PIRA_RELEASE=1 apps/photocraft-android/build.sh
 ```
 
 **Back up `pira-release.jks` and its password in two places** (for example an encrypted USB

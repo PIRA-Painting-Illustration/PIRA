@@ -914,7 +914,7 @@ fn about_tab_body(app: &mut PhotocraftApp, ui: &mut egui::Ui, tab: &str) {
             // Upstream credit (MIT OR Apache-2.0); PIRA is independent and not made or supported
             // by the PhotoCraft developers or ArtCraft.
             ui.label(tl!("Contains software derived from PhotoCraft by ArtCraft contributors, licensed under MIT OR Apache-2.0."));
-            ui.weak(tl!("PIRA is an independent project, not affiliated with PhotoCraft, ArtCraft or Clip Studio Paint."));
+            ui.weak(tl!("PIRA is an independent project, not affiliated with PhotoCraft or ArtCraft."));
             let _ = app;
             ui.add_space(10.0);
             ui.weak("egui · wgpu · photocraft-engine");

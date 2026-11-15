@@ -20,11 +20,10 @@ pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     ..craft_update::app::App::new("pira", "PIRA", "Painting and illustration", "PIRA-Painting-Illustration/PIRA")
 };
 
-/// Whether the desktop checks for updates. Off until PIRA publishes public releases on GitHub
-/// (the repository is private, so a check could only fail). With it off, Help › Check for
-/// Updates is greyed out and nothing is checked at startup. Android has the same switch:
-/// `REPO` in `Updater.java`.
-pub const UPDATES_ENABLED: bool = false;
+/// Whether the desktop checks PIRA's public GitHub releases for updates (Help › Check for
+/// Updates, and at startup). Off, the menu item is greyed out and nothing is checked. The check
+/// is `apps/photocraft/src/updates.rs`; Android's is `Updater.java`.
+pub const UPDATES_ENABLED: bool = true;
 
 /// Translate a string literal into the current UI language: `tl!("Image Size…")`.
 macro_rules! tl {

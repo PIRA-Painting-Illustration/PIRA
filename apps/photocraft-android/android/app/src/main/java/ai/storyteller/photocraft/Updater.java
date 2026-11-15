@@ -41,17 +41,17 @@ import java.util.regex.Pattern;
 /**
  * Updates from PIRA's GitHub releases.
  *
- * <p>Releases are tagged {@code android-v<major>.<minor>.<patch>[-<build>]} (pre-releases
- * included) with the APK attached. At startup (unless Help › Check for Updates at Startup is
- * off) and from Help › Check for Updates…, the newest such release is compared with this build's
- * version name ({@code 0.8.2-3-android}); when it is newer, a dialog offers to install it, wait,
- * or skip that version. Installing downloads the APK into the cache and hands it to Android's
- * package installer, which asks the user to confirm (and, the first time, to allow PhotoCraft to
+ * <p>Releases are tagged {@code v<major>.<minor>.<patch>[-beta[.<n>]]} (the PIRA_VERSION file;
+ * pre-releases included) with the APK attached. At startup (unless Help › Check for Updates at
+ * Startup is off) and from Help › Check for Updates…, the newest such release is compared with
+ * this build's version name ({@code 0.2.0-beta-android}); when it is newer, a dialog offers to
+ * install it, wait, or skip that version. A beta comes before its release: 0.2.0-beta (beta 1) <
+ * 0.2.0-beta.2 < 0.2.0. Installing downloads the APK into the cache and hands it to Android's
+ * package installer, which asks the user to confirm (and, the first time, to allow PIRA to
  * install apps). Updates only install when they are signed with the same key as this build.
  *
- * <p>The repository is private, so dev builds carry a read-only token ({@code UPDATE_TOKEN}, from
- * the build; see app/build.gradle). It goes only to api.github.com, never to the file host GitHub
- * redirects downloads to. A build without one has no update channel.
+ * <p>The repository is public, so the check needs no account or token: GitHub answers anyone,
+ * up to 60 requests an hour from one network.
  */
 final class Updater {
     private static final String TAG = "PIRA";
@@ -59,9 +59,10 @@ final class Updater {
     static final String REPO = "PIRA-Painting-Illustration/PIRA";
     private static final String API_HOST = "api.github.com";
     private static final String API = "https://" + API_HOST + "/repos/" + REPO + "/releases?per_page=20";
-    private static final String TOKEN = BuildConfig.UPDATE_TOKEN;
-    private static final Pattern TAG_VERSION = Pattern.compile("^android-v(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?$");
-    private static final Pattern NAME_VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)(?:-(\\d+))?");
+    /** Groups: 1-3 major, minor, patch; 4 "-beta…"; 5 the beta number. */
+    private static final String VERSION = "(\\d+)\\.(\\d+)\\.(\\d+)(-beta(?:\\.(\\d+))?)?";
+    private static final Pattern TAG_VERSION = Pattern.compile("^v" + VERSION + "$");
+    private static final Pattern NAME_VERSION = Pattern.compile("^" + VERSION);
     private static final String INSTALL_ACTION = "art.pira.UPDATE_INSTALLED";
 
     private final Activity activity;
@@ -96,12 +97,6 @@ final class Updater {
      * say so when there is none or the check fails, and offer a skipped version again.
      */
     void check(boolean manual) {
-        if (TOKEN.isEmpty()) {
-            if (manual) {
-                toast("This copy of PIRA has no update channel (it was built without an update token).");
-            }
-            return;
-        }
         if (busy) {
             return;
         }
@@ -151,21 +146,32 @@ final class Updater {
         }
     }
 
+    /**
+     * A version as {major, minor, patch, release, beta}: {@code release} is 0 for a beta and 1
+     * for the release itself, so a beta sorts before its release; {@code beta} is the beta
+     * number ({@code -beta} alone is beta 1). Null when {@code s} isn't a PIRA version.
+     */
     static int[] parse(Pattern p, String s) {
         Matcher m = p.matcher(s == null ? "" : s);
         if (!m.find()) {
             return null;
         }
-        int[] v = new int[4];
-        for (int i = 0; i < 4; i++) {
-            String g = m.group(i + 1);
-            v[i] = g == null ? 0 : Integer.parseInt(g);
+        try {
+            boolean beta = m.group(4) != null;
+            return new int[] {
+                Integer.parseInt(m.group(1)),
+                Integer.parseInt(m.group(2)),
+                Integer.parseInt(m.group(3)),
+                beta ? 0 : 1,
+                beta ? (m.group(5) == null ? 1 : Integer.parseInt(m.group(5))) : 0,
+            };
+        } catch (NumberFormatException e) {
+            return null;
         }
-        return v;
     }
 
     static int compare(int[] a, int[] b) {
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             if (a[i] != b[i]) {
                 return Integer.compare(a[i], b[i]);
             }
@@ -199,7 +205,7 @@ final class Updater {
                     r.tag = tag;
                     r.title = rel.optString("name", tag);
                     r.notes = rel.optString("body", "");
-                    // The API's asset link: the browser link needs a signed-in browser on a private repository.
+                    // The API's asset link, which answers application/octet-stream with the file.
                     r.apkUrl = a.getString("url");
                     r.apkSize = a.optLong("size", -1);
                     r.version = v;
@@ -212,8 +218,8 @@ final class Updater {
     }
 
     /**
-     * GET over HTTPS. Redirects (GitHub sends asset downloads to its file host, with the access
-     * in the link) are followed by hand so the token only ever goes to api.github.com.
+     * GET over HTTPS. Redirects (GitHub sends asset downloads to its file host) are followed by
+     * hand, so none of them can step down to plain HTTP.
      */
     private HttpURLConnection open(String url) throws IOException {
         boolean listing = url.equals(API);
@@ -229,7 +235,6 @@ final class Updater {
             c.setRequestProperty("User-Agent", "PIRA-Android/" + currentName());
             c.setRequestProperty("Accept", listing ? "application/vnd.github+json" : "application/octet-stream");
             if (API_HOST.equals(u.getHost())) {
-                c.setRequestProperty("Authorization", "Bearer " + TOKEN);
                 c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
             }
             int code = c.getResponseCode();
@@ -242,8 +247,11 @@ final class Updater {
                 url = new URL(u, next).toString();
                 continue;
             }
-            if (code == 401 || (code == 404 && listing)) {
-                throw new IOException("GitHub refused this build's update token (it may have expired or been revoked)");
+            if (code == 403 || code == 429) {
+                throw new IOException("GitHub is limiting requests from this network; try again in an hour");
+            }
+            if (code == 404 && listing) {
+                throw new IOException("PIRA's releases page couldn't be found");
             }
             throw new IOException("GitHub answered " + code);
         }
@@ -282,7 +290,7 @@ final class Updater {
     }
 
     private void offer(Release r) {
-        String name = r.tag.replace("android-v", "");
+        String name = r.tag.substring(1);
         new AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
                 .setTitle("PIRA " + name + " is available")
                 .setMessage("You have " + currentName() + ".\n\n" + summary(r.notes) + "\n\nDownload and install it now? Save your work first: PIRA closes to update.")
@@ -304,7 +312,7 @@ final class Updater {
         bar.setPadding(48, 24, 48, 0);
         final boolean[] cancelled = {false};
         AlertDialog dialog = new AlertDialog.Builder(activity, AlertDialog.THEME_DEVICE_DEFAULT_DARK)
-                .setTitle("Downloading PIRA " + r.tag.replace("android-v", ""))
+                .setTitle("Downloading PIRA " + r.tag.substring(1))
                 .setView(bar)
                 .setCancelable(false)
                 .setNegativeButton("Cancel", (d, w) -> cancelled[0] = true)

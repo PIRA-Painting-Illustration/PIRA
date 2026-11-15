@@ -1,6 +1,6 @@
 //! Built-in brush presets (our own designs; sampled tips and textures are generated procedurally).
 //!
-//! PIRA's own three families come first, split the way Clip Studio Paint splits its drawing
+//! PIRA's own three families come first, split by how they're used, like the drawing
 //! tools: Pens for line art, Pencils for sketching and shading, Brushes for painting (some of
 //! which mix with the canvas through the Mixer Brush, [`MIXING`]). Then groups like Photoshop's default Brushes panel folders: General, Dry
 //! Media, Wet Media and Special Effects, made pen-ready ([`pen_ready`]). Every preset is plain [`BrushSettings`] data, so it serialises, journals and
@@ -89,7 +89,7 @@ pub fn mixes(name: &str) -> bool {
     MIXING.iter().any(|m| m.eq_ignore_ascii_case(name))
 }
 
-/// Pens: crisp, opaque and steady (Clip Studio's G-pen, mapping pen and markers).
+/// Pens: crisp, opaque and steady (G-pens, mapping pens and markers).
 fn pira_pens(base: &BrushSettings) -> Vec<BrushPreset> {
     let g = |n: &str, b: BrushSettings| preset(PENS, n, b);
     let pen = |size: f32, min_size: f32, smoothing: f32| BrushSettings {
@@ -121,7 +121,7 @@ fn pira_pens(base: &BrushSettings) -> Vec<BrushPreset> {
 }
 
 /// Pencils: grainy, pressure darkens more than it widens, and the tip shades with tilt
-/// (Clip Studio's real pencil, mechanical pencil, charcoal and pastel).
+/// (real and mechanical pencils, charcoal and pastel).
 fn pira_pencils(base: &BrushSettings) -> Vec<BrushPreset> {
     let g = |n: &str, b: BrushSettings| preset(PENCILS, n, b);
     let pencil = |size: f32, hardness: f32, min_size: f32, min_opacity: f32, depth: f32, _seed: u32| BrushSettings {
@@ -175,7 +175,7 @@ fn pira_pencils(base: &BrushSettings) -> Vec<BrushPreset> {
 }
 
 /// Brushes: painting. The [`MIXING`] four paint through the Mixer Brush and blend with what is
-/// on the canvas (Clip Studio's watercolour, oil and blending brushes); gouache and the airbrush
+/// on the canvas (watercolour, oil and blending brushes); gouache and the airbrush
 /// lay colour down without mixing.
 fn pira_brushes(base: &BrushSettings) -> Vec<BrushPreset> {
     let g = |n: &str, b: BrushSettings| preset(BRUSHES, n, b);

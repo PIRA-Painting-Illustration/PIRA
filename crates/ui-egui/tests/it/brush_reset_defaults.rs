@@ -44,6 +44,14 @@ fn scramble(app: &mut PhotocraftApp) {
 
 const BRUSH_TIP: [f64; 5] = [13.0, 0.0, 0.25, 0.0, 1.0];
 const DEFAULT_TIP: [f64; 5] = [20.0, 1.0, 0.1, 0.0, 1.0];
+/// The Eraser's own plain tip (`paint_mouse::ERASER_TIP`): a fresh or reset Eraser gets it, not the
+/// live brush's texture or smoothing.
+const PLAIN_ERASER_TIP: [f64; 5] = [30.0, 1.0, 0.1, 0.0, 1.0];
+
+/// The tip a reset gives `tool`.
+fn reset_tip(tool: Tool) -> [f64; 5] {
+    if tool == Tool::Eraser { PLAIN_ERASER_TIP } else { DEFAULT_TIP }
+}
 
 #[test]
 fn reset_tool_gives_the_brush_a_13_px_soft_tip() {
@@ -73,7 +81,7 @@ fn reset_all_tools_from_another_tool_gives_the_brush_its_tip() {
     pick(&mut app, Tool::Eraser);
     scramble(&mut app);
     control(&mut app, "ui.menu.invoke", json!({"id": "tool.resetAll", "params": {"confirmed": true}}));
-    assert_eq!(tip(&mut app), DEFAULT_TIP, "the Eraser");
+    assert_eq!(tip(&mut app), PLAIN_ERASER_TIP, "the Eraser");
     pick(&mut app, Tool::Brush);
     assert_eq!(tip(&mut app), BRUSH_TIP, "the Brush");
 }
@@ -87,7 +95,7 @@ fn reset_all_tools_from_the_brush_gives_the_other_tools_the_default_tip() {
     control(&mut app, "ui.menu.invoke", json!({"id": "tool.resetAll", "params": {"confirmed": true}}));
     for tool in [Tool::Pencil, Tool::Eraser] {
         pick(&mut app, tool);
-        assert_eq!(tip(&mut app), DEFAULT_TIP, "{tool:?}");
+        assert_eq!(tip(&mut app), reset_tip(tool), "{tool:?}");
     }
 }
 
@@ -98,7 +106,7 @@ fn other_painting_tools_keep_the_default_reset_tip() {
         pick(&mut a, tool);
         scramble(&mut a);
         control(&mut a, "ui.menu.invoke", json!({"id": "tool.reset"}));
-        assert_eq!(tip(&mut a), DEFAULT_TIP, "{tool:?}");
+        assert_eq!(tip(&mut a), reset_tip(tool), "{tool:?}");
     }
 }
 
