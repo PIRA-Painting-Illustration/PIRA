@@ -1,8 +1,20 @@
 # PIRA Pose
 
-PIRA Pose is PIRA's 3D mannequin as a free app of its own, for Android tablets and Windows. It's
-for when you only need a reference figure. It shares PIRA's posing code, so both apps pose, light
-and fall the same way.
+PIRA Pose is PIRA's 3D mannequin as a free app of its own, for Android tablets, Windows and Linux.
+It's for when you only need a reference figure. It shares PIRA's posing code, so both apps pose,
+light and fall the same way.
+
+## Getting it
+
+Download it from the [PIRA Pose section](../index.html#pira-pose) of the website, or from its
+[release on GitHub](https://github.com/PIRA-Painting-Illustration/PIRA/releases/tag/pose-v0.1.0)
+(PIRA Pose releases are tagged `pose-v…`). It installs beside PIRA as an app of its own.
+
+- **Android:** open `pira-pose-<version>-arm64-v8a.apk` on the tablet.
+- **Windows:** unzip `pira-pose-<version>-windows-x64.zip` and run `PIRA Pose.exe`.
+- **Linux:** extract `pira-pose-<version>-linux-x86_64.tar.gz` and run `./pira-pose`.
+
+It doesn't check for updates yet: newer versions appear on the Releases page.
 
 ## What it has
 

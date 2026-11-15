@@ -89,7 +89,8 @@ scripts/pira-pose-release.sh <notes.md> <dist-dir>
 ```
 
 Copy the APK into the dist folder before any `cargo clean`. Raise the version in `Cargo.toml` for
-each new release.
+each new release. Then update the three `pose-v…` download links in `web/landing/index.html` (the
+PIRA Pose section); `build_wiki.py` only keeps PIRA's own links current.
 
 ## Credits
 
