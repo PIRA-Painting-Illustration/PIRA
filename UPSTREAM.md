@@ -15,8 +15,7 @@ PIRA started as a copy of the PhotoCraft Android port.
 User-facing text says **PIRA**. Machine names are unchanged on purpose: crates and binaries
 (`photocraft-*`), Rust types (`PhotocraftApp`), the Java package `ai.storyteller.photocraft` (the
 JNI pen hook in `crates/tablet/src/android.rs` is bound to it by name), and the icon file names.
-That keeps merges from the port and upstream possible. Renaming them is a later, separate step
-(decision D-001/D-002 in [docs/pira/master-plan.md](docs/pira/master-plan.md)).
+That keeps merges from the port and upstream possible. Renaming them is a later, separate step.
 
 The Android **application id** is `art.pira`, so PIRA and PhotoCraft install side by side.
 

@@ -38,7 +38,6 @@ for Android, Windows and Linux. See [apps/pira-pose](apps/pira-pose/README.md).
 | **Painting layout** | Tools on both sides of the canvas: Brushes over Color and Swatches on the left, Properties over Layers on the right. |
 | **Own identity** | Android app id `art.pira` (installs beside PhotoCraft), label PIRA, its own logo, no auto-update from PhotoCraft's releases. |
 
-Plan and brand material: [docs/pira/](docs/pira/) (master plan, brand palette, concept art).
 The website ([pira-art.com](https://pira-art.com), served by GitHub Pages) is [web/landing/](web/landing/index.html),
 with the user guide built from [docs/wiki/](docs/wiki/Home.md).
 
