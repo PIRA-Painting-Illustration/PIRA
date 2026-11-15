@@ -1,5 +1,7 @@
 # Installing and updating
 
+The current test build is **0.1.0-7**:
+[download it here](https://github.com/PIRA-Painting-Illustration/PIRA/releases/tag/android-v0.1.0-7).
 Every release on the [Releases page](https://github.com/PIRA-Painting-Illustration/PIRA/releases)
 has a file for each system.
 
