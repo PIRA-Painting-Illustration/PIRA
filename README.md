@@ -31,7 +31,7 @@ You don't need an account, a subscription or an internet connection to draw, sav
 | **Own identity** | Android app id `art.pira` (installs beside PhotoCraft), label PIRA, its own logo, no auto-update from PhotoCraft's releases. |
 
 Plan and brand material: [docs/pira/](docs/pira/) (master plan, brand palette, concept art).
-A landing-page draft is in [web/landing/](web/landing/index.html).
+The landing page for GitHub Pages, with the 30-second ad, is in [web/landing/](web/landing/index.html). It is not published yet.
 
 ## Build (Android, arm64)
 
