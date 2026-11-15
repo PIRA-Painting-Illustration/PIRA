@@ -1,5 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Desktop or web PhotoCraft
-    url: https://github.com/storytold/photocraft/issues
-    about: Problems that aren't specific to Android go to the official PhotoCraft repository.
+  - name: PIRA guide
+    url: https://pira-art.com/wiki/
+    about: How every tool and feature works.
+  - name: Troubleshooting and FAQ
+    url: https://pira-art.com/wiki/Troubleshooting-and-FAQ.html
+    about: Fixes for installing, updating, pens and common problems.

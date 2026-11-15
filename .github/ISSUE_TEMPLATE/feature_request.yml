@@ -1,0 +1,29 @@
+name: Idea or feature request
+description: Something PIRA or PIRA Pose could do, or do better
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. Check the [guide](https://pira-art.com/wiki/) first in case it's already there.
+  - type: dropdown
+    id: app
+    attributes:
+      label: App
+      options:
+        - PIRA
+        - PIRA Pose
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: What you're trying to draw or do, and what would make it easier.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: How do you do it now?
+      description: A workaround in PIRA, or how another app handles it. Screenshots or sketches welcome.

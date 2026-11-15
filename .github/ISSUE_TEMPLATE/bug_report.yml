@@ -1,12 +1,21 @@
 name: Bug report
-description: Something doesn't work in PhotoCraft for Android
+description: Something in PIRA or PIRA Pose doesn't work the way it should
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting! This is the unofficial Android port. Problems that also happen in the
-        desktop or web PhotoCraft belong at https://github.com/storytold/photocraft/issues instead.
+        Thanks for reporting. PIRA is in beta, so this helps a lot.
+        The [troubleshooting page](https://pira-art.com/wiki/Troubleshooting-and-FAQ.html) covers a few common problems.
+  - type: dropdown
+    id: app
+    attributes:
+      label: App
+      options:
+        - PIRA
+        - PIRA Pose
+    validations:
+      required: true
   - type: textarea
     id: what
     attributes:
@@ -19,25 +28,36 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Open a new document
-        2. Pick the Brush tool
+        1. Start a new canvas
+        2. Pick the Pencil
         3. ...
   - type: input
     id: version
     attributes:
-      label: App version
-      description: Help › About PhotoCraft, or the release you installed (for example 0.9.0-3).
+      label: Version
+      description: Help › About in PIRA, or the release you downloaded.
+      placeholder: e.g. 0.2.0-beta
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Android
+        - Windows
+        - Linux
     validations:
       required: true
   - type: input
     id: device
     attributes:
-      label: Tablet and Android version
-      placeholder: e.g. Samsung Galaxy Tab S9, Android 14
+      label: Device and system version
+      placeholder: e.g. Samsung Galaxy Tab S9, Android 14 / Windows 11 / Ubuntu 24.04
     validations:
       required: true
   - type: input
-    id: pen
+    id: input
     attributes:
-      label: Pen, keyboard or other input (if it matters)
-      placeholder: e.g. S Pen, Wacom One pen, Bluetooth keyboard, finger only
+      label: Pen, tablet or other input (if it matters)
+      placeholder: e.g. S Pen, Wacom Intuos (Windows Ink or WinTab), XP-Pen, mouse, finger
