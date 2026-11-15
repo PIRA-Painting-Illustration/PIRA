@@ -18,6 +18,15 @@ pub fn first_launch(app: &mut PhotocraftApp) {
     }
     studio_layout(app);
     crate::last_brush::first_launch_brush(app);
+    select_pencil(app);
+}
+
+/// Pick the Pencil (the drawing tool, with the pencil it was last using, or the 2B Pencil):
+/// a fresh install and every new canvas start sketching. Opening a file keeps the tool in use.
+pub fn select_pencil(app: &mut PhotocraftApp) {
+    // An explicit choice: it ends a temporary tool (the pen's eraser end, a held key).
+    crate::tool_memory::select(app, app.ui.tool);
+    crate::drawing_kit::switch(app, crate::drawing_kit::Kit::Pencil);
 }
 
 /// PIRA's studio layout, after the painting apps artists already know: the tools in two
@@ -62,6 +71,7 @@ mod tests {
         }
         assert_eq!(app.session.tools.current_preset.as_deref(), Some(photocraft_paint::presets::FIRST_BRUSH));
         assert!(app.session.tools.brush.tilt_shading.enabled);
+        assert_eq!(crate::drawing_kit::active(&app), Some(crate::drawing_kit::Kit::Pencil), "the Pencil is the tool in use");
     }
 
     #[test]

@@ -43,7 +43,9 @@ pub fn sync_tool_brush(app: &mut PhotocraftApp) {
         // The Art History Brush also starts at full opacity (#10263): its Opacity is its own.
         // The Background Eraser, the Healing Brush and the Burn tool start with their own measured
         // tips instead, as the whole brush Reset Tool gives them (#11911, #12099, #12671).
-        None if matches!(tool, Tool::BackgroundEraser | Tool::Healing | Tool::Burn) => fresh_brush(tool, &current),
+        // So does the Eraser: taking an Oil Paint brush made it erase with a bristle tip, canvas
+        // texture, wet edges and smoothing.
+        None if matches!(tool, Tool::Eraser | Tool::BackgroundEraser | Tool::Healing | Tool::Burn) => fresh_brush(tool, &current),
         None => {
             let opacity = if tool == Tool::ArtHistoryBrush { BrushSettings::default().opacity } else { current.opacity };
             BrushSettings { smoothing: first_smoothing(), mode: photocraft_color::BlendMode::Normal, opacity, ..current }
@@ -79,12 +81,15 @@ const BACKGROUND_ERASER_TIP: (f32, f32, f32) = (13.0, 1.0, 0.25);
 const HEALING_BRUSH_TIP: (f32, f32, f32) = (19.0, 1.0, 0.25);
 /// The Burn tool's tip after Reset Tool (#12671): a 65 px soft round at 25 % spacing.
 const BURN_TOOL_TIP: (f32, f32, f32) = (65.0, 0.0, 0.25);
+/// The Eraser's tip: a plain 30 px hard round at 10 % spacing, with no smoothing, so it rubs
+/// out exactly where the pen goes.
+const ERASER_TIP: (f32, f32, f32) = (30.0, 1.0, 0.1);
 
 /// `tool`'s brush as it starts out (Reset Tool, #2825): the default brush at Photoshop's
 /// smoothing, with the session's own fields of `current`. The Brush tool's tip is
 /// [`BRUSH_TOOL_TIP`], the Background Eraser's [`BACKGROUND_ERASER_TIP`], the Healing Brush's
-/// [`HEALING_BRUSH_TIP`], the Burn tool's [`BURN_TOOL_TIP`]; the other tools keep the default
-/// tip.
+/// [`HEALING_BRUSH_TIP`], the Burn tool's [`BURN_TOOL_TIP`], the Eraser's [`ERASER_TIP`] without
+/// smoothing; the other tools keep the default tip.
 pub(crate) fn fresh_brush(tool: Tool, current: &BrushSettings) -> BrushSettings {
     let mut brush = BrushSettings { smoothing: first_smoothing(), ..BrushSettings::default() };
     match tool {
@@ -92,6 +97,10 @@ pub(crate) fn fresh_brush(tool: Tool, current: &BrushSettings) -> BrushSettings 
         Tool::BackgroundEraser => (brush.size, brush.hardness, brush.spacing) = BACKGROUND_ERASER_TIP,
         Tool::Healing => (brush.size, brush.hardness, brush.spacing) = HEALING_BRUSH_TIP,
         Tool::Burn => (brush.size, brush.hardness, brush.spacing) = BURN_TOOL_TIP,
+        Tool::Eraser => {
+            (brush.size, brush.hardness, brush.spacing) = ERASER_TIP;
+            brush.smoothing = photocraft_engine::paint::brush::Smoothing { enabled: false, amount: 0.0, ..Default::default() };
+        }
         _ => {}
     }
     session_fields(current, &brush)
