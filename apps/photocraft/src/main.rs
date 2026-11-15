@@ -678,6 +678,10 @@ fn main() -> eframe::Result {
             {
                 app.services.tablet_poll = Some(poll);
             }
+            #[cfg(target_os = "windows")]
+            {
+                app.services.mouse_path = tablet::mouse_path_service(cc);
+            }
             #[cfg(target_os = "linux")]
             tablet::spawn_x11(&app.stylus.feed, display);
             app.services.right_button_down = tablet::right_button_service();

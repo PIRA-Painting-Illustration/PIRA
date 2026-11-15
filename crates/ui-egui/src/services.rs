@@ -429,6 +429,10 @@ pub type PenEndFn = Box<dyn Fn() -> Option<bool> + Send + Sync>;
 /// whether the app window is focused (to re-assert WinTab overlap priority on activation).
 pub type TabletPollFn = Box<dyn FnMut(bool)>;
 
+/// The mouse positions the platform recorded since the last call, oldest first, in window
+/// pixels ([`Services::mouse_path`]; see [`crate::mouse_path`]).
+pub type MousePathFn = Box<dyn FnMut() -> Vec<(f32, f32)>>;
+
 /// What the last self-update came to: `Ok` with the version it installed, `Err` with the reason it
 /// could not be installed, `None` when there is nothing to report ([`Services::last_update`]).
 pub type LastUpdateFn = fn() -> Option<Result<String, String>>;
@@ -566,6 +570,8 @@ pub struct Services {
     pub pen_end: Option<PenEndFn>,
     /// WinTab packet poll (Windows with Windows Ink disabled; see `photocraft_tablet::wintab`).
     pub tablet_poll: Option<TabletPollFn>,
+    /// Every recorded mouse position, not just one per frame (Windows; see `mouse_path`).
+    pub mouse_path: Option<MousePathFn>,
     /// The persistent brush preset store, loading in the background (desktop; see
     /// `photocraft_engine::preset_store`). Attached to the session once it arrives; without
     /// one, brush presets are session-only unless the shell attached a store before startup.

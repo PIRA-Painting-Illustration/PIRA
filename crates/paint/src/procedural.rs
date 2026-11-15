@@ -133,7 +133,8 @@ pub fn pattern(style: PatternStyle, size: u32, seed: u32) -> PatternImage {
                     let top = if (cx + cy) % 2 == 0 { warp } else { weft };
                     (0.25 + 0.65 * top + (hash2(x as i32, y as i32, salt) - 0.5) * 0.15).clamp(0.0, 1.0)
                 }
-                PatternStyle::Tooth => unreachable!("generated above"),
+                // Generated whole above and returned before this loop; mid-grey keeps the match total.
+                PatternStyle::Tooth => 0.5,
                 PatternStyle::Dots => {
                     let period = 8.0;
                     let (u, v) = ((fx / period).fract() - 0.5, (fy / period).fract() - 0.5);

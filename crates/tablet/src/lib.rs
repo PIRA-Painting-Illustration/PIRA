@@ -40,6 +40,7 @@
 pub mod appkit;
 pub mod input_age;
 pub mod motion;
+pub mod mouse_path;
 pub mod xi;
 
 #[cfg(target_os = "android")]

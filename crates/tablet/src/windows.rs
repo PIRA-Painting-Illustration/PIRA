@@ -332,6 +332,77 @@ pub fn take_pen_end() -> Option<bool> {
     decode_end(CONTACT_END.swap(encode_end(None), Ordering::Relaxed)).or_else(pen_end)
 }
 
+/// `MOUSEMOVEPOINT` (winuser.h).
+#[repr(C)]
+#[derive(Clone, Copy, Default)]
+struct MOUSEMOVEPOINT {
+    x: i32,
+    y: i32,
+    time: u32,
+    extra: usize,
+}
+
+/// `GMMP_USE_DISPLAY_POINTS` (winuser.h): screen pixels, as the cursor moves.
+const GMMP_USE_DISPLAY_POINTS: u32 = 1;
+
+#[link(name = "user32")]
+unsafe extern "system" {
+    fn GetMouseMovePointsEx(cb_size: u32, lppt: *const MOUSEMOVEPOINT, lppt_buf: *mut MOUSEMOVEPOINT, n_buf_points: i32, resolution: u32) -> i32;
+    fn GetCursorPos(point: *mut POINT) -> i32;
+    fn ScreenToClient(hwnd: *mut std::ffi::c_void, point: *mut POINT) -> i32;
+}
+
+/// The mouse's whole path for one window (see [`crate::mouse_path`]): every position Windows
+/// recorded since the last [`MousePath::take`], not just the one `WM_MOUSEMOVE` left per frame.
+pub struct MousePath {
+    hwnd: isize,
+    last: Option<crate::mouse_path::Point>,
+}
+
+impl MousePath {
+    /// The path of the cursor over window `hwnd` (its client area gives the coordinates).
+    pub fn new(hwnd: isize) -> Self {
+        Self { hwnd, last: None }
+    }
+
+    /// The positions the mouse reported since the last call, oldest first, in the window's
+    /// client pixels. Empty on the first call, or when Windows can't say (the cursor isn't in
+    /// its history yet): the caller then keeps winit's moves.
+    pub fn take(&mut self) -> Vec<(f32, f32)> {
+        let mut cursor = POINT { x: 0, y: 0 };
+        // SAFETY: `cursor` is a valid, writable POINT.
+        if unsafe { GetCursorPos(&mut cursor) } == 0 {
+            return Vec::new();
+        }
+        // Display points are 16-bit: the reference goes in the same form (Microsoft's sample).
+        let reference = MOUSEMOVEPOINT { x: cursor.x & 0xFFFF, y: cursor.y & 0xFFFF, time: 0, extra: 0 };
+        let mut buf = [MOUSEMOVEPOINT::default(); 64];
+        // SAFETY: `reference` is a valid MOUSEMOVEPOINT, `buf` holds the 64 points asked for, and
+        // the size passed is the struct's own.
+        let n = unsafe {
+            GetMouseMovePointsEx(std::mem::size_of::<MOUSEMOVEPOINT>() as u32, &reference, buf.as_mut_ptr(), buf.len() as i32, GMMP_USE_DISPLAY_POINTS)
+        };
+        let Ok(n) = usize::try_from(n) else { return Vec::new() };
+        let history: Vec<crate::mouse_path::Point> = buf
+            .iter()
+            .take(n)
+            .map(|p| crate::mouse_path::Point { x: crate::mouse_path::unwrap(p.x), y: crate::mouse_path::unwrap(p.y), time: p.time })
+            .collect();
+        let new = crate::mouse_path::since(&history, self.last);
+        if let Some(&newest) = history.first() {
+            self.last = Some(newest);
+        }
+        let hwnd = self.hwnd as *mut std::ffi::c_void;
+        new.into_iter()
+            .filter_map(|p| {
+                let mut point = POINT { x: p.x, y: p.y };
+                // SAFETY: `point` is a valid, writable POINT; a stale window handle only fails.
+                (unsafe { ScreenToClient(hwnd, &mut point) } != 0).then_some((point.x as f32, point.y as f32))
+            })
+            .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

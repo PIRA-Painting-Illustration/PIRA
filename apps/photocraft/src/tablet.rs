@@ -80,6 +80,19 @@ pub fn install_wintab(cc: &eframe::CreationContext<'_>, feed: &StylusFeed, enabl
     }))
 }
 
+/// Every position the mouse reports over the window, not just one per frame (Windows; see
+/// `photocraft_ui_egui::mouse_path`).
+#[cfg(target_os = "windows")]
+pub fn mouse_path_service(cc: &eframe::CreationContext<'_>) -> Option<photocraft_ui_egui::MousePathFn> {
+    use eframe::wgpu::rwh::{HasWindowHandle, RawWindowHandle};
+    let hwnd = match cc.window_handle().ok()?.as_raw() {
+        RawWindowHandle::Win32(handle) => handle.hwnd.get(),
+        _ => return None,
+    };
+    let mut path = photocraft_tablet::windows::MousePath::new(hwnd);
+    Some(Box::new(move || path.take()))
+}
+
 /// Stylus barrel button down check (Windows). The right mouse button is left to egui, which
 /// reports the logical secondary button (swapped buttons included) for the app's own window only.
 #[cfg(target_os = "windows")]

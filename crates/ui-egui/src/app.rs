@@ -266,6 +266,16 @@ impl eframe::App for PhotocraftApp {
         if let Some(tablet_poll) = self.services.tablet_poll.as_mut() {
             tablet_poll(raw_input.focused);
         }
+        // During a mouse drag, every position the mouse reported, not one per frame (see
+        // `mouse_path`): a quick stroke is then a smooth curve, not a few straight pieces.
+        if let Some(mouse_path) = self.services.mouse_path.as_mut()
+            && raw_input.events.iter().any(|e| matches!(e, egui::Event::PointerMoved(_)))
+        {
+            let path = mouse_path();
+            if ctx.input(|i| i.pointer.any_down()) {
+                crate::mouse_path::splice(&mut raw_input.events, &path, ctx.pixels_per_point());
+            }
+        }
         // An undecorated window gets its caption back when the toolkit changes its flags
         // (maximize, restore, …): take it off again before the frame is laid out (#2246).
         if let Some(window_frame) = self.services.window_frame.as_mut() {
