@@ -8,6 +8,9 @@ and copy it there (or the other way round) so the two stay the same.
 - `media/ad-poster.webp`: the video's still before it plays.
 - `media/shots/`: screenshots from the app on a tablet, and `lion-timelapse.mp4`, the owner's lion
   painted in PIRA (from its own timelapse export), which also plays in the ad.
+- `wiki/`: the PIRA wiki as pages of the site (GitHub wikis need a public repository on the free
+  plan). Built from `docs/wiki/` by `python3 web/landing/build_wiki.py`: edit the Markdown there and
+  run it, never the HTML. `media/logo-64.png` is the wiki's logo, copied by the same script.
 - `.nojekyll`: serve the files as they are.
 
 To publish: make the public repo `PIRA-Painting-Illustration/pira-painting-illustration.github.io`, push
