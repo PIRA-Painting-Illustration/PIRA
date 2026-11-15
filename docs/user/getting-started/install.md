@@ -4,13 +4,13 @@ description: Install PIRA on an Android tablet or phone (Android 8.0 or later, 6
 order: 10
 ---
 
-PIRA comes as an APK file from the [latest release](https://github.com/PIRA-Painting-Illustration/PIRA/releases/latest) on GitHub. In the file names below, `<version>` stands for the version number, for example `0.1.0`.
+PIRA comes as an APK file from the [download page](https://pira-art.com/#download), or from the newest `v…` release on PIRA's [Releases page](https://github.com/PIRA-Painting-Illustration/PIRA/releases) on GitHub (the `pose-v…` releases are PIRA Pose). In the file names below, `<version>` stands for the version number, for example `0.1.0`.
 
 ## Android
 
 PIRA needs Android 8.0 or later on a 64-bit Arm device, which covers almost every tablet and phone from the last several years. A pen with pressure, such as an S Pen or a USI stylus, gets the most out of it.
 
-1. On the tablet, open the [latest release](https://github.com/PIRA-Painting-Illustration/PIRA/releases/latest).
+1. On the tablet, open the [download page](https://pira-art.com/#download).
 2. Download `pira-<version>-arm64-v8a.apk`.
 3. Open the downloaded file. If Android asks, allow your browser or file manager to install apps, then tap **Install**.
 4. Open **PIRA** from your apps.
