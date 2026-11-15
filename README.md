@@ -16,6 +16,10 @@ You don't need an account, a subscription or an internet connection to draw, sav
 [Releases](https://github.com/PIRA-Painting-Illustration/PIRA/releases) ·
 [Report a problem](https://github.com/PIRA-Painting-Illustration/PIRA/issues)
 
+**PIRA Pose**, PIRA's posable 3D mannequins as an app of their own, is on the same
+[Releases](https://github.com/PIRA-Painting-Illustration/PIRA/releases) page (tagged `pose-v…`)
+for Android, Windows and Linux. See [apps/pira-pose](apps/pira-pose/README.md).
+
 > [!NOTE]
 > Beta. PIRA is an independent project. It contains
 > software derived from [PhotoCraft](https://github.com/storytold/photocraft) by ArtCraft

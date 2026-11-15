@@ -1,6 +1,6 @@
 [package]
 name = "pira-pose"
-description = "PIRA Pose: PIRA's posable 3D mannequins as an app of their own (Android and Windows)"
+description = "PIRA Pose: PIRA's posable 3D mannequins as an app of their own (Android, Windows and Linux)"
 # Its own version (the APK's): PIRA Pose ships apart from PIRA.
 version = "0.1.0"
 edition.workspace = true
