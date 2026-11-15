@@ -11,6 +11,8 @@
 - **Pose tracking:** Google's MediaPipe models (Apache 2.0), from the OpenCV Zoo.
 - **Fonts:** Inter and JetBrains Mono for the interface, and Philosopher for PIRA's titles, all
   under the SIL Open Font License.
+- **Pictures in this guide:** the [perspective ruler](Rulers-and-Guides.md#perspective-ruler)
+  screenshots use public-domain and CC0 works, credited under each picture.
 
 The full list, with licence texts, is in `ATTRIBUTION.md` and `NOTICE` in the repository and in
 the desktop downloads.

@@ -107,6 +107,13 @@ def convert(md: str) -> tuple[str, str]:
             out.append(f'<h{level} id="{slug(text)}">{inline(text)}</h{level}>')
             i += 1
             continue
+        im = re.fullmatch(r"!\[([^\]]*)\]\(([^)\s]+)\)", stripped)
+        if im:
+            flush_para()
+            alt, src = html.escape(im.group(1), quote=True), html.escape(link_target(im.group(2)), quote=True)
+            out.append(f'<figure><a href="{src}"><img src="{src}" alt="{alt}" loading="lazy"></a></figure>')
+            i += 1
+            continue
         if stripped.startswith("|"):
             flush_para()
             rows = []
@@ -195,6 +202,8 @@ code{background:#1b303c;padding:2px 6px;border-radius:5px;font-size:.88em;overfl
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line)}
 th{background:var(--panel);color:var(--text)}tr:last-child td{border-bottom:0}
+figure{margin:18px 0 8px}figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px}
+figure+p em{color:var(--muted);font-size:14px}
 blockquote{margin:18px 0;border-left:3px solid var(--a);padding:6px 18px;background:#11262a;border-radius:0 10px 10px 0}
 .pager{display:flex;justify-content:space-between;gap:16px;margin-top:52px;padding-top:20px;border-top:1px solid var(--line);font-size:14px}
 .pager a{text-decoration:none;color:var(--muted)}.pager a:hover{color:var(--a)}.pager b{display:block;color:var(--text);font-size:16px}
@@ -271,6 +280,8 @@ def main() -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
     OUT.mkdir(parents=True)
+    if (WIKI / "images").is_dir():
+        shutil.copytree(WIKI / "images", OUT / "images")
     media = OUT.parent / "media"
     media.mkdir(exist_ok=True)
     shutil.copyfile(LOGO, media / "logo-64.png")
